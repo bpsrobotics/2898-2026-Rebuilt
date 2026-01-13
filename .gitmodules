@@ -1,0 +1,3 @@
+[submodule "src/main/beaverlib"]
+	path = src/main/beaverlib
+	url = https://github.com/beavertronics/beaverlib.git

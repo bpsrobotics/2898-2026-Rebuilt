@@ -41,9 +41,12 @@ object OI : SubsystemBase() {
      * controllers or [Flight][CommandJoystick].
      */
     fun configureBindings() {
-        resetGyro.debounce(0.15).onTrue(InstantCommand ({
-            Drivetrain.zeroGyro()
-        }, Drivetrain).andThen(Rumble(GenericHID.RumbleType.kRightRumble, 0.25, 0.2)))
+        resetGyro
+            .debounce(0.15)
+            .onTrue(
+                InstantCommand({ Drivetrain.zeroGyro() }, Drivetrain)
+                    .andThen(Rumble(GenericHID.RumbleType.kRightRumble, 0.25, 0.2))
+            )
     }
 
     /**

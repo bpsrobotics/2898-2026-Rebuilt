@@ -12,7 +12,7 @@ import frc.robot.OI.translationY
 import frc.robot.OI.turnX
 import frc.robot.commands.swerve.TeleopDriveCommand
 import frc.robot.subsystems.Drivetrain
-import frc.robot.subsystems.Intake
+import frc.robot.subsystems.Vision
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -56,6 +56,6 @@ class RobotContainer {
 
     private fun initializeObjects() {
         Drivetrain
-        Intake
+        Vision
     }
 }

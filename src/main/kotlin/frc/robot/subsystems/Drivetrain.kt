@@ -8,6 +8,7 @@ import beaverlib.utils.Units.Linear.feetPerSecond
 import beaverlib.utils.Units.Linear.inches
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
@@ -24,6 +25,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import java.io.File
 import swervelib.SwerveController
 import swervelib.SwerveDrive
 import swervelib.SwerveDriveTest
@@ -31,7 +33,6 @@ import swervelib.parser.SwerveDriveConfiguration
 import swervelib.parser.SwerveParser
 import swervelib.telemetry.SwerveDriveTelemetry
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity
-import java.io.File
 
 object Drivetrain : SubsystemBase() {
     object Constants {
@@ -74,7 +75,6 @@ object Drivetrain : SubsystemBase() {
 
     var updateVisionOdometry = true
 
-
     init {
         // Configure the Telemetry before creating the SwerveDrive to avoid unnecessary objects
         // being created.
@@ -102,13 +102,13 @@ object Drivetrain : SubsystemBase() {
         Vision.listeners.add(
             "UpdateOdometry",
             fun(result, camera) {
-                if(!updateVisionOdometry) return
+                if (!updateVisionOdometry) return
                 if (result.targets.isEmpty()) return
                 if (
                     !result.multitagResult.isPresent && (result.targets.first().poseAmbiguity > 0.3)
                 )
                     return
-                val newPose = camera.getEstimatedRobotPose(result) ?: return
+                val newPose = camera.getMultiTagPoseWithFallback(result) ?: return
                 addVisionMeasurement(
                     newPose.toPose2d(),
                     result.timestampSeconds,
@@ -125,7 +125,7 @@ object Drivetrain : SubsystemBase() {
     override fun periodic() {
         posePublisher.set(pose)
         swerveStatePublisher.set(swerveDrive.states)
-        Vision.setAllCameraReferences(pose)
+        Vision.setAllCameraReferences(Pose3d(pose))
         SmartDashboard.putNumber("Odometry/X", pose.x)
         SmartDashboard.putNumber("Odometry/Y", pose.y)
         SmartDashboard.putNumber("Odometry/HEADING", pose.rotation.radians)

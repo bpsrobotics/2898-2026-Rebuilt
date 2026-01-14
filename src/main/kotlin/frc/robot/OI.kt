@@ -1,22 +1,15 @@
 package frc.robot
 
-import beaverlib.utils.Units.Angular.RPM
 import beaverlib.utils.geometry.Vector2
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.GenericHID
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
-import frc.robot.commands.DoOpenloopIntake
-import frc.robot.commands.DoOutakeFullRobot
-import frc.robot.commands.DoShoot
-import frc.robot.commands.DoShootIntake
 import frc.robot.commands.OI.NavXReset
 import frc.robot.commands.OI.Rumble
-import frc.robot.commands.autos.AutoShootCarrots
 import kotlin.math.pow
 import kotlin.math.sign
 
@@ -50,36 +43,6 @@ object OI : SubsystemBase() {
      */
     fun configureBindings() {
         resetGyro.whileTrue(navXResetCommand)
-        // If high hat is moved towards the player, and NOT shooting, run intake
-        highHatBack.and(operatorTrigger.negate()).whileTrue(DoOpenloopIntake())
-
-        // If high hat is moved away from the player, run all subsystems in reverse to dislodge
-        // stuck carrots
-        highHatForward.whileTrue(DoOutakeFullRobot()) // Outtake
-
-        SmartDashboard.putNumber("Shooter/DesiredShooterRPM", 3500.0)
-
-        // If operator trigger is pressed, and not intaking, run the shoot command
-        operatorTrigger
-            .and(highHatBack.negate())
-            .whileTrue(
-                DoShoot({ SmartDashboard.getNumber("Shooter/DesiredShooterRPM", 3500.0).RPM })
-            )
-
-        // If operator trigger is pressed, and ALSO intaking, run the shoot and intake command
-        operatorTrigger
-            .and(highHatBack)
-            .whileTrue(
-                DoShootIntake({ SmartDashboard.getNumber("Shooter/DesiredShooterRPM", 3500.0).RPM })
-            )
-        driverController.leftTrigger().whileTrue(AutoShootCarrots)
-
-        //        driverController.x().whileTrue(Shooter.routine.fullSysID())
-
-        //        driverController.y().whileTrue(sysIdDriveMotor())
-        //        driverController.a().whileTrue(
-        //            sysIdAngleMotorCommand())
-
     }
 
     /**

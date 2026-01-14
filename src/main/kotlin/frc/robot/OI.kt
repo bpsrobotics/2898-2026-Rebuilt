@@ -3,13 +3,14 @@ package frc.robot
 import beaverlib.utils.geometry.Vector2
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.GenericHID
+import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
-import frc.robot.commands.OI.NavXReset
 import frc.robot.commands.OI.Rumble
+import frc.robot.subsystems.Drivetrain
 import kotlin.math.pow
 import kotlin.math.sign
 
@@ -31,8 +32,6 @@ object OI : SubsystemBase() {
         defaultCommand = Rumble(GenericHID.RumbleType.kBothRumble, 0.0)
     }
 
-    val navXResetCommand: NavXReset = NavXReset()
-
     // val followTagCommand = FollowApriltagGood(18)
 
     /**
@@ -42,7 +41,9 @@ object OI : SubsystemBase() {
      * controllers or [Flight][CommandJoystick].
      */
     fun configureBindings() {
-        resetGyro.whileTrue(navXResetCommand)
+        resetGyro.debounce(0.15).onTrue(InstantCommand ({
+            Drivetrain.zeroGyro()
+        }, Drivetrain).andThen(Rumble(GenericHID.RumbleType.kRightRumble, 0.25, 0.2)))
     }
 
     /**

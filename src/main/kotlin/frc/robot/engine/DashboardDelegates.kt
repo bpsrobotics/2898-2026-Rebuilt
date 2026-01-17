@@ -1,5 +1,6 @@
 package frc.robot.engine
 
+import edu.wpi.first.networktables.NetworkTableEntry
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlin.reflect.KClass
@@ -8,24 +9,24 @@ import kotlin.reflect.KProperty
 fun mergePaths(parent: String, prop: String): String = if (parent == "") prop else "$parent/$prop"
 
 class DashboardBooleanDelegate(
-    private val key: String,
+    private val entry: NetworkTableEntry,
     private val initialValue: Boolean,
     persist: Boolean = false,
 ) {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean =
-        SmartDashboard.getBoolean(key, initialValue)
+        entry.getBoolean(initialValue)
 
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
-        SmartDashboard.putBoolean(key, value)
+        entry.setBoolean(value)
     }
 
     init {
         if (persist) {
-            SmartDashboard.setDefaultBoolean(key, initialValue)
-            SmartDashboard.setPersistent(key)
+            entry.setDefaultBoolean(initialValue)
+            entry.setPersistent()
         } else {
-            SmartDashboard.putBoolean(key, initialValue)
-            SmartDashboard.clearPersistent(key)
+            entry.setBoolean(initialValue)
+            entry.clearPersistent()
         }
     }
 }
@@ -37,28 +38,32 @@ class DashboardBoolean(
     private val persist: Boolean = false,
 ) {
     operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): DashboardBooleanDelegate =
-        DashboardBooleanDelegate(mergePaths(path, property.name), initialValue, persist)
+        DashboardBooleanDelegate(
+            SmartDashboard.getEntry(mergePaths(path, property.name)),
+            initialValue,
+            persist,
+        )
 }
 
 class DashboardNumberDelegate(
-    private val key: String,
+    private val entry: NetworkTableEntry,
     private val initialValue: Double,
     persist: Boolean = false,
 ) {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): Double =
-        SmartDashboard.getNumber(key, initialValue)
+        entry.getDouble(initialValue)
 
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Double) {
-        SmartDashboard.putNumber(key, value)
+        entry.setDouble(value)
     }
 
     init {
         if (persist) {
-            SmartDashboard.setDefaultNumber(key, initialValue)
-            SmartDashboard.setPersistent(key)
+            entry.setDefaultDouble(initialValue)
+            entry.setPersistent()
         } else {
-            SmartDashboard.putNumber(key, initialValue)
-            SmartDashboard.clearPersistent(key)
+            entry.setDouble(initialValue)
+            entry.clearPersistent()
         }
     }
 }
@@ -70,28 +75,32 @@ class DashboardNumber(
     private val persist: Boolean = false,
 ) {
     operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): DashboardNumberDelegate =
-        DashboardNumberDelegate(mergePaths(path, property.name), initialValue, persist)
+        DashboardNumberDelegate(
+            SmartDashboard.getEntry(mergePaths(path, property.name)),
+            initialValue,
+            persist,
+        )
 }
 
 class DashboardStringDelegate(
-    private val key: String,
+    private val entry: NetworkTableEntry,
     private val initialValue: String,
     persist: Boolean = false,
 ) {
     operator fun getValue(thisRef: Any?, property: KProperty<*>): String =
-        SmartDashboard.getString(key, initialValue)
+        entry.getString(initialValue)
 
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) {
-        SmartDashboard.putString(key, value)
+        entry.setString(value)
     }
 
     init {
         if (persist) {
-            SmartDashboard.setDefaultString(key, initialValue)
-            SmartDashboard.setPersistent(key)
+            entry.setDefaultString(initialValue)
+            entry.setPersistent()
         } else {
-            SmartDashboard.putString(key, initialValue)
-            SmartDashboard.clearPersistent(key)
+            entry.setString(initialValue)
+            entry.clearPersistent()
         }
     }
 }
@@ -103,7 +112,11 @@ class DashboardString(
     private val persist: Boolean = false,
 ) {
     operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): DashboardStringDelegate =
-        DashboardStringDelegate(mergePaths(path, property.name), initialValue, persist)
+        DashboardStringDelegate(
+            SmartDashboard.getEntry(mergePaths(path, property.name)),
+            initialValue,
+            persist,
+        )
 }
 
 class DashboardEnumDelegate<T : Enum<T>>(

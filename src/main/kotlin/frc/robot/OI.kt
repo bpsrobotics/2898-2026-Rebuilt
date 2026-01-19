@@ -3,6 +3,7 @@ package frc.robot
 import beaverlib.utils.geometry.Vector2
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.GenericHID
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
@@ -47,6 +48,12 @@ object OI : SubsystemBase() {
                 InstantCommand({ Drivetrain.zeroGyro() }, Drivetrain)
                     .andThen(Rumble(GenericHID.RumbleType.kRightRumble, 0.25, 0.2))
             )
+
+        SmartDashboard.putData("SysIdCommands/Drivetrain/DriveMotors", Drivetrain.sysIdDriveMotor())
+        SmartDashboard.putData(
+            "SysIdCommands/Drivetrain/TurnMotors",
+            Drivetrain.sysIdAngleMotorCommand(),
+        )
     }
 
     /**

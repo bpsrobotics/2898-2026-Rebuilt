@@ -13,9 +13,8 @@ class MovingBoolean(size: Int, var threshold: Int) {
     val numberTrue: Int
         get() = buffer.filter({ b -> b }).size
 
-    val percentTrue: Double
-        get() = buffer.size.toDouble() / numberTrue
+    val portionTrue: Double
+        get() = numberTrue / buffer.size.toDouble()
 
-    inline operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean =
-        numberTrue >= threshold
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): Boolean = numberTrue >= threshold
 }

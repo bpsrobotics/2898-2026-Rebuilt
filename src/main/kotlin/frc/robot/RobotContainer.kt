@@ -3,7 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot
 
-import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.DriverStation
 import frc.robot.OI.configureBindings
 import frc.robot.OI.rightTrigger
@@ -29,16 +28,16 @@ class RobotContainer {
 
     val reverseDrive =
         if (alliance == DriverStation.Alliance.Red) {
-            -1.0
-        } else {
             1.0
+        } else {
+            -1.0
         }
 
     val teleopDrive: TeleopDriveCommand =
         TeleopDriveCommand(
-            { MathUtil.applyDeadband(translationY * reverseDrive, 0.1) },
-            { MathUtil.applyDeadband(translationX * reverseDrive, 0.1) },
-            { MathUtil.applyDeadband(-turnX, 0.1) },
+            { translationY * reverseDrive },
+            { translationX * reverseDrive },
+            { -turnX },
             { true },
             { rightTrigger },
         )

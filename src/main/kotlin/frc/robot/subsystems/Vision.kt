@@ -10,9 +10,9 @@ import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.geometry.Transform3d
 import edu.wpi.first.wpilibj.Filesystem
 import frc.robot.beaverlib.odometry.BeaverVisionCamera
-import org.photonvision.PhotonPoseEstimator
 import java.io.File
 import kotlin.math.PI
+import org.photonvision.PhotonPoseEstimator
 
 val customField: MutableList<AprilTag> = mutableListOf(AprilTag(1, Pose3d()))
 
@@ -25,10 +25,10 @@ val Vision =
         BeaverVisionCamera(
             "Iris_Arducam",
             Transform3d(
-                -13.inches.asMeters,
+                -13.inches.asMeters, // -13
                 9.5.inches.asMeters,
                 7.inches.asMeters,
-                Rotation3d(0.0, 30.0.degrees.asRadians, PI + 20.0.degrees.asRadians),
+                Rotation3d(0.0, 30.0.degrees.asRadians, PI + 7.0.degrees.asRadians),
             ),
             //            Transform3d(0.18, -0.33, 0.2, Rotation3d()),
             layout =

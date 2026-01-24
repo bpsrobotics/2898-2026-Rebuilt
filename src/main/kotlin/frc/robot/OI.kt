@@ -16,7 +16,8 @@ import frc.robot.commands.DoShoot
 import frc.robot.commands.DoShootIntake
 import frc.robot.commands.OI.NavXReset
 import frc.robot.commands.OI.Rumble
-import frc.robot.commands.autos.AutoShootCarrots
+import frc.robot.commands.autos.AutoAlign
+import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.sign
 
@@ -72,7 +73,7 @@ object OI : SubsystemBase() {
             .whileTrue(
                 DoShootIntake({ SmartDashboard.getNumber("Shooter/DesiredShooterRPM", 3500.0).RPM })
             )
-        driverController.leftTrigger().whileTrue(AutoShootCarrots)
+        driverController.leftTrigger().whileTrue(AutoAlign)
 
         //        driverController.x().whileTrue(Shooter.routine.fullSysID())
 
@@ -94,27 +95,20 @@ object OI : SubsystemBase() {
      */
     private fun process(
         input: Double,
-        deadzone: Boolean = false,
-        square: Boolean = false,
-        cube: Boolean = false,
+        deadzone: Double = DEADZONE_THRESHOLD,
+        power: Double,
     ): Double {
         var output = 0.0
 
-        if (deadzone) {
-            output = MathUtil.applyDeadband(input, DEADZONE_THRESHOLD)
+        if (deadzone != 0.0) {
+            output = MathUtil.applyDeadband(input, deadzone)
         }
 
-        if (square) {
+        if (power != 1.0) {
             // To keep the signage for output, we multiply by sign(output). This keeps negative
             // inputs
             // resulting in negative outputs.
-            output = output.pow(2) * sign(output)
-        }
-
-        if (cube) {
-            // Because cubing is an odd number of multiplications, we don't need to multiply by
-            // sign(output) here.
-            output = output.pow(3)
+            output = output.absoluteValue.pow(power) * sign(output)
         }
 
         return output
@@ -122,8 +116,8 @@ object OI : SubsystemBase() {
 
     // conflicts with the other definition, name it something else after compilation
     @JvmName("process1")
-    fun Double.process(deadzone: Boolean = false, square: Boolean = false, cube: Boolean = false) =
-        process(this, deadzone, square, cube)
+    fun Double.process(deadzone: Double = DEADZONE_THRESHOLD, power: Double) =
+        process(this, deadzone, power)
 
     val driverController = CommandXboxController(Constants.DriverControllerPort)
     private val operatorController = CommandJoystick(Constants.OperatorControllerPort)
@@ -135,26 +129,26 @@ object OI : SubsystemBase() {
      * Driver controller's throttle on the left joystick for the X Axis, from -1 (left) to 1 (right)
      */
     val translationX
-        get() = process(driverController.leftX, deadzone = true, square = false)
+        get() = process(driverController.leftX, power = 1.5)
 
     /**
      * Driver controller's throttle on the left joystick for the Y Axis, from -1 (down) to 1 (up)
      */
     val translationY
-        get() = process(driverController.leftY, deadzone = true, square = false)
+        get() = process(driverController.leftY, power = 1.5)
 
     /**
      * Driver controller's throttle on the right joystick for the X Axis, from -1 (left) to 1
      * (right)
      */
     val turnX
-        get() = process(driverController.rightX, deadzone = true, square = false)
+        get() = process(driverController.rightX, power = 1.5)
 
     /**
      * Driver controller's throttle on the right joystick for the Y Axis, from -1 (down) to 1 (up)
      */
     val turnY
-        get() = process(driverController.rightY, deadzone = true, square = false)
+        get() = process(driverController.rightY, power = 1.5)
 
     val leftTrigger
         get() = driverController.leftTriggerAxis

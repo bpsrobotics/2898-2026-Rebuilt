@@ -1,16 +1,25 @@
 package frc.robot
 
+import beaverlib.utils.Units.Angular.RPM
 import beaverlib.utils.geometry.Vector2
 import edu.wpi.first.math.MathUtil
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
-import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
+import frc.robot.commands.DoOpenloopIntake
+import frc.robot.commands.DoOutakeFullRobot
+import frc.robot.commands.DoShoot
+import frc.robot.commands.DoShootIntake
+import frc.robot.commands.OI.NavXReset
 import frc.robot.commands.OI.Rumble
+import frc.robot.commands.autos.AutoAlign
+import frc.robot.commands.swerve.TeleopDriveCommand
+import frc.robot.commands.swerve.VisionTurningHandler
 import frc.robot.subsystems.Drivetrain
 import kotlin.math.absoluteValue
 import kotlin.math.pow
@@ -34,6 +43,36 @@ object OI : SubsystemBase() {
         defaultCommand = Rumble(GenericHID.RumbleType.kBothRumble, 0.0)
     }
 
+    val navXResetCommand: NavXReset = NavXReset()
+    val reverseDrive =
+        if (
+            DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
+                DriverStation.Alliance.Red
+        ) {
+            1.0
+        } else {
+            -1.0
+        }
+    val teleopDrive: TeleopDriveCommand =
+        TeleopDriveCommand(
+            { translationY * reverseDrive },
+            { translationX * reverseDrive },
+            { -turnX },
+            { true },
+            { rightTrigger },
+        )
+    val teleopDriveVisionTurn: TeleopDriveCommand =
+        TeleopDriveCommand(
+            { translationY * reverseDrive },
+            { translationX * reverseDrive },
+            VisionTurningHandler::rotationSpeed,
+            { true },
+            { rightTrigger },
+            VisionTurningHandler::initialize,
+        )
+
+    // val followTagCommand = FollowApriltagGood(18)
+
     /**
      * Use this method to define your trigger->command mappings. Triggers can be created via the
      * Trigger constructor with an arbitrary predicate, or via the named factories in [ ]'s
@@ -41,18 +80,41 @@ object OI : SubsystemBase() {
      * controllers or [Flight][CommandJoystick].
      */
     fun configureBindings() {
-        resetGyro
-            .debounce(0.15)
-            .onTrue(
-                InstantCommand({ Drivetrain.zeroGyro() }, Drivetrain)
-                    .andThen(Rumble(GenericHID.RumbleType.kRightRumble, 0.25, 0.2))
+        Drivetrain.defaultCommand = teleopDrive
+
+        driverController.a().whileTrue(teleopDriveVisionTurn)
+
+        resetGyro.whileTrue(navXResetCommand)
+        // If high hat is moved towards the player, and NOT shooting, run intake
+        highHatBack.and(operatorTrigger.negate()).whileTrue(DoOpenloopIntake())
+
+        // If high hat is moved away from the player, run all subsystems in reverse to dislodge
+        // stuck carrots
+        highHatForward.whileTrue(DoOutakeFullRobot()) // Outtake
+
+        SmartDashboard.putNumber("Shooter/DesiredShooterRPM", 3500.0)
+
+        // If operator trigger is pressed, and not intaking, run the shoot command
+        operatorTrigger
+            .and(highHatBack.negate())
+            .whileTrue(
+                DoShoot({ SmartDashboard.getNumber("Shooter/DesiredShooterRPM", 3500.0).RPM })
             )
 
-        SmartDashboard.putData("SysIdCommands/Drivetrain/DriveMotors", Drivetrain.sysIdDriveMotor())
-        SmartDashboard.putData(
-            "SysIdCommands/Drivetrain/TurnMotors",
-            Drivetrain.sysIdAngleMotorCommand(),
-        )
+        // If operator trigger is pressed, and ALSO intaking, run the shoot and intake command
+        operatorTrigger
+            .and(highHatBack)
+            .whileTrue(
+                DoShootIntake({ SmartDashboard.getNumber("Shooter/DesiredShooterRPM", 3500.0).RPM })
+            )
+        driverController.leftTrigger().whileTrue(AutoAlign)
+
+        //        driverController.x().whileTrue(Shooter.routine.fullSysID())
+
+        //        driverController.y().whileTrue(sysIdDriveMotor())
+        //        driverController.a().whileTrue(
+        //            sysIdAngleMotorCommand())
+
     }
 
     /**

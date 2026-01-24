@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
 import frc.robot.commands.OI.Rumble
+import frc.robot.commands.intake.RunIntake
 import frc.robot.subsystems.Drivetrain
 import kotlin.math.absoluteValue
 import kotlin.math.pow
@@ -53,6 +54,9 @@ object OI : SubsystemBase() {
             "SysIdCommands/Drivetrain/TurnMotors",
             Drivetrain.sysIdAngleMotorCommand(),
         )
+
+        highHatBack.whileTrue(RunIntake(0.05))
+        highHatForward.whileTrue(RunIntake(-0.05))
     }
 
     /**

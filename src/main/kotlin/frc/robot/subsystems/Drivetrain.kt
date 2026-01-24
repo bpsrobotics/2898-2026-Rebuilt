@@ -80,14 +80,10 @@ object Drivetrain : SubsystemBase() {
         // being created.
         SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH
 
-        try {
-            swerveDrive =
-                SwerveParser(Constants.DRIVE_CONFIG)
-                    .createSwerveDrive(Constants.MaxSpeedMetersPerSecond)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            throw RuntimeException("error creating swerve", e)
-        }
+        swerveDrive =
+            SwerveParser(Constants.DRIVE_CONFIG)
+                .createSwerveDrive(Constants.MaxSpeedMetersPerSecond)
+
         // Set YAGSL preferences
         swerveDrive.setHeadingCorrection(
             false

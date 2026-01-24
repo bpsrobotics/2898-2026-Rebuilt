@@ -42,6 +42,7 @@ class TeleopDriveCommand(
 
     /** @suppress */
     override fun execute() {
+        println(vForward())
         var forwardVelocity = vForward()
         var strafeVelocity = vStrafe()
         var angVelocity = omega()

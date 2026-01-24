@@ -3,6 +3,7 @@ package frc.robot
 import beaverlib.utils.Units.Angular.RPM
 import beaverlib.utils.geometry.Vector2
 import edu.wpi.first.math.MathUtil
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.SubsystemBase
@@ -17,6 +18,9 @@ import frc.robot.commands.DoShootIntake
 import frc.robot.commands.OI.NavXReset
 import frc.robot.commands.OI.Rumble
 import frc.robot.commands.autos.AutoAlign
+import frc.robot.commands.swerve.TeleopDriveCommand
+import frc.robot.commands.swerve.VisionTurningHandler
+import frc.robot.subsystems.Drivetrain
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.sign
@@ -40,6 +44,32 @@ object OI : SubsystemBase() {
     }
 
     val navXResetCommand: NavXReset = NavXReset()
+    val reverseDrive =
+        if (
+            DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
+                DriverStation.Alliance.Red
+        ) {
+            1.0
+        } else {
+            -1.0
+        }
+    val teleopDrive: TeleopDriveCommand =
+        TeleopDriveCommand(
+            { translationY * reverseDrive },
+            { translationX * reverseDrive },
+            { -turnX },
+            { true },
+            { rightTrigger },
+        )
+    val teleopDriveVisionTurn: TeleopDriveCommand =
+        TeleopDriveCommand(
+            { translationY * reverseDrive },
+            { translationX * reverseDrive },
+            VisionTurningHandler::rotationSpeed,
+            { true },
+            { rightTrigger },
+            VisionTurningHandler::initialize,
+        )
 
     // val followTagCommand = FollowApriltagGood(18)
 
@@ -50,6 +80,10 @@ object OI : SubsystemBase() {
      * controllers or [Flight][CommandJoystick].
      */
     fun configureBindings() {
+        Drivetrain.defaultCommand = teleopDrive
+
+        driverController.a().whileTrue(teleopDriveVisionTurn)
+
         resetGyro.whileTrue(navXResetCommand)
         // If high hat is moved towards the player, and NOT shooting, run intake
         highHatBack.and(operatorTrigger.negate()).whileTrue(DoOpenloopIntake())

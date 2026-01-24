@@ -56,7 +56,6 @@ class AlignOdometry(
         NetworkTableInstance.getDefault().getStructTopic("RobotPose", Pose2d.struct).publish()
 
         var rotationSpeed = rotationPID.calculate(Drivetrain.pose.rotation.radians)
-        println("DESIRED SPEED: ${rotationSpeed}")
 
         var xSpeed = xPID.calculate(Drivetrain.pose.x)
         var ySpeed = yPID.calculate(Drivetrain.pose.y)

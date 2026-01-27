@@ -20,10 +20,11 @@ object RobotMap {
 
     // Subsystem CAN IDs
     const val IntakeId = 13
-    const val TunnelId = 14
-    const val FeederId = 15
-    const val ShooterTopId = 16
-    const val ShooterBotId = 17
+    const val HopperID = 14
+    const val PivotID = 15
+    const val FeederId = 16
+    const val ShooterTopId = 17
+    const val ShooterBotId = 18
 
     // DIO IDs
 

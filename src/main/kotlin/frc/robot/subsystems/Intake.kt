@@ -18,76 +18,8 @@ import frc.robot.RobotMap
 
 object Intake : SubsystemBase() {
 
-    object Pivot : SubsystemBase() {
-
-        // Initializing brushless motor with SparkMAX motor controller
-        private val motor = SparkMax(RobotMap.PivotID, SparkLowLevel.MotorType.kBrushless)
-        private val motorConfig: SparkMaxConfig = SparkMaxConfig()
-
-        // Values for PID tuning
-        private const val kP: Double = 0.0
-        private const val kI: Double = 0.0
-        private const val kD: Double = 0.0
-        val absEncoder: SparkAbsoluteEncoder = motor.getAbsoluteEncoder()
-
-        init {
-            motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(40)
-            motor.configure(
-                motorConfig,
-                ResetMode.kResetSafeParameters,
-                PersistMode.kPersistParameters,
-            )
-            defaultCommand = stopCommand()
-        }
-
-        private val PIDController = PIDController(kP, kI, kD)
-
-        override fun periodic() {
-            val PIDOutput: Double = PIDController.calculate(absEncoder.position)
-            motor.set(PIDOutput)
-        }
-
-        fun calculatePID(): Double {
-            return (PIDController.calculate(absEncoder.position))
-        }
-
-        fun runMotor(speed: Double = 0.0, isPID: Boolean) {
-            motor.set(if (isPID) PIDController.calculate(absEncoder.position) else speed)
-        }
-    }
-
     private val motor = SparkMax(RobotMap.IntakeId, SparkLowLevel.MotorType.kBrushless)
     private val motorConfig: SparkMaxConfig = SparkMaxConfig()
-
-    object Hopper : SubsystemBase() {
-        private val motor = SparkMax(RobotMap.HopperID, SparkLowLevel.MotorType.kBrushless)
-        private val motorConfig: SparkMaxConfig = SparkMaxConfig()
-
-        init {
-            motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(40)
-            motor.configure(
-                motorConfig,
-                ResetMode.kResetSafeParameters,
-                PersistMode.kPersistParameters,
-            )
-            defaultCommand = stopCommand()
-        }
-
-        // Periodic hopper diagnostic outputs
-        override fun periodic() {
-            SmartDashboard.putNumber("Hopper motor voltage:", motor.busVoltage)
-            SmartDashboard.putNumber("Hopper motor current usage:", motor.outputCurrent)
-            SmartDashboard.putNumber("Hopper motor temperature:", motor.motorTemperature)
-        }
-
-        fun runAtPower(power: Double) {
-            motor.set(power)
-        }
-
-        fun stop() {
-            motor.stopMotor()
-        }
-    }
 
     init {
         // Intake motor initialisation stuff
@@ -130,4 +62,53 @@ object Intake : SubsystemBase() {
 
     /** Command that stops the Intake motor */
     fun stopCommand() = this.run { stop() }
+
+    object Pivot : SubsystemBase() {
+
+        private const val kP: Double = 0.0  // Proportional
+        private const val kI: Double = 0.0  // Integral
+        private const val kD: Double = 0.0  // Derivative
+
+        // Initializing brushless motor with SparkMAX motor controller
+        private val motor = SparkMax(RobotMap.PivotID, SparkLowLevel.MotorType.kBrushless)
+        private val motorConfig: SparkMaxConfig = SparkMaxConfig()
+
+        // Use encoder values for PID tuning
+        val absEncoder: SparkAbsoluteEncoder = motor.getAbsoluteEncoder()
+
+        init {
+            motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(40)
+            motor.configure(
+                motorConfig,
+                // The reset mote and persist mode have to do with maintaining
+                // settings after a power cycle.
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters,
+            )
+
+            // Stop if nothing else is going on
+            defaultCommand = stopCommand()
+        }
+
+        // PID controller class for pivot subsystem
+        private val PIDController = PIDController(kP, kI, kD)
+
+        // Periodically use the PID controller output as value to pass to the motor.
+        override fun periodic() {
+            val PIDOutput: Double = calculatePID()
+            motor.set(PIDOutput)
+        }
+
+
+        fun calculatePID(): Double {
+            // Use absolute encoder as the feedback sensor for the PID controller
+            return (PIDController.calculate(absEncoder.position))
+        }
+
+        // If isPID is false, then the raw speed will be used rather than
+        // a PID adjusted one. Not recommended for this case.
+        fun runMotor(speed: Double = 0.0, isPID: Boolean = true) {
+            motor.set(if (isPID) calculatePID() else speed)
+        }
+    }
 }

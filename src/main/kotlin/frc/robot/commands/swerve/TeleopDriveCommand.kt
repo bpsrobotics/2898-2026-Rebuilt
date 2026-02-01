@@ -3,6 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot.commands.swerve
 
+import beaverlib.fieldmap.FieldMapREBUILTWelded
 import beaverlib.utils.Units.Angular.degrees
 import beaverlib.utils.geometry.vector2
 import edu.wpi.first.math.MathUtil
@@ -11,7 +12,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.engine.DashboardNumberPublisher
-import frc.robot.engine.FieldMap
 import frc.robot.subsystems.Drivetrain
 import kotlin.math.PI
 import kotlin.math.pow
@@ -95,7 +95,7 @@ object VisionTurningHandler {
     fun rotationSpeed(): Double {
         val error =
             MathUtil.inputModulus(
-                Drivetrain.pose.vector2.angleTo(FieldMap.teamFeederStation.center).asRadians -
+                Drivetrain.pose.vector2.angleTo(FieldMapREBUILTWelded.teamHub.center).asRadians -
                     Drivetrain.pose.rotation.radians,
                 -PI,
                 PI,

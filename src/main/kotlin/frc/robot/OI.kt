@@ -1,6 +1,9 @@
 package frc.robot
 
+import beaverlib.fieldmap.FieldMapREBUILTWelded
 import beaverlib.utils.Units.Angular.RPM
+import beaverlib.utils.Units.Angular.degrees
+import beaverlib.utils.Units.Linear.meters
 import beaverlib.utils.geometry.Vector2
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.DriverStation
@@ -17,9 +20,9 @@ import frc.robot.commands.DoShoot
 import frc.robot.commands.DoShootIntake
 import frc.robot.commands.OI.NavXReset
 import frc.robot.commands.OI.Rumble
-import frc.robot.commands.autos.AutoAlign
 import frc.robot.commands.swerve.TeleopDriveCommand
 import frc.robot.commands.swerve.VisionTurningHandler
+import frc.robot.commands.vision.DoCirclePoint
 import frc.robot.subsystems.Drivetrain
 import kotlin.math.absoluteValue
 import kotlin.math.pow
@@ -49,9 +52,9 @@ object OI : SubsystemBase() {
             DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
                 DriverStation.Alliance.Red
         ) {
-            1.0
-        } else {
             -1.0
+        } else {
+            1.0
         }
     val teleopDrive: TeleopDriveCommand =
         TeleopDriveCommand(
@@ -107,7 +110,15 @@ object OI : SubsystemBase() {
             .whileTrue(
                 DoShootIntake({ SmartDashboard.getNumber("Shooter/DesiredShooterRPM", 3500.0).RPM })
             )
-        driverController.leftTrigger().whileTrue(AutoAlign)
+        driverController
+            .leftTrigger()
+            .whileTrue(
+                DoCirclePoint(
+                    FieldMapREBUILTWelded.teamHub.center,
+                    2.meters,
+                    { translationX.degrees },
+                )
+            )
 
         //        driverController.x().whileTrue(Shooter.routine.fullSysID())
 

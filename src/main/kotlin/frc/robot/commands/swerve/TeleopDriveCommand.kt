@@ -93,6 +93,14 @@ object VisionTurningHandler {
     }
 
     fun rotationSpeed(): Double {
+        SmartDashboard.putNumber(
+            "Odometry/DesiredRotation",
+            MathUtil.inputModulus(
+                Drivetrain.pose.vector2.angleTo(FieldMapREBUILTWelded.teamHub.center).asRadians,
+                -PI,
+                PI,
+            ),
+        )
         val error =
             MathUtil.inputModulus(
                 Drivetrain.pose.vector2.angleTo(FieldMapREBUILTWelded.teamHub.center).asRadians -

@@ -3,9 +3,12 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot.subsystems
 
+import beaverlib.fieldmap.FieldMapREBUILTWelded
+import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Angular.radiansPerSecond
 import beaverlib.utils.Units.Linear.feetPerSecond
 import beaverlib.utils.Units.Linear.inches
+import beaverlib.utils.Units.Linear.meters
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Pose3d
@@ -27,7 +30,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.commands.autos.AutoShootCarrotsStuff
+import frc.robot.commands.vision.TargetPoseProvider
 import java.io.File
 import kotlin.math.PI
 import swervelib.SwerveController
@@ -124,7 +127,10 @@ object Drivetrain : SubsystemBase() {
     override fun periodic() {
         posePublisher.set(pose)
         swerveStatePublisher.set(swerveDrive.states)
-        targetPosePublisher.set(AutoShootCarrotsStuff.targetPose)
+        val targetPoseProvider =
+            TargetPoseProvider(FieldMapREBUILTWelded.teamHub.center, 2.meters, { 0.radians })
+        targetPoseProvider.initialize()
+        targetPosePublisher.set(targetPoseProvider.getPose())
         Vision.setAllCameraReferences(Pose3d(pose))
         SmartDashboard.putNumber("Odometry/X", pose.x)
         SmartDashboard.putNumber("Odometry/Y", pose.y)

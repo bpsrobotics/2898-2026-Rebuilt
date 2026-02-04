@@ -35,10 +35,9 @@ fun DoCirclePoint(
     rotateAround: () -> AngleUnit = { 0.radians },
 ): Command {
     val targetPoseProvider: TargetPoseProvider = TargetPoseProvider(point, distance, rotateAround)
-    return AlignOdometryContinuous(
+    return AlignOdometryContinuousBetter(
             targetPoseProvider::getPose,
-            initializeLambda = targetPoseProvider::initialize,
-        )
-        .alongWith(Drivetrain.doEnableVisionOdometry(false))
-        .finallyDo { bool -> Drivetrain.updateVisionOdometry = true }
+        ).beforeStarting({targetPoseProvider.initialize()})
+        //.alongWith(Drivetrain.doEnableVisionOdometry(false))
+        //.finallyDo { bool -> Drivetrain.updateVisionOdometry = true }
 }

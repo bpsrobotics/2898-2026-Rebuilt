@@ -28,6 +28,7 @@ object Shooter : SubsystemBase() {
 
     val topMotor = SparkMax(toptempID, SparkLowLevel.MotorType.kBrushless)
     val bottomMotor = SparkMax(tempIDbottom, SparkLowLevel.MotorType.kBrushless)
+
     private var ShooterConfig: SparkMaxConfig = SparkMaxConfig()
     private val Encoder = Encoder(topencoder, bottomencoder)
     private val constraints =
@@ -35,4 +36,12 @@ object Shooter : SubsystemBase() {
     private var profile = TrapezoidProfile(constraints)
     var currentState = TrapezoidProfile.State(Encoder.distance, 0.0)
     var goalState = TrapezoidProfile.State(Encoder.distance, 0.0)
+
+    // Shooter speed:
+    val topMotorSpeed
+        // you can also define motor speed using angular setpoints
+        get() = topencoder.veloticy.RPM
+    val bottomMotorSpeed
+        // you can also define motor speed using angular setpoints
+        get() = bottomencoder.veloticy.RPM
 }

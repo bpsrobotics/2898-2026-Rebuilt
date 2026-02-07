@@ -27,6 +27,11 @@ class TargetPoseProvider(
         println((Vector2(angle) * distance.asMeters + center).toPose2d(angle))
         return (Vector2(angle) * distance.asMeters + center).toPose2d(angle)
     }
+
+    fun getAngleAndCalculate(): AngleUnit {
+        angle += rotateAround()
+        return angle
+    }
 }
 
 fun DoCirclePoint(
@@ -35,9 +40,8 @@ fun DoCirclePoint(
     rotateAround: () -> AngleUnit = { 0.radians },
 ): Command {
     val targetPoseProvider: TargetPoseProvider = TargetPoseProvider(point, distance, rotateAround)
-    return AlignOdometryContinuousBetter(
-            targetPoseProvider::getPose,
-        ).beforeStarting({targetPoseProvider.initialize()})
-        //.alongWith(Drivetrain.doEnableVisionOdometry(false))
-        //.finallyDo { bool -> Drivetrain.updateVisionOdometry = true }
+    return CircleAlign({ point }, { targetPoseProvider.getAngleAndCalculate() }, { distance })
+        .beforeStarting(targetPoseProvider::initialize)
+        .alongWith(Drivetrain.doEnableVisionOdometry(false))
+        .finallyDo { bool -> Drivetrain.updateVisionOdometry = true }
 }

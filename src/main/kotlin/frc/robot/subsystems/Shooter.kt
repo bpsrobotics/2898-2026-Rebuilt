@@ -44,4 +44,7 @@ object Shooter : SubsystemBase() {
     val bottomMotorSpeed
         // you can also define motor speed using angular setpoints
         get() = bottomencoder.velocity.RPM
+    init{
+
+    }
 }

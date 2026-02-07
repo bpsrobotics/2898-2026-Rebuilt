@@ -1,29 +1,39 @@
 package frc.robot.subsystems
 
 import beaverlib.fieldmap.FieldMapREBUILTWelded
-import beaverlib.utils.geometry.Raycast2D
 import beaverlib.utils.geometry.Vector2
 import beaverlib.utils.geometry.vector2
-import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj2.command.button.Trigger
-import frc.robot.commands.OI.Rumble
+
+fun Vector2.crossesX(origin: Vector2, X: Double): Boolean {
+    if (origin.x < X && (origin + this).x < X) return false
+    if (origin.x > X && (origin + this).x > X) return false
+    return true
+}
 
 object HedgieHelmet {
     val trenchDriveTrigger = Trigger({ willCollideWithTrench() })
 
-    init {
-        trenchDriveTrigger.onTrue(Rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.5))
-    }
-
     fun willCollideWithTrench(): Boolean {
-        val robotVelocityVector: Vector2 = Drivetrain.robotVelocity.vector2
+        val robotVelocityVector: Vector2 = Drivetrain.robotVelocity.vector2 * 0.1
         val robotPoseVector: Vector2 = Drivetrain.pose.vector2
-        val rayCast: Raycast2D = Raycast2D(robotPoseVector, robotVelocityVector.angle)
+        val robotWidthVector: Vector2 = Vector2(Drivetrain.Constants.RobotWidth.asMeters, 0.0)
 
-        for (trench in FieldMapREBUILTWelded.trenches) {
-            val intersection = trench.line.intersection(rayCast) ?: continue
-            if (intersection.distance(robotPoseVector) < robotVelocityVector.magnitude) return true
+        for (area in
+            arrayOf(
+                FieldMapREBUILTWelded.RedAllianceAreaLineX,
+                FieldMapREBUILTWelded.BlueAllianceAreaLineX,
+            )) {
+            if (
+                (robotVelocityVector + robotWidthVector).crossesX(robotPoseVector, area.asMeters) ||
+                    (robotVelocityVector - robotWidthVector).crossesX(
+                        robotPoseVector,
+                        area.asMeters,
+                    )
+            )
+                return true
         }
+
         return false
     }
 }

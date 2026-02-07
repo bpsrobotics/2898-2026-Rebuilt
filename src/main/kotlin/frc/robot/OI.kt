@@ -24,6 +24,7 @@ import frc.robot.commands.swerve.TeleopDriveCommand
 import frc.robot.commands.swerve.VisionTurningHandler
 import frc.robot.commands.vision.DoCirclePoint
 import frc.robot.subsystems.Drivetrain
+import frc.robot.subsystems.HedgieHelmet.trenchDriveTrigger
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.sign
@@ -86,6 +87,8 @@ object OI : SubsystemBase() {
         Drivetrain.defaultCommand = teleopDrive
 
         driverController.a().whileTrue(teleopDriveVisionTurn)
+
+        trenchDriveTrigger.onTrue(Rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.5))
 
         resetGyro.whileTrue(navXResetCommand)
         // If high hat is moved towards the player, and NOT shooting, run intake

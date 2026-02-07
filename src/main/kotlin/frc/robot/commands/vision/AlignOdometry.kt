@@ -49,7 +49,6 @@ class AlignOdometry(
         rotationPID.setpoint = MathUtil.angleModulus(targetPose2d.rotation.radians)
         xPID.setpoint = targetPose2d.x
         yPID.setpoint = targetPose2d.y
-        println("AUTO ALIGN START\nError : ${rotationPID.error}")
     }
 
     override fun execute() {
@@ -104,6 +103,5 @@ class AlignOdometry(
 
     override fun end(interrupted: Boolean) {
         Drivetrain.stop()
-        println("AUTO ALIGN END")
     }
 }

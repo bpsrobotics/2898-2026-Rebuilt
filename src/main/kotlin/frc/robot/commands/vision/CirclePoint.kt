@@ -24,7 +24,6 @@ class TargetPoseProvider(
 
     fun getPose(): Pose2d {
         angle += rotateAround()
-        println((Vector2(angle) * distance.asMeters + center).toPose2d(angle))
         return (Vector2(angle) * distance.asMeters + center).toPose2d(angle)
     }
 

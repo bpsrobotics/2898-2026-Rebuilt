@@ -40,8 +40,8 @@ object Shooter : SubsystemBase() {
     // Shooter speed:
     val topMotorSpeed
         // you can also define motor speed using angular setpoints
-        get() = topencoder.veloticy.RPM
+        get() = topencoder.velocity.RPM
     val bottomMotorSpeed
         // you can also define motor speed using angular setpoints
-        get() = bottomencoder.veloticy.RPM
+        get() = bottomencoder.velocity.RPM
 }

@@ -1,38 +1,51 @@
 package frc.robot.subsystems
 
+import beaverlib.controls.PIDConstants
+import beaverlib.utils.Sugar.clamp
+import beaverlib.utils.Units.Angular.AngleUnit
 import beaverlib.utils.Units.Angular.AngularVelocity
 import beaverlib.utils.Units.Angular.RPM
+import beaverlib.utils.Units.Angular.degrees
+import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Time
 import com.revrobotics.PersistMode
 import com.revrobotics.ResetMode
-import com.revrobotics.spark.SparkAbsoluteEncoder
 import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.SparkMax
 import com.revrobotics.spark.config.SparkBaseConfig
 import com.revrobotics.spark.config.SparkMaxConfig
-import edu.wpi.first.math.controller.PIDController
+import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.RobotMap
+import frc.robot.engine.toPIDSin
+import kotlin.math.PI
 
 object Intake : SubsystemBase() {
+
+    object Constants {
+        val pivotPID: PIDConstants = PIDConstants(0.0, 0.0, 0.0)
+        val pivotkSin: Double = 0.0
+        val pivotStowedPosition = 0.degrees
+        val pivotExtendedPosition = PI.radians
+    }
 
     private val motor = SparkMax(RobotMap.IntakeId, SparkLowLevel.MotorType.kBrushless)
     private val motorConfig: SparkMaxConfig = SparkMaxConfig()
 
     init {
         // Intake motor initialisation stuff
-        motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(40)
+        motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(20)
         motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
-        defaultCommand = stopCommand()
+        defaultCommand = doStop()
     }
 
     val speed: AngularVelocity
         get() = motor.encoder.velocity.RPM
 
     override fun periodic() {
-        SmartDashboard.putNumber("Intake/motorVoltage", motor.busVoltage)
         SmartDashboard.putNumber("Intake/motorCurrent", motor.outputCurrent)
         SmartDashboard.putNumber("Intake motor temperature:", motor.motorTemperature)
     }
@@ -55,29 +68,27 @@ object Intake : SubsystemBase() {
      * Runs the Intake at the specified power for the specified time. If time is null, this will run
      * indefinitely until canceled
      */
-    fun runAtPowerCommand(power: Double, time: Time? = null): Command {
+    fun doRunAtPower(power: Double, time: Time? = null): Command {
         time ?: return this.runEnd({ runAtPower(power) }, { stop() })
         return this.runEnd({ runAtPower(power) }, { stop() }).withTimeout(time.asSeconds)
     }
 
     /** Command that stops the Intake motor */
-    fun stopCommand() = this.run { stop() }
+    fun doStop() = this.run { stop() }
 
     object Pivot : SubsystemBase() {
-
-        private const val kP: Double = 0.0  // Proportional
-        private const val kI: Double = 0.0  // Integral
-        private const val kD: Double = 0.0  // Derivative
+        // PID controller class for pivot subsystem
+        private val PIDSinController = Constants.pivotPID.toPIDSin(Constants.pivotkSin)
 
         // Initializing brushless motor with SparkMAX motor controller
         private val motor = SparkMax(RobotMap.PivotID, SparkLowLevel.MotorType.kBrushless)
         private val motorConfig: SparkMaxConfig = SparkMaxConfig()
 
         // Use encoder values for PID tuning
-        val absEncoder: SparkAbsoluteEncoder = motor.getAbsoluteEncoder()
+        val absEncoder: DutyCycleEncoder = DutyCycleEncoder(0)
 
         init {
-            motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(40)
+            motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(20)
             motor.configure(
                 motorConfig,
                 // The reset mote and persist mode have to do with maintaining
@@ -85,30 +96,29 @@ object Intake : SubsystemBase() {
                 ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters,
             )
+            SmartDashboard.putData("Intake/PivotPID", PIDSinController.PID)
 
-            // Stop if nothing else is going on
-            defaultCommand = stopCommand()
+            // Stabilize the wrist if nothing else is happening
+            defaultCommand = doStabilize()
         }
 
-        // PID controller class for pivot subsystem
-        private val PIDController = PIDController(kP, kI, kD)
+        /** Stops the wrist */
+        fun doStop() = this.run { motor.stopMotor() }
 
-        // Periodically use the PID controller output as value to pass to the motor.
-        override fun periodic() {
-            val PIDOutput: Double = calculatePID()
-            motor.set(PIDOutput)
-        }
+        /** Holds the wrist at the last set position */
+        fun doStabilize() =
+            this.run {
+                motor.setVoltage(
+                    PIDSinController.calculate(absEncoder.get().radians).clamp(-1.0, 1.0)
+                )
+            }
 
-
-        fun calculatePID(): Double {
-            // Use absolute encoder as the feedback sensor for the PID controller
-            return (PIDController.calculate(absEncoder.position))
-        }
-
-        // If isPID is false, then the raw speed will be used rather than
-        // a PID adjusted one. Not recommended for this case.
-        fun runMotor(speed: Double = 0.0, isPID: Boolean = true) {
-            motor.set(if (isPID) calculatePID() else speed)
-        }
+        /** Sets the wrist to target position, and ends once the PID is at the setpoint */
+        fun doSetPosition(targetPosition: AngleUnit) =
+            doStabilize()
+                .beforeStarting(
+                    InstantCommand({ PIDSinController.setpoint = targetPosition.asRadians })
+                )
+                .until { PIDSinController.PID.atSetpoint() }
     }
 }

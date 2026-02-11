@@ -13,6 +13,7 @@ import frc.robot.OI.process
 import frc.robot.commands.OI.Rumble
 import frc.robot.commands.intake.RunIntake
 import frc.robot.subsystems.Drivetrain
+import frc.robot.subsystems.Intake
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.sign
@@ -42,6 +43,7 @@ object OI : SubsystemBase() {
      * controllers or [Flight][CommandJoystick].
      */
     fun configureBindings() {
+        // --- Drivetrain --- \\
         resetGyro
             .debounce(0.15)
             .onTrue(
@@ -49,14 +51,23 @@ object OI : SubsystemBase() {
                     .andThen(Rumble(GenericHID.RumbleType.kRightRumble, 0.25, 0.2))
             )
 
+        // --- Intake --- \\
+        highHatBack.whileTrue(RunIntake(0.05))
+        highHatForward.whileTrue(RunIntake(-0.05))
+
+        operatorController
+            .axisGreaterThan(0, 0.5)
+            .onTrue(Intake.Pivot.doSetPosition(Intake.Constants.pivotStowedPosition))
+        operatorController
+            .axisLessThan(0, -0.5)
+            .onTrue(Intake.Pivot.doSetPosition(Intake.Constants.pivotExtendedPosition))
+
+        // --- SysID --- \\
         SmartDashboard.putData("SysIdCommands/Drivetrain/DriveMotors", Drivetrain.sysIdDriveMotor())
         SmartDashboard.putData(
             "SysIdCommands/Drivetrain/TurnMotors",
             Drivetrain.sysIdAngleMotorCommand(),
         )
-
-        highHatBack.whileTrue(RunIntake(0.05))
-        highHatForward.whileTrue(RunIntake(-0.05))
     }
 
     /**

@@ -110,7 +110,7 @@ object VisionTurningHandler {
         }
         if (
             FieldMapREBUILTWelded.getPoseAllianceArea(nextFramePos.toPose2d(0.0.radians)) ==
-                FieldMapREBUILTWelded.AllianceArea.Center
+                FieldMapREBUILTWelded.AllianceArea.Neutral
         ) {
             if (
                 nextFramePos.y + Drivetrain.Constants.RobotWidth.asMeters / 2 <

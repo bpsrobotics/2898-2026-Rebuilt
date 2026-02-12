@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj2.command.ParallelRaceGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 
 object Shooter : SubsystemBase() {
-    object Constants {
+    private object Constants {
         // TODO(ant): Get CAN IDs from Electrical
         const val MOTOR_1_ID = 70
         const val MOTOR_2_ID = 71
@@ -27,11 +27,11 @@ object Shooter : SubsystemBase() {
         val motor2FFConstants = SimpleMotorFeedForwardConstants(0.1, 0.19, 4.04)
     }
 
-    val motor1 = SparkMax(Constants.MOTOR_1_ID, SparkLowLevel.MotorType.kBrushless)
-    val motor2 = SparkMax(Constants.MOTOR_2_ID, SparkLowLevel.MotorType.kBrushless)
+    private val motor1 = SparkMax(Constants.MOTOR_1_ID, SparkLowLevel.MotorType.kBrushless)
+    private val motor2 = SparkMax(Constants.MOTOR_2_ID, SparkLowLevel.MotorType.kBrushless)
 
-    val motor1PIDFF = PIDFF(Constants.motor1PIDConstants, Constants.motor1FFConstants)
-    val motor2PIDFF = PIDFF(Constants.motor2PIDConstants, Constants.motor2FFConstants)
+    private val motor1PIDFF = PIDFF(Constants.motor1PIDConstants, Constants.motor1FFConstants)
+    private val motor2PIDFF = PIDFF(Constants.motor2PIDConstants, Constants.motor2FFConstants)
 
     init {
         val shooterConfig = SparkMaxConfig()

@@ -9,10 +9,12 @@ import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.SparkMax
 import com.revrobotics.spark.config.SparkBaseConfig
 import com.revrobotics.spark.config.SparkMaxConfig
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands.waitUntil
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import frc.robot.engine.FFSendable
 
 object Shooter : SubsystemBase() {
     private object Constants {
@@ -52,6 +54,11 @@ object Shooter : SubsystemBase() {
         )
 
         defaultCommand = stop()
+
+        SmartDashboard.putData("Shooter/motor1/PID", motor1PIDFF.PID)
+        SmartDashboard.putData("Shooter/motor1/FF", FFSendable(motor1PIDFF.FeedForward))
+        SmartDashboard.putData("Shooter/motor2/PID", motor2PIDFF.PID)
+        SmartDashboard.putData("Shooter/motor2/FF", FFSendable(motor2PIDFF.FeedForward))
     }
 
     fun stop(): Command {

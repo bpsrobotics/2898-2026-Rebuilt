@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands.waitUntil
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import frc.robot.engine.DashboardNumber
 import frc.robot.engine.FFSendable
 
 object Shooter : SubsystemBase() {
@@ -27,6 +28,8 @@ object Shooter : SubsystemBase() {
 
         val motor1FFConstants = SimpleMotorFeedForwardConstants(0.1, 0.19, 4.04)
         val motor2FFConstants = SimpleMotorFeedForwardConstants(0.1, 0.19, 4.04)
+
+        val runningSpeed by DashboardNumber(0.0, "Shooter/Constants")
     }
 
     private val motor1 = SparkMax(Constants.MOTOR_1_ID, SparkLowLevel.MotorType.kBrushless)
@@ -61,27 +64,96 @@ object Shooter : SubsystemBase() {
         SmartDashboard.putData("Shooter/motor2/FF", FFSendable(motor2PIDFF.FeedForward))
     }
 
-    fun stop(): Command {
-        return runOnce {
-            motor1.stopMotor()
-            motor2.stopMotor()
-        }
+    fun stop(): Command = runOnce {
+        motor1.stopMotor()
+        motor2.stopMotor()
     }
 
-    fun runSpeed(setpointAngVelocity: Double): Command {
-        return run {
-            motor1PIDFF.setpoint = setpointAngVelocity
-            motor1.set(motor1PIDFF.calculate(motor1.encoder.velocity))
+    fun runSpeed(): Command = run {
+        motor1PIDFF.setpoint = Constants.runningSpeed
+        motor1.set(motor1PIDFF.calculate(motor1.encoder.velocity))
 
-            motor2PIDFF.setpoint = setpointAngVelocity
-            motor2.set(motor2PIDFF.calculate(motor2.encoder.velocity))
-        }
+        motor2PIDFF.setpoint = Constants.runningSpeed
+        motor2.set(motor2PIDFF.calculate(motor2.encoder.velocity))
     }
 
-    fun waitSpeed(setpointAngVelocity: Double): Command {
-        return ParallelRaceGroup(
-            runSpeed(setpointAngVelocity),
-            waitUntil({ motor1PIDFF.atSetpoint() && motor2PIDFF.atSetpoint() }),
-        )
+    fun waitSpeed(): Command = waitUntil { motor1PIDFF.atSetpoint() && motor2PIDFF.atSetpoint() }
+
+    object Hood : SubsystemBase() {
+        private object Constants {
+            // TODO(ant): Get CAN ID from Electrical
+            const val MOTOR_ID = 72
+
+            val pidConstants = PIDConstants(0.0, 0.0, 0.0)
+            val ffConstants = SimpleMotorFeedForwardConstants(0.0, 0.0, 0.0)
+
+            const val DOWN_POSITION = 0.0
+        }
+
+        private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
+        private val controller = PIDFF(Constants.pidConstants, Constants.ffConstants)
+
+        init {
+            val motorConfig = SparkMaxConfig()
+            motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(20)
+            motor.configure(
+                motorConfig,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters,
+            )
+
+            defaultCommand = down()
+
+            SmartDashboard.putData("Shooter/Hood/PID", controller.PID)
+            SmartDashboard.putData("Shooter/Hood/FF", FFSendable(controller.FeedForward))
+        }
+
+        fun toPosition(position: Double): Command =
+            ParallelRaceGroup(
+                run {
+                    controller.setpoint = position
+                    motor.set(controller.calculate(motor.encoder.position))
+                },
+                waitUntil { controller.atSetpoint() },
+            )
+
+        fun down() = toPosition(Constants.DOWN_POSITION)
+    }
+
+    object Feeder : SubsystemBase() {
+        private object Constants {
+            // TODO(ant): Get CAN ID from Electrical
+            const val MOTOR_ID = 73
+
+            val pidConstants = PIDConstants(0.0, 0.0, 0.0)
+            val ffConstants = SimpleMotorFeedForwardConstants(0.0, 0.0, 0.0)
+
+            val runningSpeed by DashboardNumber(100.0, "Shooter/Feeder/Constants")
+        }
+
+        private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
+        private val controller = PIDFF(Constants.pidConstants, Constants.ffConstants)
+
+        init {
+            val motorConfig = SparkMaxConfig()
+            motorConfig.idleMode(SparkBaseConfig.IdleMode.kCoast).smartCurrentLimit(20)
+            motor.configure(
+                motorConfig,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters,
+            )
+
+            defaultCommand = stop()
+
+            SmartDashboard.putData("Shooter/Feeder/PID", controller.PID)
+            SmartDashboard.putData("Shooter/Feeder/FF", FFSendable(controller.FeedForward))
+        }
+
+        fun stop(): Command = runOnce { motor.stopMotor() }
+
+        fun runSpeed(): Command = run {
+            controller.setpoint = Constants.runningSpeed
+            motor.set(controller.calculate(motor.encoder.velocity))
+        }
     }
 }

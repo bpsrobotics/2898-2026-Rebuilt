@@ -2,9 +2,11 @@ package frc.robot
 
 import beaverlib.utils.geometry.Vector2
 import edu.wpi.first.math.MathUtil
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.InstantCommand
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
@@ -12,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
 import frc.robot.commands.OI.Rumble
 import frc.robot.subsystems.Drivetrain
+import frc.robot.subsystems.Shooter
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.sign
@@ -26,13 +29,15 @@ import kotlin.math.sign
 @Suppress("unused")
 object OI : SubsystemBase() {
     object Constants {
-        const val DriverControllerPort = 0
-        const val OperatorControllerPort = 1
+        const val DRIVER_CONTROLLER_PORT = 0
+        const val OPERATOR_CONTROLLER_PORT = 1
     }
 
     init {
         defaultCommand = Rumble(GenericHID.RumbleType.kBothRumble, 0.0)
     }
+
+    private val isEnabled = Trigger { DriverStation.isEnabled() }
 
     /**
      * Use this method to define your trigger->command mappings. Triggers can be created via the
@@ -47,6 +52,14 @@ object OI : SubsystemBase() {
                 InstantCommand({ Drivetrain.zeroGyro() }, Drivetrain)
                     .andThen(Rumble(GenericHID.RumbleType.kRightRumble, 0.25, 0.2))
             )
+
+        // Shooter
+        isEnabled.whileTrue(Shooter.runSpeed())
+        operatorController
+            .trigger()
+            .whileTrue(SequentialCommandGroup(Shooter.waitSpeed(), Shooter.Feeder.runSpeed()))
+        // TODO(ant): Integrate with HedgieHelmet etc.
+        driverController.a().whileTrue(Shooter.Hood.toPosition(0.1))
 
         SmartDashboard.putData("SysIdCommands/Drivetrain/DriveMotors", Drivetrain.sysIdDriveMotor())
         SmartDashboard.putData(
@@ -91,8 +104,8 @@ object OI : SubsystemBase() {
     fun Double.process(deadzone: Double = DEADZONE_THRESHOLD, power: Double) =
         process(this, deadzone, power)
 
-    val driverController = CommandXboxController(Constants.DriverControllerPort)
-    private val operatorController = CommandJoystick(Constants.OperatorControllerPort)
+    val driverController = CommandXboxController(Constants.DRIVER_CONTROLLER_PORT)
+    private val operatorController = CommandJoystick(Constants.OPERATOR_CONTROLLER_PORT)
 
     // Right joystick y-axis.  Controller mapping can be tricky, the best way is to use the driver
     // station to see what buttons and axis are being pressed.

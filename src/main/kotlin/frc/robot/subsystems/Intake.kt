@@ -53,7 +53,7 @@ object Intake : SubsystemBase() {
     /**
      * Run the Intake at the given speed
      *
-     * @param percent (-1, 1) the percent speed to run the motor at
+     * @param power (-1, 1) the percent speed to run the motor at
      */
     fun runAtPower(power: Double) {
         motor.set(power)
@@ -74,7 +74,7 @@ object Intake : SubsystemBase() {
     }
 
     /** Command that stops the Intake motor */
-    fun doStop() = this.run { stop() }
+    fun doStop(): Command = this.run { stop() }
 
     object Pivot : SubsystemBase() {
         // PID controller class for pivot subsystem
@@ -103,10 +103,10 @@ object Intake : SubsystemBase() {
         }
 
         /** Stops the wrist */
-        fun doStop() = this.run { motor.stopMotor() }
+        fun doStop(): Command = this.run { motor.stopMotor() }
 
         /** Holds the wrist at the last set position */
-        fun doStabilize() =
+        fun doStabilize(): Command =
             this.run {
                 motor.setVoltage(
                     PIDSinController.calculate(absEncoder.get().radians).clamp(-1.0, 1.0)
@@ -114,7 +114,7 @@ object Intake : SubsystemBase() {
             }
 
         /** Sets the wrist to target position, and ends once the PID is at the setpoint */
-        fun doSetPosition(targetPosition: AngleUnit) =
+        fun doSetPosition(targetPosition: AngleUnit): Command =
             doStabilize()
                 .beforeStarting(
                     InstantCommand({ PIDSinController.setpoint = targetPosition.asRadians })

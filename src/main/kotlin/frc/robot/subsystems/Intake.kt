@@ -26,8 +26,8 @@ import kotlin.math.PI
 object Intake : SubsystemBase() {
 
     object Constants {
-        val pivotPID: PIDConstants = PIDConstants(0.0, 0.0, 0.0)
-        val pivotkSin: Double = 0.0
+        val pivotPID: PIDConstants = PIDConstants(0.67, 0.0, 0.0) //TODO: Tune this johnn (temp values from recalc)
+        val pivotkSin: Double = 0.98
         val pivotStowedPosition = 0.degrees
         val pivotExtendedPosition = PI.radians
     }
@@ -88,7 +88,7 @@ object Intake : SubsystemBase() {
         val absEncoder: DutyCycleEncoder = DutyCycleEncoder(0)
 
         init {
-            motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(20)
+            motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(15) //TODO: Tune this but Recalc says we need at least 30 amps current limit
             motor.configure(
                 motorConfig,
                 // The reset mote and persist mode have to do with maintaining

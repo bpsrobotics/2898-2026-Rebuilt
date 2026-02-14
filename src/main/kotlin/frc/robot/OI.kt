@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
 import frc.robot.commands.OI.Rumble
-import frc.robot.commands.intake.RunIntake
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Intake
 import kotlin.math.absoluteValue
@@ -28,8 +27,8 @@ import kotlin.math.sign
 @Suppress("unused")
 object OI : SubsystemBase() {
     object Constants {
-        const val DriverControllerPort = 0
-        const val OperatorControllerPort = 1
+        const val DRIVER_CONTROLLER_PORT = 0
+        const val OPERATOR_CONTROLLER_PORT = 1
     }
 
     init {
@@ -43,7 +42,7 @@ object OI : SubsystemBase() {
      * controllers or [Flight][CommandJoystick].
      */
     fun configureBindings() {
-        // --- Drivetrain --- \\
+        // Drivetrain
         resetGyro
             .debounce(0.15)
             .onTrue(
@@ -51,18 +50,13 @@ object OI : SubsystemBase() {
                     .andThen(Rumble(GenericHID.RumbleType.kRightRumble, 0.25, 0.2))
             )
 
-        // --- Intake --- \\
-        highHatBack.whileTrue(RunIntake(0.05))
-        highHatForward.whileTrue(RunIntake(-0.05))
+        // Intake
+        highHatBack.whileTrue(Intake.runAtPower(0.05))
+        highHatForward.whileTrue(Intake.runAtPower(-0.05))
+        operatorController.axisGreaterThan(0, 0.5).onTrue(Intake.Pivot.stow())
+        operatorController.axisLessThan(0, -0.5).onTrue(Intake.Pivot.extend())
 
-        operatorController
-            .axisGreaterThan(0, 0.5)
-            .onTrue(Intake.Pivot.doSetPosition(Intake.Constants.pivotStowedPosition))
-        operatorController
-            .axisLessThan(0, -0.5)
-            .onTrue(Intake.Pivot.doSetPosition(Intake.Constants.pivotExtendedPosition))
-
-        // --- SysID --- \\
+        // SysID
         SmartDashboard.putData("SysIdCommands/Drivetrain/DriveMotors", Drivetrain.sysIdDriveMotor())
         SmartDashboard.putData(
             "SysIdCommands/Drivetrain/TurnMotors",
@@ -106,8 +100,8 @@ object OI : SubsystemBase() {
     fun Double.process(deadzone: Double = DEADZONE_THRESHOLD, power: Double) =
         process(this, deadzone, power)
 
-    val driverController = CommandXboxController(Constants.DriverControllerPort)
-    private val operatorController = CommandJoystick(Constants.OperatorControllerPort)
+    val driverController = CommandXboxController(Constants.DRIVER_CONTROLLER_PORT)
+    private val operatorController = CommandJoystick(Constants.OPERATOR_CONTROLLER_PORT)
 
     // Right joystick y-axis.  Controller mapping can be tricky, the best way is to use the driver
     // station to see what buttons and axis are being pressed.

@@ -3,23 +3,39 @@ package frc.robot.engine
 import beaverlib.controls.PIDConstants
 import beaverlib.controls.toPID
 import beaverlib.utils.Units.Angular.AngleUnit
+import beaverlib.utils.Units.Angular.radians
+import edu.wpi.first.util.sendable.Sendable
+import edu.wpi.first.util.sendable.SendableBuilder
 import kotlin.math.PI
 
-class PIDSinController(constants: PIDConstants, val kSin: Double) {
-    val PID = constants.toPID()
+class PIDSinController(constants: PIDConstants, var kSin: Double) : Sendable {
+    val pid = constants.toPID()
 
     init {
-        PID.enableContinuousInput(-PI, PI)
+        pid.enableContinuousInput(-PI, PI)
     }
 
-    var setpoint
-        get() = PID.setpoint
+    var setpoint: AngleUnit
+        get() = pid.setpoint.radians
         set(value) {
-            PID.setpoint = value
+            pid.setpoint = value.asRadians
         }
 
     fun calculate(measurement: AngleUnit): Double {
-        return PID.calculate(measurement.asRadians) + measurement.sin() * kSin
+        return pid.calculate(measurement.asRadians) + measurement.sin() * kSin
+    }
+
+    override fun initSendable(builder: SendableBuilder) {
+        builder.setSmartDashboardType("PIDSinController")
+        builder.addDoubleProperty("kP", pid::getP, pid::setP)
+        builder.addDoubleProperty("kI", pid::getI, pid::setI)
+        builder.addDoubleProperty("kD", pid::getD, pid::setD)
+        builder.addDoubleProperty("kSin", { kSin }, { value -> kSin = value })
+        builder.addDoubleProperty(
+            "setpoint",
+            { setpoint.asRadians },
+            { value -> setpoint = value.radians },
+        )
     }
 }
 

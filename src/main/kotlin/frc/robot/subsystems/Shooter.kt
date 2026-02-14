@@ -14,17 +14,13 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands.waitUntil
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import frc.robot.RobotMap.FeederId
-import frc.robot.RobotMap.ShooterFollowerId
-import frc.robot.RobotMap.HoodId
-import frc.robot.RobotMap.ShooterMasterId
 import frc.robot.engine.DashboardNumber
 import frc.robot.engine.FFSendable
 
 object Shooter : SubsystemBase() {
     private object Constants {
-        const val MOTOR_1_ID = ShooterMasterId
-        const val MOTOR_2_ID = ShooterFollowerId
+        const val MOTOR_1_ID = 16
+        const val MOTOR_2_ID = 17
 
         val motor1PIDConstants = PIDConstants(0.47, 0.0, 0.0)
         val motor2PIDConstants = PIDConstants(0.47, 0.0, 0.0)
@@ -84,7 +80,7 @@ object Shooter : SubsystemBase() {
 
     object Hood : SubsystemBase() {
         private object Constants {
-            const val MOTOR_ID = HoodId
+            const val MOTOR_ID = 18
 
             val pidConstants = PIDConstants(0.0, 0.0, 0.0)
             val ffConstants = SimpleMotorFeedForwardConstants(0.0, 0.0, 0.0)
@@ -124,7 +120,7 @@ object Shooter : SubsystemBase() {
 
     object Feeder : SubsystemBase() {
         private object Constants {
-            const val MOTOR_ID = FeederId
+            const val MOTOR_ID = 15
 
             val pidConstants = PIDConstants(0.0, 0.0, 0.0)
             val ffConstants = SimpleMotorFeedForwardConstants(0.0, 0.0, 0.0)

@@ -55,9 +55,10 @@ object Intake : SubsystemBase() {
         private object Constants {
             // TODO(ant): Get CAN IDs from Electrical
             const val PIVOT_ID = 15
+            const val ENCODER_ID = 0
 
-            val pidConstants: PIDConstants = PIDConstants(0.0, 0.0, 0.0)
-            const val K_SIN: Double = 0.0
+            val pidConstants: PIDConstants = PIDConstants(0.67, 0.0, 0.0)
+            const val K_SIN: Double = 0.98
             val PIVOT_STOWED_POSITION = 0.degrees
             val PIVOT_EXTENDED_POSITION = PI.radians
         }
@@ -66,14 +67,14 @@ object Intake : SubsystemBase() {
         private val motor = SparkMax(Constants.PIVOT_ID, SparkLowLevel.MotorType.kBrushless)
 
         // Use encoder values for PID tuning
-        private val absEncoder: DutyCycleEncoder = DutyCycleEncoder(0)
+        private val absEncoder: DutyCycleEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
 
         // PID controller class for pivot subsystem
         private val pidSin = Constants.pidConstants.toPIDSin(Constants.K_SIN)
 
         init {
             val motorConfig = SparkMaxConfig()
-            motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(20)
+            motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(15) //TODO: Tune this but Recalc says we need at least 30 amps current limit
             motor.configure(
                 motorConfig,
                 // The reset mote and persist mode have to do with maintaining

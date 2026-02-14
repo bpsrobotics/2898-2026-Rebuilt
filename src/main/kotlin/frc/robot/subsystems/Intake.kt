@@ -22,7 +22,6 @@ import kotlin.math.PI
 
 object Intake : SubsystemBase() {
     private object Constants {
-        // TODO: Get CAN IDs from Electrical
         const val MOTOR_ID = 13
     }
 
@@ -53,8 +52,7 @@ object Intake : SubsystemBase() {
 
     object Pivot : SubsystemBase() {
         private object Constants {
-            // TODO(ant): Get CAN IDs from Electrical
-            const val MOTOR_ID = 15
+            const val MOTOR_ID = 14
             const val ENCODER_ID = 0
 
             val pidConstants: PIDConstants = PIDConstants(0.67, 0.0, 0.0)

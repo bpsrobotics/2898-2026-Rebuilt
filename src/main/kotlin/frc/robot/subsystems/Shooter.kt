@@ -14,17 +14,20 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands.waitUntil
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import frc.robot.RobotMap.FeederId
+import frc.robot.RobotMap.ShooterFollowerId
+import frc.robot.RobotMap.HoodId
+import frc.robot.RobotMap.ShooterMasterId
 import frc.robot.engine.DashboardNumber
 import frc.robot.engine.FFSendable
 
 object Shooter : SubsystemBase() {
     private object Constants {
-        // TODO(ant): Get CAN IDs from Electrical
-        const val MOTOR_1_ID = 70
-        const val MOTOR_2_ID = 71
+        const val MOTOR_1_ID = ShooterMasterId
+        const val MOTOR_2_ID = ShooterFollowerId
 
-        val motor1PIDConstants = PIDConstants(0.0, 0.0, 0.0)
-        val motor2PIDConstants = PIDConstants(0.0, 0.0, 0.0)
+        val motor1PIDConstants = PIDConstants(0.47, 0.0, 0.0)
+        val motor2PIDConstants = PIDConstants(0.47, 0.0, 0.0)
 
         val motor1FFConstants = SimpleMotorFeedForwardConstants(0.1, 0.19, 4.04)
         val motor2FFConstants = SimpleMotorFeedForwardConstants(0.1, 0.19, 4.04)
@@ -81,8 +84,7 @@ object Shooter : SubsystemBase() {
 
     object Hood : SubsystemBase() {
         private object Constants {
-            // TODO(ant): Get CAN ID from Electrical
-            const val MOTOR_ID = 72
+            const val MOTOR_ID = HoodId
 
             val pidConstants = PIDConstants(0.0, 0.0, 0.0)
             val ffConstants = SimpleMotorFeedForwardConstants(0.0, 0.0, 0.0)
@@ -122,8 +124,7 @@ object Shooter : SubsystemBase() {
 
     object Feeder : SubsystemBase() {
         private object Constants {
-            // TODO(ant): Get CAN ID from Electrical
-            const val MOTOR_ID = 73
+            const val MOTOR_ID = FeederId
 
             val pidConstants = PIDConstants(0.0, 0.0, 0.0)
             val ffConstants = SimpleMotorFeedForwardConstants(0.0, 0.0, 0.0)

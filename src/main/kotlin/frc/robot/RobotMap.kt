@@ -2,13 +2,13 @@ package frc.robot
 
 object RobotMap {
     // Drivetrain CAN IDs
-    const val FrontLeftDrivingCanId = 8
-    const val FrontLeftCANCoderID = 9
-    const val FrontLeftTurningCanId = 7
+    const val FrontLeftDrivingCanId = 11
+    const val FrontLeftCANCoderID = 12
+    const val FrontLeftTurningCanId = 10
 
-    const val RearLeftDrivingCanId = 11
-    const val RearLeftCANCoderID = 12
-    const val RearLeftTurningCanId = 10
+    const val RearLeftDrivingCanId = 8
+    const val RearLeftCANCoderID = 9
+    const val RearLeftTurningCanId = 7
 
     const val FrontRightDrivingCanId = 2
     const val FrontRightCANCoderID = 3
@@ -20,17 +20,15 @@ object RobotMap {
 
     // Subsystem CAN IDs
     const val IntakeId = 13
-    const val TunnelId = 14
+    const val PivotID = 14
     const val FeederId = 15
-    const val ShooterTopId = 16
-    const val ShooterBotId = 17
+    const val ShooterMasterId = 16
+    const val ShooterFollowerId = 17
+    const val HoodId = 18
 
     // DIO IDs
 
-    const val IntakeSharkId = 0
-    const val FeederSharkId = 1
+    const val PivotEncoderId = 0
+    const val HoodEncoderId = 1
 
-    // I2C port
-
-    // the coral check thing
 }

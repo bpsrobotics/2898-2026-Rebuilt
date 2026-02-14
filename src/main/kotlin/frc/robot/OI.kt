@@ -15,6 +15,7 @@ import frc.robot.OI.process
 import frc.robot.commands.OI.Rumble
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Shooter
+import frc.robot.subsystems.Intake
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.sign
@@ -46,6 +47,7 @@ object OI : SubsystemBase() {
      * controllers or [Flight][CommandJoystick].
      */
     fun configureBindings() {
+        // Drivetrain
         resetGyro
             .debounce(0.15)
             .onTrue(
@@ -61,6 +63,13 @@ object OI : SubsystemBase() {
         // TODO(ant): Integrate with HedgieHelmet etc.
         driverController.a().whileTrue(Shooter.Hood.toPosition(0.1))
 
+        // Intake
+        highHatBack.whileTrue(Intake.runAtPower(0.05))
+        highHatForward.whileTrue(Intake.runAtPower(-0.05))
+        operatorController.axisGreaterThan(0, 0.5).onTrue(Intake.Pivot.stow())
+        operatorController.axisLessThan(0, -0.5).onTrue(Intake.Pivot.extend())
+
+        // SysID
         SmartDashboard.putData("SysIdCommands/Drivetrain/DriveMotors", Drivetrain.sysIdDriveMotor())
         SmartDashboard.putData(
             "SysIdCommands/Drivetrain/TurnMotors",

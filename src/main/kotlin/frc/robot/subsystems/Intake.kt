@@ -54,17 +54,17 @@ object Intake : SubsystemBase() {
     object Pivot : SubsystemBase() {
         private object Constants {
             // TODO(ant): Get CAN IDs from Electrical
-            const val PIVOT_ID = 15
+            const val MOTOR_ID = 15
             const val ENCODER_ID = 0
 
             val pidConstants: PIDConstants = PIDConstants(0.67, 0.0, 0.0)
             const val K_SIN: Double = 0.98
-            val PIVOT_STOWED_POSITION = 0.degrees
-            val PIVOT_EXTENDED_POSITION = PI.radians
+            val STOWED_POSITION = 0.degrees
+            val EXTENDED_POSITION = PI.radians
         }
 
         // Initializing brushless motor with SparkMAX motor controller
-        private val motor = SparkMax(Constants.PIVOT_ID, SparkLowLevel.MotorType.kBrushless)
+        private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
 
         // Use encoder values for PID tuning
         private val absEncoder: DutyCycleEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
@@ -105,8 +105,8 @@ object Intake : SubsystemBase() {
                 pidSin.pid.atSetpoint()
             }
 
-        fun extend() = runToPosition(Constants.PIVOT_EXTENDED_POSITION)
+        fun extend() = runToPosition(Constants.EXTENDED_POSITION)
 
-        fun stow() = runToPosition(Constants.PIVOT_STOWED_POSITION)
+        fun stow() = runToPosition(Constants.STOWED_POSITION)
     }
 }

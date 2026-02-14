@@ -1,10 +1,13 @@
 package frc.robot
 
+import beaverlib.utils.Units.Time
+import beaverlib.utils.Units.seconds
 import beaverlib.utils.geometry.Vector2
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
+import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
@@ -12,10 +15,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
-import frc.robot.commands.OI.Rumble
 import frc.robot.subsystems.Drivetrain
-import frc.robot.subsystems.Shooter
 import frc.robot.subsystems.Intake
+import frc.robot.subsystems.Shooter
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.sign
@@ -35,7 +37,7 @@ object OI : SubsystemBase() {
     }
 
     init {
-        defaultCommand = Rumble(GenericHID.RumbleType.kBothRumble, 0.0)
+        defaultCommand = rumble(GenericHID.RumbleType.kBothRumble, 0.0)
     }
 
     private val isEnabled = Trigger { DriverStation.isEnabled() }
@@ -52,7 +54,7 @@ object OI : SubsystemBase() {
             .debounce(0.15)
             .onTrue(
                 InstantCommand({ Drivetrain.zeroGyro() }, Drivetrain)
-                    .andThen(Rumble(GenericHID.RumbleType.kRightRumble, 0.25, 0.2))
+                    .andThen(rumble(GenericHID.RumbleType.kRightRumble, 0.25, 0.2.seconds))
             )
 
         // Shooter
@@ -113,7 +115,7 @@ object OI : SubsystemBase() {
     fun Double.process(deadzone: Double = DEADZONE_THRESHOLD, power: Double) =
         process(this, deadzone, power)
 
-    val driverController = CommandXboxController(Constants.DRIVER_CONTROLLER_PORT)
+    private val driverController = CommandXboxController(Constants.DRIVER_CONTROLLER_PORT)
     private val operatorController = CommandJoystick(Constants.OPERATOR_CONTROLLER_PORT)
 
     // Right joystick y-axis.  Controller mapping can be tricky, the best way is to use the driver
@@ -203,4 +205,13 @@ object OI : SubsystemBase() {
                 DOWNRIGHT -> Vector2(1.0, -1.0)
             }
     }
+
+    /** Rumbles the driver controller continuously until interrupted. */
+    fun rumble(side: GenericHID.RumbleType, power: Double): Command = run {
+        driverController.setRumble(side, power)
+    }
+
+    /** Rumbles the driver controller until the given time has elapsed. */
+    fun rumble(side: GenericHID.RumbleType, power: Double, time: Time): Command =
+        rumble(side, power).withTimeout(time.asSeconds)
 }

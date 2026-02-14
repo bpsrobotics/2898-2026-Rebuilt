@@ -65,7 +65,7 @@ object Intake : SubsystemBase() {
         private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
 
         // Use encoder values for PID tuning
-        private val absEncoder: DutyCycleEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
+        private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
 
         // PID controller class for pivot subsystem
         private val pidSin = Constants.pidConstants.toPIDSin(Constants.K_SIN)

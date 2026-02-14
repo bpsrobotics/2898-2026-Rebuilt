@@ -9,10 +9,10 @@ import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.SparkMax
 import com.revrobotics.spark.config.SparkBaseConfig
 import com.revrobotics.spark.config.SparkMaxConfig
+import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands.waitUntil
-import edu.wpi.first.wpilibj2.command.ParallelRaceGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.engine.DashboardNumber
 import frc.robot.engine.FFSendable
@@ -81,6 +81,7 @@ object Shooter : SubsystemBase() {
     object Hood : SubsystemBase() {
         private object Constants {
             const val MOTOR_ID = 18
+            const val ENCODER_ID = 1
 
             val pidConstants = PIDConstants(0.0, 0.0, 0.0)
             val ffConstants = SimpleMotorFeedForwardConstants(0.0, 0.0, 0.0)
@@ -89,6 +90,8 @@ object Shooter : SubsystemBase() {
         }
 
         private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
+        private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
+
         private val controller = PIDFF(Constants.pidConstants, Constants.ffConstants)
 
         init {
@@ -106,14 +109,13 @@ object Shooter : SubsystemBase() {
             SmartDashboard.putData("Shooter/Hood/FF", FFSendable(controller.FeedForward))
         }
 
+        fun holdPosition(position: Double): Command = run {
+            controller.setpoint = position
+            motor.set(controller.calculate(absEncoder.get()))
+        }
+
         fun toPosition(position: Double): Command =
-            ParallelRaceGroup(
-                run {
-                    controller.setpoint = position
-                    motor.set(controller.calculate(motor.encoder.position))
-                },
-                waitUntil { controller.atSetpoint() },
-            )
+            holdPosition(position).withDeadline(waitUntil { controller.atSetpoint() })
 
         fun down() = toPosition(Constants.DOWN_POSITION)
     }

@@ -74,7 +74,10 @@ object Intake : SubsystemBase() {
 
         init {
             val motorConfig = SparkMaxConfig()
-            motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(15) //TODO: Tune this but Recalc says we need at least 30 amps current limit
+            motorConfig
+                .idleMode(SparkBaseConfig.IdleMode.kBrake)
+                // TODO: Tune current limit but Recalc says we need at least 30A
+                .smartCurrentLimit(15)
             motor.configure(
                 motorConfig,
                 // The reset mote and persist mode have to do with maintaining

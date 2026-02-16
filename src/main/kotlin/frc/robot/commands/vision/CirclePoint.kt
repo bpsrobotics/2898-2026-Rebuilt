@@ -8,7 +8,6 @@ import beaverlib.utils.geometry.vector2
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.subsystems.Drivetrain
-import frc.robot.subsystems.Drivetrain.updateVisionOdometry
 
 class TargetPoseProvider(
     val center: Vector2,
@@ -16,7 +15,6 @@ class TargetPoseProvider(
     val rotateAround: () -> AngleUnit,
 ) {
     var angle = Drivetrain.pose.vector2.angleTo(center)
-    var targetPose: Pose2d = Drivetrain.pose
 
     fun initialize() {
         angle = Drivetrain.pose.vector2.angleTo(center)
@@ -33,14 +31,14 @@ class TargetPoseProvider(
     }
 }
 
-fun DoCirclePoint(
+fun doCirclePoint(
     point: Vector2,
     distance: DistanceUnit,
     rotateAround: () -> AngleUnit = { 0.radians },
 ): Command {
-    val targetPoseProvider: TargetPoseProvider = TargetPoseProvider(point, distance, rotateAround)
+    val targetPoseProvider = TargetPoseProvider(point, distance, rotateAround)
     return CircleAlign({ point }, { targetPoseProvider.getAngleAndCalculate() }, { distance })
         .beforeStarting(targetPoseProvider::initialize)
         .alongWith(Drivetrain.doEnableVisionOdometry(false))
-        .finallyDo { bool -> Drivetrain.updateVisionOdometry = true }
+        .finallyDo { _ -> Drivetrain.updateVisionOdometry = true }
 }

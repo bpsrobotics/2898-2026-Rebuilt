@@ -8,7 +8,6 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.subsystems.Drivetrain
 import kotlin.math.absoluteValue
@@ -20,8 +19,6 @@ class AlignOdometry(
     val maxSpeed: Double = 0.5,
     val maxRotSpeed: Double = 1.0,
 ) : Command() {
-    val timer = Timer()
-
     companion object {
         val yPID = PIDController(2.0, 0.3, 0.1)
         val xPID = PIDController(2.0, 0.3, 0.1)

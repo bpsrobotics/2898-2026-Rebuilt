@@ -36,7 +36,7 @@ class TeleopDriveCommand(
     val omega: () -> Double,
     val driveMode: () -> Boolean,
     val slowMode: () -> Double,
-    val initializeLamdbda: () -> Unit = {},
+    val initializeLambda: () -> Unit = {},
 ) : Command() {
     init {
         // Use addRequirements() here to declare subsystem dependencies.
@@ -45,7 +45,7 @@ class TeleopDriveCommand(
 
     /** @suppress */
     override fun initialize() {
-        initializeLamdbda()
+        initializeLambda()
     }
 
     var forwardVelocity: Double by DashboardNumberPublisher(0.0, "Teleop/")

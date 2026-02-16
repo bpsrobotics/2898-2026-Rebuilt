@@ -31,8 +31,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.commands.vision.TargetPoseProvider
-import java.io.File
-import kotlin.math.PI
 import swervelib.SwerveController
 import swervelib.SwerveDrive
 import swervelib.SwerveDriveTest
@@ -40,6 +38,8 @@ import swervelib.parser.SwerveDriveConfiguration
 import swervelib.parser.SwerveParser
 import swervelib.telemetry.SwerveDriveTelemetry
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity
+import java.io.File
+import kotlin.math.PI
 
 object Drivetrain : SubsystemBase() {
     object Constants {
@@ -85,6 +85,9 @@ object Drivetrain : SubsystemBase() {
 
     var updateVisionOdometry = true
 
+    val targetPoseProvider =
+        TargetPoseProvider(FieldMapREBUILTWelded.teamHub.center, 2.meters, { 0.radians })
+
     init {
         // Configure the Telemetry before creating the SwerveDrive to avoid unnecessary objects
         // being created.
@@ -120,6 +123,8 @@ object Drivetrain : SubsystemBase() {
         )
         setVisionMeasurementStdDevs(3.0, 4.0, 5.0)
         // setupPathPlanner()
+
+        targetPoseProvider.initialize()
     }
 
     fun doEnableVisionOdometry(enable: Boolean = true) =
@@ -128,9 +133,6 @@ object Drivetrain : SubsystemBase() {
     override fun periodic() {
         posePublisher.set(pose)
         swerveStatePublisher.set(swerveDrive.states)
-        val targetPoseProvider =
-            TargetPoseProvider(FieldMapREBUILTWelded.teamHub.center, 2.meters, { 0.radians })
-        targetPoseProvider.initialize()
         targetPosePublisher.set(targetPoseProvider.getPose())
         Vision.setAllCameraReferences(Pose3d(pose))
         SmartDashboard.putNumber("Odometry/X", pose.x)

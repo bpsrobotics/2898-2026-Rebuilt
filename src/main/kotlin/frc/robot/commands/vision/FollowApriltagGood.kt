@@ -11,11 +11,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Vision
+import org.photonvision.targeting.PhotonTrackedTarget
 import kotlin.math.absoluteValue
 import kotlin.math.cos
 import kotlin.math.sign
 import kotlin.math.sin
-import org.photonvision.targeting.PhotonTrackedTarget
 
 class FollowApriltagGood(val apriltagId: Int, var yToTag: Double = 0.0, var xToTag: Double = 1.0) :
     Command() {

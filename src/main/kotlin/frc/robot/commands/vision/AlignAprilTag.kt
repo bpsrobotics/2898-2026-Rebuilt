@@ -11,11 +11,11 @@ import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Vision
+import org.photonvision.targeting.PhotonTrackedTarget
 import kotlin.math.absoluteValue
 import kotlin.math.cos
 import kotlin.math.sign
 import kotlin.math.sin
-import org.photonvision.targeting.PhotonTrackedTarget
 
 class AlignAprilTag(val apriltagId: Int, var yToTag: Double = 0.0) : Command() {
     val timer = Timer()

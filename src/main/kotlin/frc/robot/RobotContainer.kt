@@ -27,6 +27,7 @@ class RobotContainer {
         configureBindings()
     }
 
+    @Suppress("UnusedExpression")
     private fun initializeObjects() {
         Drivetrain
         Vision

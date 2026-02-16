@@ -7,7 +7,6 @@ import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableInstance
-import edu.wpi.first.wpilibj.Timer
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.subsystems.Drivetrain
 import kotlin.math.absoluteValue
@@ -16,10 +15,8 @@ import kotlin.math.sign
 class AlignOdometryContinuousBetter(
     var targetPose2dProvider: () -> Pose2d,
     val maxSpeed: Double = 0.5,
-    val maxRotSpeed: Double = 1.0
+    val maxRotSpeed: Double = 1.0,
 ) : Command() {
-    val timer = Timer()
-
     companion object {
         val translationPID = PIDController(2.0, 0.3, 0.1)
         val rotationPID = PIDController(3.0, 0.1, 0.1)
@@ -31,7 +28,6 @@ class AlignOdometryContinuousBetter(
 
         val rotationError: Double
             get() = rotationPID.error.absoluteValue
-
     }
 
     init {
@@ -67,12 +63,12 @@ class AlignOdometryContinuousBetter(
         if (totalError < 0.08) {
             if (translationError > rotationError * 2) {
                 rotationSpeed = 0.0
-            }
-            else {
+            } else {
                 speed = 0.0
             }
         }
-        val travelVector = (Drivetrain.pose.vector2 - targetPose2d.vector2).unit * speed.clamp(-maxSpeed, maxSpeed)
+        val travelVector =
+            (Drivetrain.pose.vector2 - targetPose2d.vector2).unit * speed.clamp(-maxSpeed, maxSpeed)
 
         Drivetrain.driveFieldOriented(
             ChassisSpeeds(

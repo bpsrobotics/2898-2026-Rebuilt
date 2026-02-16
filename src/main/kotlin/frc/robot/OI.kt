@@ -1,11 +1,10 @@
 package frc.robot
 
-import beaverlib.utils.Units.Time
-import beaverlib.utils.Units.seconds
 import beaverlib.fieldmap.FieldMapREBUILTWelded
-import beaverlib.utils.Units.Angular.RPM
 import beaverlib.utils.Units.Angular.degrees
 import beaverlib.utils.Units.Linear.meters
+import beaverlib.utils.Units.Time
+import beaverlib.utils.Units.seconds
 import beaverlib.utils.geometry.Vector2
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.DriverStation
@@ -19,14 +18,13 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
-import frc.robot.subsystems.Drivetrain
-import frc.robot.subsystems.Intake
-import frc.robot.subsystems.Shooter
-import kotlin.math.absoluteValue
 import frc.robot.commands.swerve.TeleopDriveCommand
 import frc.robot.commands.swerve.VisionTurningHandler
-import frc.robot.commands.vision.DoCirclePoint
+import frc.robot.commands.vision.doCirclePoint
+import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet.trenchDriveTrigger
+import frc.robot.subsystems.Intake
+import frc.robot.subsystems.Shooter
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.sign
@@ -93,14 +91,26 @@ object OI : SubsystemBase() {
                 InstantCommand({ Drivetrain.zeroGyro() }, Drivetrain)
                     .andThen(rumble(GenericHID.RumbleType.kRightRumble, 0.25, 0.2.seconds))
             )
+        Drivetrain.defaultCommand = teleopDrive
+        driverController.a().whileTrue(teleopDriveVisionTurn)
+        trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5))
+        driverController
+            .leftTrigger()
+            .whileTrue(
+                doCirclePoint(FieldMapREBUILTWelded.teamHub.center, 2.meters) {
+                    translationX.degrees
+                }
+            )
 
         // Shooter
         isEnabled.whileTrue(Shooter.runSpeed())
         operatorController
             .trigger()
             .whileTrue(SequentialCommandGroup(Shooter.waitSpeed(), Shooter.Feeder.runSpeed()))
-        // TODO(ant): Integrate with HedgieHelmet etc.
-        driverController.a().whileTrue(Shooter.Hood.toPosition(0.1))
+        driverController
+            .a()
+            .and(trenchDriveTrigger.negate())
+            .whileTrue(Shooter.Hood.toPosition(0.1))
 
         // Intake
         highHatBack.whileTrue(Intake.runAtPower(0.05))
@@ -114,20 +124,6 @@ object OI : SubsystemBase() {
             "SysIdCommands/Drivetrain/TurnMotors",
             Drivetrain.sysIdAngleMotorCommand(),
         )
-
-        // Vision-related
-        driverController.a().whileTrue(teleopDriveVisionTurn)
-
-        trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5))
-        driverController
-            .leftTrigger()
-            .whileTrue(
-                DoCirclePoint(
-                    FieldMapREBUILTWelded.teamHub.center,
-                    2.meters,
-                    { translationX.degrees },
-                )
-            )
     }
 
     /**
@@ -205,10 +201,6 @@ object OI : SubsystemBase() {
 
     val resetGyro: Trigger = driverController.rightBumper()
     val followTag: Trigger = driverController.leftBumper()
-    val sysidFQ: Trigger = driverController.x()
-    val sysidBQ: Trigger = driverController.y()
-    val sysidFD: Trigger = driverController.b()
-    val sysidBD: Trigger = driverController.a()
 
     val highHatForward: Trigger = operatorController.pov(0)
     val highHatBack: Trigger = operatorController.pov(180)
@@ -230,10 +222,10 @@ object OI : SubsystemBase() {
         RIGHT,
         UP,
         DOWN,
-        UPLEFT,
-        UPRIGHT,
-        DOWNLEFT,
-        DOWNRIGHT,
+        UP_LEFT,
+        UP_RIGHT,
+        DOWN_LEFT,
+        DOWN_RIGHT,
         INACTIVE;
 
         fun mirrored() =
@@ -250,10 +242,10 @@ object OI : SubsystemBase() {
                 UP -> Vector2(0.0, 1.0)
                 DOWN -> Vector2(0.0, -1.0)
                 INACTIVE -> Vector2.zero()
-                UPLEFT -> Vector2(-1.0, 1.0)
-                UPRIGHT -> Vector2(1.0, 1.0)
-                DOWNLEFT -> Vector2(-1.0, -1.0)
-                DOWNRIGHT -> Vector2(1.0, -1.0)
+                UP_LEFT -> Vector2(-1.0, 1.0)
+                UP_RIGHT -> Vector2(1.0, 1.0)
+                DOWN_LEFT -> Vector2(-1.0, -1.0)
+                DOWN_RIGHT -> Vector2(1.0, -1.0)
             }
     }
 

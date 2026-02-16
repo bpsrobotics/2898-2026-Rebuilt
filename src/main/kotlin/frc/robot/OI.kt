@@ -2,6 +2,10 @@ package frc.robot
 
 import beaverlib.utils.Units.Time
 import beaverlib.utils.Units.seconds
+import beaverlib.fieldmap.FieldMapREBUILTWelded
+import beaverlib.utils.Units.Angular.RPM
+import beaverlib.utils.Units.Angular.degrees
+import beaverlib.utils.Units.Linear.meters
 import beaverlib.utils.geometry.Vector2
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.DriverStation
@@ -18,6 +22,11 @@ import frc.robot.OI.process
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
+import kotlin.math.absoluteValue
+import frc.robot.commands.swerve.TeleopDriveCommand
+import frc.robot.commands.swerve.VisionTurningHandler
+import frc.robot.commands.vision.DoCirclePoint
+import frc.robot.subsystems.HedgieHelmet.trenchDriveTrigger
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.sign
@@ -41,6 +50,34 @@ object OI : SubsystemBase() {
     }
 
     private val isEnabled = Trigger { DriverStation.isEnabled() }
+    val reverseDrive =
+        if (
+            DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
+                DriverStation.Alliance.Red
+        ) {
+            -1.0
+        } else {
+            1.0
+        }
+    val teleopDrive: TeleopDriveCommand =
+        TeleopDriveCommand(
+            { translationY * reverseDrive },
+            { translationX * reverseDrive },
+            { -turnX },
+            { true },
+            { rightTrigger },
+        )
+    val teleopDriveVisionTurn: TeleopDriveCommand =
+        TeleopDriveCommand(
+            { translationY * reverseDrive },
+            { translationX * reverseDrive },
+            VisionTurningHandler::rotationSpeed,
+            { true },
+            { rightTrigger },
+            VisionTurningHandler::initialize,
+        )
+
+    // val followTagCommand = FollowApriltagGood(18)
 
     /**
      * Use this method to define your trigger->command mappings. Triggers can be created via the
@@ -77,6 +114,20 @@ object OI : SubsystemBase() {
             "SysIdCommands/Drivetrain/TurnMotors",
             Drivetrain.sysIdAngleMotorCommand(),
         )
+
+        // Vision-related
+        driverController.a().whileTrue(teleopDriveVisionTurn)
+
+        trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5))
+        driverController
+            .leftTrigger()
+            .whileTrue(
+                DoCirclePoint(
+                    FieldMapREBUILTWelded.teamHub.center,
+                    2.meters,
+                    { translationX.degrees },
+                )
+            )
     }
 
     /**

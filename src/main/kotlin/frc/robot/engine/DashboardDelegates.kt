@@ -45,6 +45,43 @@ class DashboardBoolean(
         )
 }
 
+class DashboardNumberPublisherDelegate(
+    private val entry: NetworkTableEntry,
+    private var value: Double,
+    persist: Boolean = false,
+) {
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): Double = value
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Double) {
+        this.value = value
+        entry.setDouble(value)
+    }
+
+    init {
+        if (persist) {
+            entry.setDefaultDouble(value)
+            entry.setPersistent()
+        } else {
+            entry.setDouble(value)
+            entry.clearPersistent()
+        }
+    }
+}
+
+@Suppress("unused")
+class DashboardNumberPublisher(
+    private val value: Double,
+    private val path: String = "",
+    private val persist: Boolean = false,
+) {
+    operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): DashboardNumberDelegate =
+        DashboardNumberDelegate(
+            SmartDashboard.getEntry(mergePaths(path, property.name)),
+            value,
+            persist,
+        )
+}
+
 class DashboardNumberDelegate(
     private val entry: NetworkTableEntry,
     private val initialValue: Double,

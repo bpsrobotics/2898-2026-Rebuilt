@@ -4,10 +4,12 @@ import beaverlib.controls.PIDConstants
 import beaverlib.controls.PathPlannerPID
 import beaverlib.utils.Units.Angular.AngularAcceleration
 import beaverlib.utils.Units.Angular.AngularVelocity
+import beaverlib.utils.Units.Angular.RPM
 import beaverlib.utils.Units.Angular.radiansPerSecond
 import beaverlib.utils.Units.Angular.radiansPerSecondSquared
 import beaverlib.utils.Units.Linear.*
 import beaverlib.utils.Units.lb
+import beaverlib.utils.Units.seconds
 import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.RobotConfig
@@ -23,6 +25,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
+import frc.robot.commands.DoShootIntake
+import frc.robot.commands.autos.AutoAlign
+import frc.robot.commands.autos.AutoShootCarrots
+import frc.robot.commands.autos.AutoShootThenMovement
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Drivetrain.driveConsumer
 import frc.robot.subsystems.Drivetrain.getAlliance
@@ -64,7 +70,13 @@ object Autos {
     val autonomousCommand: Command
         get() = autoCommandChooser.selected
 
-    val autos = mapOf<String, Command>()
+    val autos =
+        mapOf<String, Command>(
+            Pair("AutoAlignShoot", AutoShootCarrots),
+            Pair("JustShoot", DoShootIntake({ 3500.RPM }, shootTime = 2.seconds)),
+            Pair("Auto Shoot Then Movement", AutoShootThenMovement),
+            Pair("Just Align", AutoAlign),
+        )
 
     fun addAutos() {
         autoCommandChooser.setDefaultOption("No Auto", InstantCommand())
@@ -92,39 +104,6 @@ object Autos {
         )
     }
 
-    //    /**
-    //     * Gets a command that follows a path created in PathPlanner.
-    //     * @param pathName The path's file name.
-    //     * @param setOdomAtStart Whether to update the robot's odometry to the start pose of the
-    // path.
-    //     * @return A command that follows the path.
-    //     */
-    //    fun getAutonomousCommand(
-    //        autoName: String,
-    //       setOdomAtStart: Boolean
-    //    ): Command {
-    //        var startPosition: Pose2d = Pose2d()
-    //        if(PathPlannerAuto.getStaringPoseFromAutoFile(autoName) == null) {
-    //            startPosition =
-    // PathPlannerAuto.getPathGroupFromAutoFile(autoName)[0].startingDifferentialPose
-    //        } else {
-    //            startPosition = PathPlannerAuto.getStaringPoseFromAutoFile(autoName)
-    //        }
-    //
-    //        if(DriverStation.getAlliance() == Optional.of(Alliance.Red)){
-    //            startPosition = GeometryUtil.flipFieldPose(startPosition)
-    //        }
-    //
-    //        if (setOdomAtStart)
-    //        {
-    //            if (startPosition != null) {
-    //                resetOdometry(startPosition)
-    //            }
-    //        }
-    //
-    //        // TODO: Configure path planner's AutoBuilder
-    //        return PathPlannerAuto(autoName)
-    //    }
     fun generatePath(
         vararg pose2dWaypoints: Pose2d,
         maxVelocity: VelocityUnit = 3.0.metersPerSecond,

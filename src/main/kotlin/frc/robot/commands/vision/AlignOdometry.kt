@@ -14,21 +14,27 @@ import frc.robot.subsystems.Drivetrain
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 
-
 // 3, 3.2
 class AlignOdometry(
     var targetPose2d: Pose2d = Pose2d(3.1, 4.24, Rotation2d(0.0)),
-    val maxSpeed: Double = 1.5,
+    val maxSpeed: Double = 0.5,
     val maxRotSpeed: Double = 1.0,
 ) : Command() {
     val timer = Timer()
 
-    companion object {}
+    companion object {
+        val yPID = PIDController(2.0, 0.3, 0.1)
+        val xPID = PIDController(2.0, 0.3, 0.1)
+        val rotationPID = PIDController(3.0, 0.1, 0.1)
+        val xError: Double
+            get() = xPID.error.absoluteValue
 
-    val yPID = PIDController(2.0, 0.3, 0.1)
-    val xPID = PIDController(2.0, 0.3, 0.1)
+        val yError: Double
+            get() = xPID.error.absoluteValue
 
-    val rotationPID = PIDController(3.0, 0.2, 0.1)
+        val rotationError: Double
+            get() = xPID.error.absoluteValue
+    }
 
     init {
         addRequirements(Drivetrain)
@@ -36,16 +42,20 @@ class AlignOdometry(
     }
 
     override fun initialize() {
+        xPID.reset()
+        yPID.reset()
+        rotationPID.reset()
+
         rotationPID.setpoint = MathUtil.angleModulus(targetPose2d.rotation.radians)
         xPID.setpoint = targetPose2d.x
         yPID.setpoint = targetPose2d.y
-        Drivetrain.updateVisionOdometry = false
     }
 
     override fun execute() {
         NetworkTableInstance.getDefault().getStructTopic("RobotPose", Pose2d.struct).publish()
 
         var rotationSpeed = rotationPID.calculate(Drivetrain.pose.rotation.radians)
+
         var xSpeed = xPID.calculate(Drivetrain.pose.x)
         var ySpeed = yPID.calculate(Drivetrain.pose.y)
 
@@ -59,15 +69,15 @@ class AlignOdometry(
         if (rotationSpeed.absoluteValue < deadzone) rotationSpeed = 0.0
         else rotationSpeed += ks * rotationSpeed.sign
 
-        val totalError = rotationPID.error + xPID.error + yPID.error
+        val totalError = rotationError + xError + yError
 
         if (totalError < 0.2) {
             when {
-                xPID.error > yPID.error && xPID.error > rotationPID.error * 2 -> {
+                xError > yError && xError > rotationError * 2 -> {
                     ySpeed = 0.0
                     rotationSpeed = 0.0
                 }
-                yPID.error > xPID.error && yPID.error > rotationPID.error * 2 -> {
+                yPID.error > xError && yError > rotationError * 2 -> {
                     xSpeed = 0.0
                     rotationSpeed = 0.0
                 }
@@ -88,11 +98,10 @@ class AlignOdometry(
     }
 
     override fun isFinished(): Boolean {
-        return rotationPID.error < 0.01 && xPID.error < 0.01 && yPID.error < 0.01
+        return rotationError < 0.01 && xError < 0.01 && yError < 0.01
     }
 
     override fun end(interrupted: Boolean) {
         Drivetrain.stop()
-        Drivetrain.updateVisionOdometry = true
     }
 }

@@ -3,13 +3,17 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot.subsystems
 
+import beaverlib.fieldmap.FieldMapREBUILTWelded
+import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Angular.radiansPerSecond
 import beaverlib.utils.Units.Linear.feetPerSecond
 import beaverlib.utils.Units.Linear.inches
+import beaverlib.utils.Units.Linear.meters
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Pose3d
 import edu.wpi.first.math.geometry.Rotation2d
+import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics
@@ -23,9 +27,12 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Filesystem
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
+import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import frc.robot.commands.vision.TargetPoseProvider
 import java.io.File
+import kotlin.math.PI
 import swervelib.SwerveController
 import swervelib.SwerveDrive
 import swervelib.SwerveDriveTest
@@ -73,6 +80,9 @@ object Drivetrain : SubsystemBase() {
     var posePublisher: StructPublisher<Pose2d> =
         NetworkTableInstance.getDefault().getStructTopic("RobotPose", Pose2d.struct).publish()
 
+    var targetPosePublisher: StructPublisher<Pose2d> =
+        NetworkTableInstance.getDefault().getStructTopic("TargetPose", Pose2d.struct).publish()
+
     var updateVisionOdometry = true
 
     init {
@@ -85,14 +95,14 @@ object Drivetrain : SubsystemBase() {
                 .createSwerveDrive(Constants.MaxSpeedMetersPerSecond)
 
         // Set YAGSL preferences
-        swerveDrive.setHeadingCorrection(
-            false
-        ) // Heading correction should only be used while controlling the robot via angle.
-        swerveDrive.setCosineCompensator(
-            false
-        ) // !SwerveDriveTelemetry.isSimulation); // Disables cosine compensation for simulations
+        swerveDrive.setHeadingCorrection(false)
+        // Heading correction should only be used while controlling the robot via angle.
+        swerveDrive.setCosineCompensator(false)
+        // !SwerveDriveTelemetry.isSimulation); // Disables cosine compensation for simulations
         // since it causes discrepancies not seen in real life.
         swerveDrive.setMotorIdleMode(false)
+
+        swerveDrive.setGyroOffset(Rotation3d(0.0, 0.0, PI))
 
         // Updates odometry whenever vision sees apriltag
         Vision.listeners.add(
@@ -105,22 +115,23 @@ object Drivetrain : SubsystemBase() {
                 )
                     return
                 val newPose = camera.getMultiTagPoseWithFallback(result) ?: return
-                addVisionMeasurement(
-                    newPose.toPose2d(),
-                    result.timestampSeconds,
-                    !DriverStation.isTeleop(),
-                )
+                addVisionMeasurement(newPose.toPose2d(), result.timestampSeconds, true)
             },
         )
         setVisionMeasurementStdDevs(3.0, 4.0, 5.0)
-
         // setupPathPlanner()
-
     }
+
+    fun doEnableVisionOdometry(enable: Boolean = true) =
+        InstantCommand({ updateVisionOdometry = enable })
 
     override fun periodic() {
         posePublisher.set(pose)
         swerveStatePublisher.set(swerveDrive.states)
+        val targetPoseProvider =
+            TargetPoseProvider(FieldMapREBUILTWelded.teamHub.center, 2.meters, { 0.radians })
+        targetPoseProvider.initialize()
+        targetPosePublisher.set(targetPoseProvider.getPose())
         Vision.setAllCameraReferences(Pose3d(pose))
         SmartDashboard.putNumber("Odometry/X", pose.x)
         SmartDashboard.putNumber("Odometry/Y", pose.y)

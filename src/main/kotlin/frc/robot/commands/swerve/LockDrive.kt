@@ -4,6 +4,6 @@ class LockDrive : DriveManager.DriveRequestBase() {
     override var vx: Double? = 0.0
     override var vy: Double? = 0.0
     override var omega: Double? = 0.0
-    override var doLock: Boolean? = false
+    override var doLock: Boolean? = true
     override val priority: Int = DriverPriority.LOCK.ordinal
 }

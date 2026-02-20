@@ -1,6 +1,3 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
 package frc.robot.subsystems
 
 import beaverlib.fieldmap.FieldMapREBUILTWelded
@@ -16,9 +13,7 @@ import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics
 import edu.wpi.first.math.kinematics.SwerveModuleState
-import edu.wpi.first.math.trajectory.Trajectory
 import edu.wpi.first.math.util.Units
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructArrayPublisher
@@ -31,62 +26,61 @@ import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.commands.vision.TargetPoseProvider
-import swervelib.SwerveController
 import swervelib.SwerveDrive
 import swervelib.SwerveDriveTest
-import swervelib.parser.SwerveDriveConfiguration
 import swervelib.parser.SwerveParser
 import swervelib.telemetry.SwerveDriveTelemetry
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity
 import java.io.File
+import kotlin.jvm.optionals.getOrNull
 import kotlin.math.PI
 
 object Drivetrain : SubsystemBase() {
     object Constants {
-        val MaxSpeedMetersPerSecond = (15.1).feetPerSecond.asMetersPerSecond
-        val MaxAngularSpeedRadiansPerSecond = (Math.PI).radiansPerSecond.asRadiansPerSecond
+        val MAX_SPEED_MPS = (15.1).feetPerSecond.asMetersPerSecond
+        val MAX_ANGULAR_SPEED_RADIANS_PER_SECOND = (Math.PI).radiansPerSecond.asRadiansPerSecond
         // Chassis configuration (left to right dist of center of the wheels)
-        val TrackWidth = Units.inchesToMeters(11.5)
+        private val TRACK_WIDTH = Units.inchesToMeters(11.5)
 
         // Distance between centers of right and left wheels on robot (front to back dist)
-        val WheelBase = Units.inchesToMeters(11.5)
+        private val WHEEL_BASE = Units.inchesToMeters(11.5)
 
         // Distance between front and back wheels on robot: CHANGE TO MATCH WITH ROBOT
-        val DriveKinematics =
+        val DRIVE_KINEMATICS =
             arrayOf(
-                Translation2d(WheelBase / 2, TrackWidth / 2),
-                Translation2d(WheelBase / 2, -TrackWidth / 2),
-                Translation2d(-WheelBase / 2, TrackWidth / 2),
-                Translation2d(-WheelBase / 2, -TrackWidth / 2),
+                Translation2d(WHEEL_BASE / 2, TRACK_WIDTH / 2),
+                Translation2d(WHEEL_BASE / 2, -TRACK_WIDTH / 2),
+                Translation2d(-WHEEL_BASE / 2, TRACK_WIDTH / 2),
+                Translation2d(-WHEEL_BASE / 2, -TRACK_WIDTH / 2),
             )
         // YAGSL `File` Configs
         val DRIVE_CONFIG: File = File(Filesystem.getDeployDirectory(), "swerve1")
 
-        val RobotWidth = 29.inches
-        val BumperWidth = 35.inches
+        val ROBOT_WIDTH = 29.inches
+        // val BUMPER_WIDTH = 35.inches
     }
 
-    var swerveDrive: SwerveDrive
+    private val swerveDrive: SwerveDrive
 
     /** The maximum speed of the swerve drive */
-    var maximumSpeed = Constants.MaxSpeedMetersPerSecond
-    var maxAngularSpeed = Constants.MaxAngularSpeedRadiansPerSecond
+    val maximumSpeed = Constants.MAX_SPEED_MPS
+    val maxAngularSpeed = Constants.MAX_ANGULAR_SPEED_RADIANS_PER_SECOND
 
     /** SwerveModuleStates publisher for swerve display */
-    var swerveStatePublisher: StructArrayPublisher<SwerveModuleState> =
+    private val swerveStatePublisher: StructArrayPublisher<SwerveModuleState> =
         NetworkTableInstance.getDefault()
             .getStructArrayTopic("SwerveStates/swerveStates", SwerveModuleState.struct)
             .publish()
-    var posePublisher: StructPublisher<Pose2d> =
+    private val posePublisher: StructPublisher<Pose2d> =
         NetworkTableInstance.getDefault().getStructTopic("RobotPose", Pose2d.struct).publish()
 
-    var targetPosePublisher: StructPublisher<Pose2d> =
+    private val targetPosePublisher: StructPublisher<Pose2d> =
         NetworkTableInstance.getDefault().getStructTopic("TargetPose", Pose2d.struct).publish()
 
     var updateVisionOdometry = true
 
-    val targetPoseProvider =
-        TargetPoseProvider(FieldMapREBUILTWelded.teamHub.center, 2.meters, { 0.radians })
+    private val targetPoseProvider =
+        TargetPoseProvider(FieldMapREBUILTWelded.teamHub.center, 2.meters) { 0.radians }
 
     init {
         // Configure the Telemetry before creating the SwerveDrive to avoid unnecessary objects
@@ -94,8 +88,7 @@ object Drivetrain : SubsystemBase() {
         SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH
 
         swerveDrive =
-            SwerveParser(Constants.DRIVE_CONFIG)
-                .createSwerveDrive(Constants.MaxSpeedMetersPerSecond)
+            SwerveParser(Constants.DRIVE_CONFIG).createSwerveDrive(Constants.MAX_SPEED_MPS)
 
         // Set YAGSL preferences
         swerveDrive.setHeadingCorrection(false)
@@ -118,7 +111,7 @@ object Drivetrain : SubsystemBase() {
                 )
                     return
                 val newPose = camera.getMultiTagPoseWithFallback(result) ?: return
-                addVisionMeasurement(newPose.toPose2d(), result.timestampSeconds, true)
+                addVisionMeasurement(newPose.toPose2d(), result.timestampSeconds)
             },
         )
         setVisionMeasurementStdDevs(3.0, 4.0, 5.0)
@@ -140,10 +133,8 @@ object Drivetrain : SubsystemBase() {
         SmartDashboard.putNumber("Odometry/HEADING", pose.rotation.radians)
     }
 
-    val getAlliance: () -> Boolean = {
-        val alliance = DriverStation.getAlliance()
-        if (alliance.isPresent) alliance.get() == DriverStation.Alliance.Red else false
-    }
+    fun getAlliance(): DriverStation.Alliance =
+        DriverStation.getAlliance().getOrNull() ?: DriverStation.Alliance.Blue
 
     fun driveFieldOriented(speeds: ChassisSpeeds) {
         swerveDrive.driveFieldOriented(speeds)
@@ -158,20 +149,11 @@ object Drivetrain : SubsystemBase() {
     }
 
     /**
-     * Directly send voltage to the drive motors.
-     *
-     * @param volts The voltage to send to the motors.
-     */
-    fun setRawMotorVoltage(volts: Double) {
-        swerveDrive.modules.forEach { it.driveMotor.voltage = volts }
-    }
-
-    /**
      * Return SysID command for drive motors from YAGSL
      *
      * @return A command that SysIDs the drive motors.
      */
-    fun sysIdDriveMotor(): Command? {
+    fun sysIdDriveMotors(): Command? {
         return SwerveDriveTest.generateSysIdCommand(
             SwerveDriveTest.setDriveSysIdRoutine(
                 SysIdRoutine.Config(),
@@ -189,9 +171,9 @@ object Drivetrain : SubsystemBase() {
     /**
      * Return SysID command for angle motors from YAGSL
      *
-     * @return A command that SysIDs the angle1 motors.
+     * @return A command that SysIDs the angle motors.
      */
-    fun sysIdAngleMotorCommand(): Command {
+    fun sysIdAngleMotors(): Command {
         return SwerveDriveTest.generateSysIdCommand(
             SwerveDriveTest.setAngleSysIdRoutine(SysIdRoutine.Config(), this, swerveDrive),
             3.0,
@@ -206,7 +188,7 @@ object Drivetrain : SubsystemBase() {
      *
      * @param translation The desired X and Y velocity of the robot.
      * @param rotation The desired rotational velocity of the robot.
-     * @param fieldOriented Whether the robot's motion should be field oriented or robot oriented.
+     * @param fieldOriented Whether the robot's motion should be field-oriented or robot-oriented.
      * @param centerOfRotation The center of rotation of the robot.
      */
     fun drive(
@@ -232,10 +214,6 @@ object Drivetrain : SubsystemBase() {
         drive(fieldSpeeds)
     }
 
-    /** Returns the Kinematics object of the swerve drive. */
-    val kinematics: SwerveDriveKinematics
-        get() = swerveDrive.kinematics
-
     /**
      * Method to reset the odometry of the robot to a desired pose.
      *
@@ -249,27 +227,13 @@ object Drivetrain : SubsystemBase() {
     val pose
         get() = Pose2d(swerveDrive.pose.x, swerveDrive.pose.y, swerveDrive.pose.rotation)
 
-    /** Method to display a desired trajectory to a field2d object. */
-    fun postTrajectory(trajectory: Trajectory) {
-        swerveDrive.postTrajectory(trajectory)
-    }
-
     /** Method to zero the gyro. */
     fun zeroGyro() {
         swerveDrive.zeroGyro()
     }
 
-    /**
-     * Method to toggle the motor's brakes.
-     *
-     * @param brake Whether to set the motor's brakes to true or false.
-     */
-    fun setMotorBrake(brake: Boolean) {
-        swerveDrive.setMotorIdleMode(brake)
-    }
-
     /** Method to get the current heading (yaw) of the robot. */
-    val heading: Rotation2d
+    private val heading: Rotation2d
         get() = swerveDrive.yaw
 
     /**
@@ -280,15 +244,15 @@ object Drivetrain : SubsystemBase() {
      * @param angle The desired rotational velocity of the robot.
      * @return The generated ChassisSpeeds object.
      */
-    fun getTargetSpeeds(vForward: Double, vSide: Double, angle: Rotation2d): ChassisSpeeds {
-        return swerveDrive.swerveController.getTargetSpeeds(
+    @Suppress("unused")
+    fun getTargetSpeeds(vForward: Double, vSide: Double, angle: Rotation2d): ChassisSpeeds =
+        swerveDrive.swerveController.getTargetSpeeds(
             vForward,
             vSide,
             angle.radians,
             heading.radians,
             maximumSpeed,
         )
-    }
 
     /**
      * Method to generate a ChassisSpeeds object from a desired X, Y, and angle X and Y components.
@@ -299,13 +263,14 @@ object Drivetrain : SubsystemBase() {
      * @param headingY The desired Y component of the angle.
      * @return The generated ChassisSpeeds object.
      */
+    @Suppress("unused")
     fun getTargetSpeeds(
         vForward: Double,
         vSide: Double,
         headingX: Double,
         headingY: Double,
-    ): ChassisSpeeds {
-        return swerveDrive.swerveController.getTargetSpeeds(
+    ): ChassisSpeeds =
+        swerveDrive.swerveController.getTargetSpeeds(
             vForward,
             vSide,
             headingX,
@@ -313,7 +278,6 @@ object Drivetrain : SubsystemBase() {
             heading.radians,
             maximumSpeed,
         )
-    }
 
     /** Returns the current field oriented velocity of the robot. */
     val fieldVelocity: ChassisSpeeds
@@ -323,22 +287,10 @@ object Drivetrain : SubsystemBase() {
     val robotVelocity: ChassisSpeeds
         get() = swerveDrive.robotVelocity
 
-    /** Returns the SwerveController object of the swerve drive. */
-    val swerveController: SwerveController
-        get() = swerveDrive.swerveController
-
-    /** Returns the SwerveDriveConfiguration object of the swerve drive. */
-    val swerveDriveConfiguration: SwerveDriveConfiguration
-        get() = swerveDrive.swerveDriveConfiguration
-
     /** Method to toggle the lock position of the swerve drive to prevent motion. */
     fun lock() {
         swerveDrive.lockPose()
     }
-
-    /** Returns the current pitch of the robot. */
-    val pitch: Rotation2d
-        get() = swerveDrive.pitch
 
     /**
      * Add a vision measurement to the swerve drive's pose estimator.
@@ -346,17 +298,8 @@ object Drivetrain : SubsystemBase() {
      * @param measurement The pose measurement to add.
      * @param timestamp The timestamp of the pose measurement.
      */
-    fun addVisionMeasurement(
-        measurement: Pose2d,
-        timestamp: Double,
-        updateRotation: Boolean = false,
-    ) {
-        if (updateRotation) swerveDrive.addVisionMeasurement(measurement, timestamp)
-        else
-            swerveDrive.addVisionMeasurement(
-                Pose2d(measurement.x, measurement.y, pose.rotation),
-                timestamp,
-            )
+    private fun addVisionMeasurement(measurement: Pose2d, timestamp: Double) {
+        swerveDrive.addVisionMeasurement(measurement, timestamp)
     }
 
     /**
@@ -367,7 +310,8 @@ object Drivetrain : SubsystemBase() {
      * @param stdDevTheta The standard deviation of the rotational component of the vision
      *   measurements.
      */
-    fun setVisionMeasurementStdDevs(stdDevX: Double, stdDevY: Double, stdDevTheta: Double) {
+    @Suppress("SameParameterValue")
+    private fun setVisionMeasurementStdDevs(stdDevX: Double, stdDevY: Double, stdDevTheta: Double) {
         swerveDrive.swerveDrivePoseEstimator.setVisionMeasurementStdDevs(
             VecBuilder.fill(stdDevX, stdDevY, stdDevTheta)
         )

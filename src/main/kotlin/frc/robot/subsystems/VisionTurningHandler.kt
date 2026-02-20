@@ -11,7 +11,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import kotlin.math.PI
 
 object VisionTurningHandler {
-    val rotationPID = PIDController(1.0, 0.0, 0.1)
+    private val rotationPID = PIDController(1.0, 0.0, 0.1)
 
     init {
         rotationPID.enableContinuousInput(-PI, PI)
@@ -40,9 +40,9 @@ object VisionTurningHandler {
                 FieldMapREBUILTWelded.AllianceArea.Neutral
         ) {
             if (
-                nextFramePos.y + Drivetrain.Constants.RobotWidth.asMeters / 2 <
+                nextFramePos.y + Drivetrain.Constants.ROBOT_WIDTH.asMeters / 2 <
                     FieldMapREBUILTWelded.teamHub.shape.bottomRight.y ||
-                    nextFramePos.y - Drivetrain.Constants.RobotWidth.asMeters / 2 >
+                    nextFramePos.y - Drivetrain.Constants.ROBOT_WIDTH.asMeters / 2 >
                         FieldMapREBUILTWelded.teamHub.shape.topRight.y
             ) {
                 return Vector2(nextFramePos.x, 0.0)

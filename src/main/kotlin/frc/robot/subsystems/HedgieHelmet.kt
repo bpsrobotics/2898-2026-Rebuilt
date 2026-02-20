@@ -12,12 +12,12 @@ fun Vector2.crossesX(origin: Vector2, x: Double): Boolean {
 }
 
 object HedgieHelmet {
-    val trenchDriveTrigger = Trigger({ willCollideWithTrench() })
+    val trenchDriveTrigger = Trigger { willCollideWithTrench() }
 
-    fun willCollideWithTrench(): Boolean {
-        val robotVelocityVector: Vector2 = Drivetrain.robotVelocity.vector2 * 0.1
+    private fun willCollideWithTrench(): Boolean {
+        val robotVelocityVector: Vector2 = Drivetrain.robotVelocity.vector2 * 2.0
         val robotPoseVector: Vector2 = Drivetrain.pose.vector2
-        val robotWidthVector = Vector2(Drivetrain.Constants.RobotWidth.asMeters, 0.0)
+        val robotWidthVector = Vector2(Drivetrain.Constants.ROBOT_WIDTH.asMeters, 0.0)
 
         for (area in
             arrayOf(

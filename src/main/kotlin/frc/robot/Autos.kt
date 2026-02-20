@@ -23,13 +23,12 @@ import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.math.trajectory.TrapezoidProfile
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import frc.robot.subsystems.Drivetrain
-import frc.robot.subsystems.Drivetrain.driveConsumer
-import frc.robot.subsystems.Drivetrain.getAlliance
 import kotlin.math.PI
 
 object Autos {
@@ -37,16 +36,16 @@ object Autos {
         val robotConfig =
             RobotConfig(
                 (120.0).lb.asKilograms,
-                Drivetrain.Constants.MaxSpeedMetersPerSecond,
+                Drivetrain.Constants.MAX_SPEED_MPS,
                 ModuleConfig(
                     (2.0).inches.asMeters,
-                    Drivetrain.Constants.MaxSpeedMetersPerSecond,
+                    Drivetrain.Constants.MAX_SPEED_MPS,
                     1.54,
                     DCMotor.getNEO(1).withReduction(6.75),
                     30.0,
                     1,
                 ),
-                *Drivetrain.Constants.DriveKinematics,
+                *Drivetrain.Constants.DRIVE_KINEMATICS,
             )
 
         const val MaxAccelerationMetersPerSecondSquared = 3.0
@@ -83,7 +82,8 @@ object Autos {
                 resetOdometry, // Method to reset odometry (will be called if your auto has a
             // starting pose)
             { Drivetrain.robotVelocity }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            driveConsumer, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds.
+            Drivetrain.driveConsumer, // Method that will drive the robot given ROBOT RELATIVE
+            // ChassisSpeeds.
             // Also optionally outputs individual module feedforwards
             PPHolonomicDriveController( // PPolonomicController is the built-in path following
                 // controller for holonomic drive trains
@@ -91,7 +91,7 @@ object Autos {
                 Constants.RotationPIDConstant.PathPlannerPID,
             ),
             Constants.robotConfig,
-            getAlliance,
+            { Drivetrain.getAlliance() == DriverStation.Alliance.Red },
             Drivetrain, // Reference to this subsystem to set requirements
         )
     }

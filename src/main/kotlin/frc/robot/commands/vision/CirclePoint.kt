@@ -10,9 +10,9 @@ import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.subsystems.Drivetrain
 
 class TargetPoseProvider(
-    val center: Vector2,
-    val distance: DistanceUnit,
-    val rotateAround: () -> AngleUnit,
+    private val center: Vector2,
+    private val distance: DistanceUnit,
+    private val rotateAround: () -> AngleUnit,
 ) {
     var angle = Drivetrain.pose.vector2.angleTo(center)
 
@@ -37,8 +37,12 @@ fun doCirclePoint(
     rotateAround: () -> AngleUnit = { 0.radians },
 ): Command {
     val targetPoseProvider = TargetPoseProvider(point, distance, rotateAround)
-    return CircleAlign({ point }, { targetPoseProvider.getAngleAndCalculate() }, { distance })
+    return CircleAlign(
+            targetCenter = { point },
+            angleProvider = { targetPoseProvider.getAngleAndCalculate() },
+            desiredDistance = { distance },
+        )
         .beforeStarting(targetPoseProvider::initialize)
         .alongWith(Drivetrain.doEnableVisionOdometry(false))
-        .finallyDo { _ -> Drivetrain.updateVisionOdometry = true }
+        .andThen(Drivetrain.doEnableVisionOdometry())
 }

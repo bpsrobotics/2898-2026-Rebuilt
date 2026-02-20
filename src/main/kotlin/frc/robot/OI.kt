@@ -1,11 +1,8 @@
 package frc.robot
 
-import beaverlib.fieldmap.FieldMapREBUILTWelded
-import beaverlib.utils.Units.Angular.degrees
 import beaverlib.utils.Units.Linear.meters
 import beaverlib.utils.Units.Time
 import beaverlib.utils.Units.seconds
-import beaverlib.utils.geometry.Vector2
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.GenericHID
@@ -18,13 +15,16 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
-import frc.robot.commands.swerve.TeleopDriveCommand
-import frc.robot.commands.vision.doCirclePoint
+import frc.robot.commands.swerve.DriveManager
+import frc.robot.commands.swerve.HubAlign
+import frc.robot.commands.swerve.HubDistanceController
+import frc.robot.commands.swerve.LockDrive
+import frc.robot.commands.swerve.TeleopDrive
+import frc.robot.commands.swerve.TrenchAlign
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet.trenchDriveTrigger
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
-import frc.robot.subsystems.VisionTurningHandler
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.sign
@@ -36,7 +36,6 @@ import kotlin.math.sign
  * getting (or setting) a field is outsourced to another object. Then, whenever you read the
  * property, it asks the object the property is delegated to for the value.
  */
-@Suppress("unused")
 object OI : SubsystemBase() {
     object Constants {
         const val DRIVER_CONTROLLER_PORT = 0
@@ -48,7 +47,7 @@ object OI : SubsystemBase() {
     }
 
     private val isEnabled = Trigger { DriverStation.isEnabled() }
-    val reverseDrive =
+    private val reverseDrive =
         if (
             DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
                 DriverStation.Alliance.Red
@@ -57,25 +56,8 @@ object OI : SubsystemBase() {
         } else {
             1.0
         }
-    val teleopDrive: TeleopDriveCommand =
-        TeleopDriveCommand(
-            { translationY * reverseDrive },
-            { translationX * reverseDrive },
-            { -turnX },
-            { true },
-            { rightTrigger },
-        )
-    val teleopDriveVisionTurn: TeleopDriveCommand =
-        TeleopDriveCommand(
-            { translationY * reverseDrive },
-            { translationX * reverseDrive },
-            VisionTurningHandler::rotationSpeed,
-            { true },
-            { rightTrigger },
-            VisionTurningHandler::initialize,
-        )
 
-    // val followTagCommand = FollowApriltagGood(18)
+    private val driveManager = DriveManager()
 
     /**
      * Use this method to define your trigger->command mappings. Triggers can be created via the
@@ -86,27 +68,47 @@ object OI : SubsystemBase() {
     fun configureBindings() {
         // Drivetrain
         resetGyro
-            .debounce(0.15)
+            .debounce(0.5)
             .onTrue(
                 InstantCommand({ Drivetrain.zeroGyro() }, Drivetrain)
-                    .andThen(rumble(GenericHID.RumbleType.kRightRumble, 0.25, 0.2.seconds))
+                    .andThen(rumble(GenericHID.RumbleType.kLeftRumble, 0.25, 0.2.seconds))
             )
-        Drivetrain.defaultCommand = teleopDrive
-        driverController.a().whileTrue(teleopDriveVisionTurn)
-        trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5))
+
+        Drivetrain.defaultCommand = driveManager
+        isEnabled.whileTrue(
+            driveManager.defineDriver(
+                TeleopDrive(
+                    { translationY * reverseDrive },
+                    { translationX * reverseDrive },
+                    { -turn },
+                    { rightTrigger },
+                )
+            )
+        )
         driverController
-            .leftTrigger()
+            .a()
+            .or(driverController.y())
+            .whileTrue(driveManager.defineDriver(HubAlign()))
+        driverController.b().debounce(0.2).whileTrue(driveManager.defineDriver(TrenchAlign()))
+        driverController.x().debounce(0.2).whileTrue(driveManager.defineDriver(LockDrive()))
+        driverController
+            .y()
             .whileTrue(
-                doCirclePoint(FieldMapREBUILTWelded.teamHub.center, 2.meters) {
-                    translationX.degrees
-                }
+                driveManager.defineDriver(
+                    HubDistanceController(
+                        desiredDistance = { 2.meters },
+                        moveAround = { translationX },
+                    )
+                )
             )
+
+        trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.seconds))
 
         // Shooter
         isEnabled.whileTrue(Shooter.runSpeed())
-        operatorController
-            .trigger()
-            .whileTrue(SequentialCommandGroup(Shooter.waitSpeed(), Shooter.Feeder.runSpeed()))
+        operatorTrigger.whileTrue(
+            SequentialCommandGroup(Shooter.waitSpeed(), Shooter.Feeder.runSpeed())
+        )
         driverController
             .a()
             .and(trenchDriveTrigger.negate())
@@ -119,10 +121,13 @@ object OI : SubsystemBase() {
         operatorController.axisLessThan(0, -0.5).onTrue(Intake.Pivot.extend())
 
         // SysID
-        SmartDashboard.putData("SysIdCommands/Drivetrain/DriveMotors", Drivetrain.sysIdDriveMotor())
         SmartDashboard.putData(
-            "SysIdCommands/Drivetrain/TurnMotors",
-            Drivetrain.sysIdAngleMotorCommand(),
+            "SysIdCommands/Drivetrain/DriveMotors",
+            Drivetrain.sysIdDriveMotors(),
+        )
+        SmartDashboard.putData(
+            "SysIdCommands/Drivetrain/AngleMotors",
+            Drivetrain.sysIdAngleMotors(),
         )
     }
 
@@ -171,90 +176,39 @@ object OI : SubsystemBase() {
     /**
      * Driver controller's throttle on the left joystick for the X Axis, from -1 (left) to 1 (right)
      */
-    val translationX
+    private val translationX
         get() = process(driverController.leftX, power = 1.5)
 
     /**
      * Driver controller's throttle on the left joystick for the Y Axis, from -1 (down) to 1 (up)
      */
-    val translationY
+    private val translationY
         get() = process(driverController.leftY, power = 1.5)
 
     /**
      * Driver controller's throttle on the right joystick for the X Axis, from -1 (left) to 1
      * (right)
      */
-    val turnX
+    private val turn
         get() = process(driverController.rightX, power = 1.5)
 
-    /**
-     * Driver controller's throttle on the right joystick for the Y Axis, from -1 (down) to 1 (up)
-     */
-    val turnY
-        get() = process(driverController.rightY, power = 1.5)
-
-    val leftTrigger
-        get() = driverController.leftTriggerAxis
-
-    val rightTrigger
+    private val rightTrigger
         get() = driverController.rightTriggerAxis
 
-    val resetGyro: Trigger = driverController.rightBumper()
-    val followTag: Trigger = driverController.leftBumper()
+    private val resetGyro: Trigger = driverController.leftTrigger()
 
-    val highHatForward: Trigger = operatorController.pov(0)
-    val highHatBack: Trigger = operatorController.pov(180)
-    val operatorTrigger: Trigger = operatorController.trigger()
-
-    //    val hatVector get() = when (operatorController.pov) {
-    //        0 -> Vector2(0.0,1.0)
-    //        90 -> Vector2(1.0,0.0)
-    //        180 -> Vector2(0.0,-1.0)
-    //        270 -> Vector2(-1.0,0.0)
-    //        else -> Vector2.zero()
-    //    }
-
-    val intakeSpeed
-        get() = operatorController.throttle
-
-    enum class Direction {
-        LEFT,
-        RIGHT,
-        UP,
-        DOWN,
-        UP_LEFT,
-        UP_RIGHT,
-        DOWN_LEFT,
-        DOWN_RIGHT,
-        INACTIVE;
-
-        fun mirrored() =
-            when (this) {
-                LEFT -> RIGHT
-                RIGHT -> LEFT
-                else -> this
-            }
-
-        fun toVector() =
-            when (this) {
-                LEFT -> Vector2(-1.0, 0.0)
-                RIGHT -> Vector2(1.0, 0.0)
-                UP -> Vector2(0.0, 1.0)
-                DOWN -> Vector2(0.0, -1.0)
-                INACTIVE -> Vector2.zero()
-                UP_LEFT -> Vector2(-1.0, 1.0)
-                UP_RIGHT -> Vector2(1.0, 1.0)
-                DOWN_LEFT -> Vector2(-1.0, -1.0)
-                DOWN_RIGHT -> Vector2(1.0, -1.0)
-            }
-    }
+    private val highHatForward: Trigger = operatorController.pov(0)
+    private val highHatBack: Trigger = operatorController.pov(180)
+    private val operatorTrigger: Trigger = operatorController.trigger()
 
     /** Rumbles the driver controller continuously until interrupted. */
-    fun rumble(side: GenericHID.RumbleType, power: Double): Command = run {
-        driverController.setRumble(side, power)
-    }
+    private fun rumble(side: GenericHID.RumbleType, power: Double): Command =
+        runEnd(
+            { driverController.setRumble(side, power) },
+            { driverController.setRumble(side, 0.0) },
+        )
 
     /** Rumbles the driver controller until the given time has elapsed. */
-    fun rumble(side: GenericHID.RumbleType, power: Double, time: Time): Command =
+    private fun rumble(side: GenericHID.RumbleType, power: Double, time: Time): Command =
         rumble(side, power).withTimeout(time.asSeconds)
 }

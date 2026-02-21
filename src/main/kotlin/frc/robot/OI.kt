@@ -77,14 +77,17 @@ object OI : SubsystemBase() {
                     .andThen(rumble(GenericHID.RumbleType.kLeftRumble, 0.25, 0.2.seconds))
             )
 
-        Drivetrain.defaultCommand = driveManager. alongWith(driveManager.defineDriver(
-            TeleopDrive(
-                { translationY * reverseDrive },
-                { translationX * reverseDrive },
-                { -turn },
-                { rightTrigger },
+        Drivetrain.defaultCommand =
+            driveManager.alongWith(
+                driveManager.defineDriver(
+                    TeleopDrive(
+                        { translationY * reverseDrive },
+                        { translationX * reverseDrive },
+                        { -turn },
+                        { rightTrigger },
+                    )
+                )
             )
-        ))
         driverController
             .a()
             .or(driverController.y())
@@ -105,11 +108,13 @@ object OI : SubsystemBase() {
         trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.seconds))
 
         // Shooter
-        operatorController.axisGreaterThan(operatorController.throttleChannel, 0.5)
-            .whileTrue(Shooter.runAtPower(0.1))
+        operatorController
+            .axisGreaterThan(operatorController.throttleChannel, 0.5)
+            .whileTrue(Shooter.runAtPower(1.0))
         operatorTrigger.whileTrue(
-            SequentialCommandGroup(Shooter.waitSpeed(), Shooter.Feeder.runAtPower(0.1))
+            SequentialCommandGroup(/*Shooter.waitSpeed(),*/ Shooter.Feeder.runAtPower(1.0))
         )
+        operatorController.button(4).whileTrue(Shooter.Hood.doRunAtkS())
         driverController
             .a()
             .and(trenchDriveTrigger.negate())
@@ -129,6 +134,10 @@ object OI : SubsystemBase() {
         SmartDashboard.putData(
             "SysIdCommands/Drivetrain/AngleMotors",
             Drivetrain.sysIdAngleMotors(),
+        )
+        SmartDashboard.putData(
+            "SysIdCommands/Shooter/Flywheel",
+            Shooter.sysID.fullSysID(),
         )
     }
 

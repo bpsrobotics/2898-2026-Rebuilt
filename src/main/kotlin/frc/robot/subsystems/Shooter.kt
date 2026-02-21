@@ -19,6 +19,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands.waitUntil
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import frc.robot.beaverlib.utils.sysID.BeaverSysIDMotor
+import frc.robot.beaverlib.utils.sysID.BeaverSysIDRoutine
 import frc.robot.engine.DashboardNumber
 import frc.robot.engine.FFSendable
 
@@ -28,10 +30,8 @@ object Shooter : SubsystemBase() {
         const val MOTOR_2_ID = 17
 
         val motor1PIDConstants = PIDConstants(0.47, 0.0, 0.0)
-        val motor2PIDConstants = PIDConstants(0.47, 0.0, 0.0)
 
         val motor1FFConstants = SimpleMotorFeedForwardConstants(0.1, 0.19, 4.04)
-        val motor2FFConstants = SimpleMotorFeedForwardConstants(0.1, 0.19, 4.04)
 
         val runningSpeed by DashboardNumber(0.0, "Shooter/Constants")
     }
@@ -40,7 +40,6 @@ object Shooter : SubsystemBase() {
     private val motor2 = SparkMax(Constants.MOTOR_2_ID, SparkLowLevel.MotorType.kBrushless)
 
     private val motor1Controller = PidFF(Constants.motor1PIDConstants, Constants.motor1FFConstants)
-    private val motor2Controller = PidFF(Constants.motor2PIDConstants, Constants.motor2FFConstants)
 
     init {
         val shooterConfig = SparkMaxConfig()
@@ -55,7 +54,7 @@ object Shooter : SubsystemBase() {
             PersistMode.kPersistParameters,
         )
         motor2.configure(
-            shooterConfig.inverted(false),
+            shooterConfig.inverted(false).follow(motor1),
             ResetMode.kResetSafeParameters,
             PersistMode.kPersistParameters,
         )
@@ -64,9 +63,8 @@ object Shooter : SubsystemBase() {
 
         SmartDashboard.putData("Shooter/motor1/PID", motor1Controller.pid)
         SmartDashboard.putData("Shooter/motor1/FF", FFSendable(motor1Controller.feedforward))
-        SmartDashboard.putData("Shooter/motor2/PID", motor2Controller.pid)
-        SmartDashboard.putData("Shooter/motor2/FF", FFSendable(motor2Controller.feedforward))
     }
+    val sysID : BeaverSysIDRoutine = BeaverSysIDRoutine(this, BeaverSysIDMotor("ShooterMotor", motor1))
 
     @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun stop(): Command = runOnce {
@@ -77,11 +75,10 @@ object Shooter : SubsystemBase() {
     @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun stabilize(): Command = run {
         motor1.set(motor1Controller.calculate(motor1.encoder.velocity))
-        motor2.set(motor2Controller.calculate(motor2.encoder.velocity))
     }
 
     fun waitSpeed(): Command = waitUntil {
-        motor1Controller.atSetpoint() && motor2Controller.atSetpoint()
+        motor1Controller.atSetpoint())
     }
 
     @Suppress("MemberVisibilityCanBePrivate", "unused")
@@ -89,12 +86,10 @@ object Shooter : SubsystemBase() {
         stabilize()
             .beforeStarting({
                 motor1Controller.setpoint = Constants.runningSpeed
-                motor2Controller.setpoint = Constants.runningSpeed
             })
 
     fun runAtPower(power: Double): Command = run {
         motor1.set(power)
-        motor2.set(power)
     }
 
     object Hood : SubsystemBase() {

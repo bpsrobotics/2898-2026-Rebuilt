@@ -22,6 +22,7 @@ import frc.robot.commands.swerve.HubDistanceController
 import frc.robot.commands.swerve.LockDrive
 import frc.robot.commands.swerve.TeleopDrive
 import frc.robot.commands.swerve.TrenchAlign
+import frc.robot.engine.DashboardNumber
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet.trenchDriveTrigger
 import frc.robot.subsystems.Intake
@@ -60,6 +61,8 @@ object OI : SubsystemBase() {
 
     private val driveManager = DriveManager()
 
+    private val hubDistance by DashboardNumber(2.0, "OI")
+
     /**
      * Use this method to define your trigger->command mappings. Triggers can be created via the
      * Trigger constructor with an arbitrary predicate, or via the named factories in [ ]'s
@@ -67,7 +70,7 @@ object OI : SubsystemBase() {
      * controllers or [Flight][CommandJoystick].
      */
     fun configureBindings() {
-        // --- Drivetrain --- /// --- Drivetrain --- ///
+        // Drivetrain
         resetGyro
             .debounce(0.5)
             .onTrue(
@@ -97,7 +100,7 @@ object OI : SubsystemBase() {
             .whileTrue(
                 driveManager.defineDriver(
                     HubDistanceController(
-                        desiredDistance = { 2.meters },
+                        desiredDistance = { hubDistance.meters },
                         moveAround = { translationX },
                     )
                 )
@@ -105,23 +108,23 @@ object OI : SubsystemBase() {
 
         trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.seconds))
 
-        /// --- Shooter --- /// --- Shooter --- ///
-        isEnabled.whileTrue(Shooter.doRunAtPower(0.1))
+        // Shooter
+        isEnabled.whileTrue(Shooter.runAtPower(0.1))
         operatorTrigger.whileTrue(
-            SequentialCommandGroup(Shooter.waitSpeed(), Shooter.Feeder.doRunAtPower(0.1))
+            SequentialCommandGroup(Shooter.waitSpeed(), Shooter.Feeder.runAtPower(0.1))
         )
         driverController
             .a()
             .and(trenchDriveTrigger.negate())
-            .whileTrue(Shooter.Hood.doMoveToPosition(0.1.radians))
+            .whileTrue(Shooter.Hood.moveToPosition(0.1.radians))
 
-        /// --- Intake --- /// --- Intake --- ///
+        // Intake
         highHatBack.whileTrue(Intake.runAtPower(0.05))
         highHatForward.whileTrue(Intake.runAtPower(-0.05))
         operatorController.axisGreaterThan(0, 0.5).onTrue(Intake.Pivot.stow())
         operatorController.axisLessThan(0, -0.5).onTrue(Intake.Pivot.extend())
 
-        /// --- SysID --- /// --- SysID --- ///
+        // SysID
         SmartDashboard.putData(
             "SysIdCommands/Drivetrain/DriveMotors",
             Drivetrain.sysIdDriveMotors(),

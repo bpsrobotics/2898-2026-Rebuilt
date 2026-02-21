@@ -3,7 +3,6 @@ package frc.robot.subsystems
 import beaverlib.controls.ArmFeedForwardConstants
 import beaverlib.controls.PIDConstants
 import beaverlib.controls.toArmPidFF
-import beaverlib.utils.Sugar.clamp
 import beaverlib.utils.Units.Angular.AngleUnit
 import beaverlib.utils.Units.Angular.degrees
 import beaverlib.utils.Units.Angular.radians
@@ -48,6 +47,7 @@ object Intake : SubsystemBase() {
      */
     fun runAtPower(power: Double): Command = runEnd({ motor.set(power) }, { motor.stopMotor() })
 
+    @Suppress("MemberVisibilityCanBePrivate", "unused")
     /** Stops the Intake motor */
     fun stop(): Command = runOnce { motor.stopMotor() }
 
@@ -84,25 +84,28 @@ object Intake : SubsystemBase() {
                 ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters,
             )
-            SmartDashboard.putData("Intake/Pivot/PIDSin", controller.PID)
+            SmartDashboard.putData("Intake/Pivot/ArmPidFF", controller)
 
             // Stabilize the wrist if nothing else is happening
             defaultCommand = stabilize()
         }
 
         /** Stops the wrist */
+        @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun stop(): Command = runOnce { motor.stopMotor() }
 
         /** Holds the wrist at the last set position */
+        @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun stabilize(): Command = run {
-            motor.setVoltage(controller.calculate(absEncoder.get().rotations).clamp(-1.0, 1.0))
+            motor.set(controller.calculate(absEncoder.get().rotations))
         }
 
         /** Sets the wrist to target position, and ends once the PID is at the setpoint */
+        @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun runToPosition(targetPosition: AngleUnit): Command =
-            stabilize().beforeStarting(InstantCommand({ controller.setpoint = targetPosition })).until {
-                controller.atSetpoint()
-            }
+            stabilize()
+                .beforeStarting(InstantCommand({ controller.setpoint = targetPosition }))
+                .until { controller.atSetpoint() }
 
         fun extend() = runToPosition(Constants.EXTENDED_POSITION)
 

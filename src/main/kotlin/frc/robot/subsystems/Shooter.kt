@@ -1,9 +1,9 @@
 package frc.robot.subsystems
 
 import beaverlib.controls.ArmFeedForwardConstants
-import beaverlib.controls.ArmPIDFF
+import beaverlib.controls.ArmPidFF
 import beaverlib.controls.PIDConstants
-import beaverlib.controls.PIDFF
+import beaverlib.controls.PidFF
 import beaverlib.controls.SimpleMotorFeedForwardConstants
 import beaverlib.utils.Units.Angular.AngleUnit
 import beaverlib.utils.Units.Angular.radians
@@ -39,8 +39,8 @@ object Shooter : SubsystemBase() {
     private val motor1 = SparkMax(Constants.MOTOR_1_ID, SparkLowLevel.MotorType.kBrushless)
     private val motor2 = SparkMax(Constants.MOTOR_2_ID, SparkLowLevel.MotorType.kBrushless)
 
-    private val motor1PIDFF = PIDFF(Constants.motor1PIDConstants, Constants.motor1FFConstants)
-    private val motor2PIDFF = PIDFF(Constants.motor2PIDConstants, Constants.motor2FFConstants)
+    private val motor1Controller = PidFF(Constants.motor1PIDConstants, Constants.motor1FFConstants)
+    private val motor2Controller = PidFF(Constants.motor2PIDConstants, Constants.motor2FFConstants)
 
     init {
         val shooterConfig = SparkMaxConfig()
@@ -62,33 +62,37 @@ object Shooter : SubsystemBase() {
 
         defaultCommand = stop()
 
-        SmartDashboard.putData("Shooter/motor1/PID", motor1PIDFF.PID)
-        SmartDashboard.putData("Shooter/motor1/FF", FFSendable(motor1PIDFF.FeedForward))
-        SmartDashboard.putData("Shooter/motor2/PID", motor2PIDFF.PID)
-        SmartDashboard.putData("Shooter/motor2/FF", FFSendable(motor2PIDFF.FeedForward))
+        SmartDashboard.putData("Shooter/motor1/PID", motor1Controller.pid)
+        SmartDashboard.putData("Shooter/motor1/FF", FFSendable(motor1Controller.feedforward))
+        SmartDashboard.putData("Shooter/motor2/PID", motor2Controller.pid)
+        SmartDashboard.putData("Shooter/motor2/FF", FFSendable(motor2Controller.feedforward))
     }
 
+    @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun stop(): Command = runOnce {
         motor1.stopMotor()
         motor2.stopMotor()
     }
 
-    fun runPIDFF(): Command = run {
-        motor1.set(motor1PIDFF.calculate(motor1.encoder.velocity))
-        motor2.set(motor2PIDFF.calculate(motor2.encoder.velocity))
+    @Suppress("MemberVisibilityCanBePrivate", "unused")
+    fun stabilize(): Command = run {
+        motor1.set(motor1Controller.calculate(motor1.encoder.velocity))
+        motor2.set(motor2Controller.calculate(motor2.encoder.velocity))
     }
 
-    fun waitSpeed(): Command = waitUntil { motor1PIDFF.atSetpoint() && motor2PIDFF.atSetpoint() }
+    fun waitSpeed(): Command = waitUntil {
+        motor1Controller.atSetpoint() && motor2Controller.atSetpoint()
+    }
 
-    fun doRunAtSpeed(): Command =
-        startRun({
-            motor1PIDFF.setpoint = Constants.runningSpeed
-            motor2PIDFF.setpoint = Constants.runningSpeed
-        }) {
-            runPIDFF()
-        }
+    @Suppress("MemberVisibilityCanBePrivate", "unused")
+    fun runAtSpeed(): Command =
+        stabilize()
+            .beforeStarting({
+                motor1Controller.setpoint = Constants.runningSpeed
+                motor2Controller.setpoint = Constants.runningSpeed
+            })
 
-    fun doRunAtPower(power: Double): Command = run {
+    fun runAtPower(power: Double): Command = run {
         motor1.set(power)
         motor2.set(power)
     }
@@ -107,7 +111,7 @@ object Shooter : SubsystemBase() {
         private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
         private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
 
-        private val controller = ArmPIDFF(Constants.pidConstants, Constants.ffConstants)
+        private val controller = ArmPidFF(Constants.pidConstants, Constants.ffConstants)
 
         init {
             val motorConfig = SparkMaxConfig()
@@ -118,26 +122,29 @@ object Shooter : SubsystemBase() {
                 PersistMode.kPersistParameters,
             )
 
-            defaultCommand = doStop() // todo doMoveDown()
+            defaultCommand = stop() // todo doMoveDown()
 
-            SmartDashboard.putData("Shooter/Hood/PID", controller.PID)
-            // SmartDashboard.putData("Shooter/Hood/FF", FFSendable(controller.FeedForward))
+            SmartDashboard.putData("Shooter/Hood/ArmPID", controller)
         }
 
-        fun doStop(): Command = run {
+        @Suppress("MemberVisibilityCanBePrivate", "unused")
+        fun stop(): Command = run {
             motor1.stopMotor()
             motor2.stopMotor()
         }
 
-        fun doHoldPosition(position: AngleUnit): Command =
+        @Suppress("MemberVisibilityCanBePrivate", "unused")
+        fun holdPosition(position: AngleUnit): Command =
             startRun({ controller.setpoint = position }) {
-                motor.setVoltage(controller.calculate(absEncoder.get().rotations))
+                motor.set(controller.calculate(absEncoder.get().rotations))
             }
 
-        fun doMoveToPosition(position: AngleUnit): Command =
-            doHoldPosition(position).withDeadline(waitUntil { controller.atSetpoint() })
+        @Suppress("MemberVisibilityCanBePrivate", "unused")
+        fun moveToPosition(position: AngleUnit): Command =
+            holdPosition(position).withDeadline(waitUntil { controller.atSetpoint() })
 
-        fun doMoveDown() = doHoldPosition(Constants.DOWN_POSITION)
+        @Suppress("MemberVisibilityCanBePrivate", "unused")
+        fun moveDown() = holdPosition(Constants.DOWN_POSITION)
     }
 
     object Feeder : SubsystemBase() {
@@ -151,7 +158,7 @@ object Shooter : SubsystemBase() {
         }
 
         private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
-        private val controller = PIDFF(Constants.pidConstants, Constants.ffConstants)
+        private val controller = PidFF(Constants.pidConstants, Constants.ffConstants)
 
         init {
             val motorConfig = SparkMaxConfig()
@@ -162,17 +169,20 @@ object Shooter : SubsystemBase() {
                 PersistMode.kPersistParameters,
             )
 
-            defaultCommand = doStop()
+            defaultCommand = stop()
 
-            SmartDashboard.putData("Shooter/Feeder/PID", controller.PID)
-            SmartDashboard.putData("Shooter/Feeder/FF", FFSendable(controller.FeedForward))
+            SmartDashboard.putData("Shooter/Feeder/PID", controller.pid)
+            SmartDashboard.putData("Shooter/Feeder/FF", FFSendable(controller.feedforward))
         }
 
-        fun doStop(): Command = runOnce { motor.stopMotor() }
+        @Suppress("MemberVisibilityCanBePrivate", "unused")
+        fun stop(): Command = runOnce { motor.stopMotor() }
 
-        fun doRunAtPower(power: Double): Command = run { motor.set(power) }
+        @Suppress("MemberVisibilityCanBePrivate", "unused")
+        fun runAtPower(power: Double): Command = run { motor.set(power) }
 
-        fun doRunAtSpeed(): Command =
+        @Suppress("MemberVisibilityCanBePrivate", "unused")
+        fun runAtSpeed(): Command =
             startRun({ controller.setpoint = Constants.runningSpeed }) {
                 motor.set(controller.calculate(motor.encoder.velocity))
             }

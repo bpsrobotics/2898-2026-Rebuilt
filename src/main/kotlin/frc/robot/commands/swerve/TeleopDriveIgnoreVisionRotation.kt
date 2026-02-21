@@ -28,14 +28,12 @@ class TeleopDriveIgnoreVisionRotation(
     override var vy: Double? = 0.0
     override var omega: Double? = 0.0
     override val priority: Int = DriverPriority.BASE_TELEOP.ordinal
-    var angleOffset: AngleUnit = 0.0.radians
+    private var angleOffset: AngleUnit = 0.0.radians
 
     /** @suppress */
     override fun initialize() {
         initializeLambda()
-        angleOffset =
-            Drivetrain.pose.rotation.asAngleUnit -
-                Drivetrain.swerveDrive.gyro.rotation3d.toRotation2d().asAngleUnit
+        angleOffset = Drivetrain.pose.rotation.asAngleUnit - Drivetrain.rawYaw
     }
 
     private var forwardVelocity: Double by DashboardNumberPublisher(0.0, "Teleop/")
@@ -57,9 +55,7 @@ class TeleopDriveIgnoreVisionRotation(
         val velocity =
             Vector2(forwardVelocity, strafeVelocity)
                 .rotateBy(
-                    Drivetrain.pose.rotation.asAngleUnit -
-                        (Drivetrain.swerveDrive.gyro.rotation3d.toRotation2d().asAngleUnit +
-                            angleOffset)
+                    Drivetrain.pose.rotation.asAngleUnit - (Drivetrain.rawYaw + angleOffset)
                 ) * Drivetrain.maximumSpeed
 
         vx = velocity.x

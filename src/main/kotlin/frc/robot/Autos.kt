@@ -22,7 +22,6 @@ import com.pathplanner.lib.path.PathPlannerPath
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.system.plant.DCMotor
-import edu.wpi.first.math.trajectory.TrapezoidProfile
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -48,26 +47,26 @@ object Autos {
                 *Drivetrain.Constants.DRIVE_KINEMATICS,
             )
 
-        const val MaxAccelerationMetersPerSecondSquared = 3.0
-        const val MaxAngularSpeedRadiansPerSecond = Math.PI
-        const val MaxAngularSpeedRadiansPerSecondSquared = Math.PI
+        // const val MAX_ACCELERATION_METERS_PER_SECOND_SQUARED = 3.0
+        // private const val MAX_ANGULAR_SPEED_RADIANS_PER_SECOND = Math.PI
+        // private const val MAX_ANGULAR_SPEED_RADIANS_PER_SECOND_SQUARED = Math.PI
 
-        val TranslationPIDConstant = PIDConstants(5.0, 0.0, 0.0)
-        val RotationPIDConstant = PIDConstants(0.01, 0.0, 0.0)
+        val translationPIDConstants = PIDConstants(5.0, 0.0, 0.0)
+        val rotationPIDConstants = PIDConstants(0.01, 0.0, 0.0)
 
         // Constraint for the motion profiled robot angle controller
-        val ThetaControllerConstraints =
-            TrapezoidProfile.Constraints(
-                MaxAngularSpeedRadiansPerSecond,
-                MaxAngularSpeedRadiansPerSecondSquared,
-            )
+        // val THETA_CONTROLLER_CONSTRAINTS =
+        //     TrapezoidProfile.Constraints(
+        //         MAX_ANGULAR_SPEED_RADIANS_PER_SECOND,
+        //         MAX_ANGULAR_SPEED_RADIANS_PER_SECOND_SQUARED
+        //     )
     }
 
     private var autoCommandChooser: SendableChooser<Command> = SendableChooser()
     val autonomousCommand: Command
         get() = autoCommandChooser.selected
 
-    val autos = mapOf<String, Command>()
+    private val autos = mapOf<String, Command>()
 
     fun addAutos() {
         autoCommandChooser.setDefaultOption("No Auto", InstantCommand())
@@ -84,11 +83,11 @@ object Autos {
             { Drivetrain.robotVelocity }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
             Drivetrain.driveConsumer, // Method that will drive the robot given ROBOT RELATIVE
             // ChassisSpeeds.
-            // Also optionally outputs individual module feedforwards
-            PPHolonomicDriveController( // PPolonomicController is the built-in path following
+            // Also, optionally outputs individual module feedforwards
+            PPHolonomicDriveController( // PPHolonomicController is the built-in path following
                 // controller for holonomic drive trains
-                Constants.TranslationPIDConstant.PathPlannerPID, // Translation PID constants
-                Constants.RotationPIDConstant.PathPlannerPID,
+                Constants.translationPIDConstants.PathPlannerPID, // Translation PID constants
+                Constants.rotationPIDConstants.PathPlannerPID,
             ),
             Constants.robotConfig,
             { Drivetrain.getAlliance() == DriverStation.Alliance.Red },
@@ -96,6 +95,7 @@ object Autos {
         )
     }
 
+    @Suppress("unused")
     fun generatePath(
         vararg pose2dWaypoints: Pose2d,
         maxVelocity: VelocityUnit = 3.0.metersPerSecond,
@@ -136,6 +136,7 @@ object Autos {
         return path
     }
 
+    @Suppress("unused")
     fun pathFindToPose(
         pose: Pose2d,
         maxVelocity: VelocityUnit = 1.0.metersPerSecond,
@@ -151,5 +152,5 @@ object Autos {
                 maxAngularVelocity.asRadiansPerSecond,
                 maxAngularAcceleration.asRadiansPerSecondSquared,
             ),
-        ) // The constraints for this path.)
+        ) // The constraints for this path.
 }

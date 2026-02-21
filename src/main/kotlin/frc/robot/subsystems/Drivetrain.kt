@@ -1,6 +1,7 @@
 package frc.robot.subsystems
 
 import beaverlib.fieldmap.FieldMapREBUILTWelded
+import beaverlib.utils.Units.Angular.asAngleUnit
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Angular.radiansPerSecond
 import beaverlib.utils.Units.Linear.feetPerSecond
@@ -235,6 +236,9 @@ object Drivetrain : SubsystemBase() {
     /** Method to get the current heading (yaw) of the robot. */
     private val heading: Rotation2d
         get() = swerveDrive.yaw
+
+    val rawYaw
+        get() = swerveDrive.gyro.rotation3d.toRotation2d().asAngleUnit
 
     /**
      * Method to generate a ChassisSpeeds object from a desired X, Y, and Rotational velocity.

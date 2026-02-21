@@ -1,6 +1,8 @@
 package frc.robot.subsystems
 
+import beaverlib.controls.ArmFeedForwardConstants
 import beaverlib.controls.PIDConstants
+import beaverlib.controls.toArmPidFF
 import beaverlib.utils.Sugar.clamp
 import beaverlib.utils.Units.Angular.AngleUnit
 import beaverlib.utils.Units.Angular.degrees
@@ -17,7 +19,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import frc.robot.engine.toPIDSin
 import kotlin.math.PI
 
 object Intake : SubsystemBase() {
@@ -56,7 +57,7 @@ object Intake : SubsystemBase() {
             const val ENCODER_ID = 0
 
             val pidConstants: PIDConstants = PIDConstants(0.67, 0.0, 0.0)
-            const val K_SIN: Double = 0.98
+            val armFFConstants = ArmFeedForwardConstants(0.0, 0.98, 0.0)
             val STOWED_POSITION = 0.degrees
             val EXTENDED_POSITION = PI.radians
         }
@@ -68,7 +69,7 @@ object Intake : SubsystemBase() {
         private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
 
         // PID controller class for pivot subsystem
-        private val pidSin = Constants.pidConstants.toPIDSin(Constants.K_SIN)
+        private val controller = Constants.pidConstants.toArmPidFF(Constants.armFFConstants)
 
         init {
             val motorConfig = SparkMaxConfig()
@@ -83,7 +84,7 @@ object Intake : SubsystemBase() {
                 ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters,
             )
-            SmartDashboard.putData("Intake/Pivot/PIDSin", pidSin)
+            SmartDashboard.putData("Intake/Pivot/PIDSin", controller.PID)
 
             // Stabilize the wrist if nothing else is happening
             defaultCommand = stabilize()
@@ -94,13 +95,13 @@ object Intake : SubsystemBase() {
 
         /** Holds the wrist at the last set position */
         fun stabilize(): Command = run {
-            motor.setVoltage(pidSin.calculate(absEncoder.get().rotations).clamp(-1.0, 1.0))
+            motor.setVoltage(controller.calculate(absEncoder.get().rotations).clamp(-1.0, 1.0))
         }
 
         /** Sets the wrist to target position, and ends once the PID is at the setpoint */
         fun runToPosition(targetPosition: AngleUnit): Command =
-            stabilize().beforeStarting(InstantCommand({ pidSin.setpoint = targetPosition })).until {
-                pidSin.pid.atSetpoint()
+            stabilize().beforeStarting(InstantCommand({ controller.setpoint = targetPosition })).until {
+                controller.atSetpoint()
             }
 
         fun extend() = runToPosition(Constants.EXTENDED_POSITION)

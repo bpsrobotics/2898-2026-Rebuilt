@@ -1,8 +1,13 @@
 package frc.robot.subsystems
 
+import beaverlib.controls.ArmFeedForwardConstants
+import beaverlib.controls.ArmPIDFF
 import beaverlib.controls.PIDConstants
 import beaverlib.controls.PIDFF
 import beaverlib.controls.SimpleMotorFeedForwardConstants
+import beaverlib.utils.Units.Angular.AngleUnit
+import beaverlib.utils.Units.Angular.radians
+import beaverlib.utils.Units.Angular.rotations
 import com.revrobotics.PersistMode
 import com.revrobotics.ResetMode
 import com.revrobotics.spark.SparkLowLevel
@@ -68,15 +73,25 @@ object Shooter : SubsystemBase() {
         motor2.stopMotor()
     }
 
-    fun runSpeed(): Command = run {
-        motor1PIDFF.setpoint = Constants.runningSpeed
+    fun runPIDFF(): Command = run {
         motor1.set(motor1PIDFF.calculate(motor1.encoder.velocity))
-
-        motor2PIDFF.setpoint = Constants.runningSpeed
         motor2.set(motor2PIDFF.calculate(motor2.encoder.velocity))
     }
 
     fun waitSpeed(): Command = waitUntil { motor1PIDFF.atSetpoint() && motor2PIDFF.atSetpoint() }
+
+    fun doRunAtSpeed(): Command =
+        startRun({
+            motor1PIDFF.setpoint = Constants.runningSpeed
+            motor2PIDFF.setpoint = Constants.runningSpeed
+        }) {
+            runPIDFF()
+        }
+
+    fun doRunAtPower(power: Double): Command = run {
+        motor1.set(power)
+        motor2.set(power)
+    }
 
     object Hood : SubsystemBase() {
         private object Constants {
@@ -84,15 +99,15 @@ object Shooter : SubsystemBase() {
             const val ENCODER_ID = 1
 
             val pidConstants = PIDConstants(0.0, 0.0, 0.0)
-            val ffConstants = SimpleMotorFeedForwardConstants(0.0, 0.0, 0.0)
+            val ffConstants = ArmFeedForwardConstants(0.0, 0.0, 0.0)
 
-            const val DOWN_POSITION = 0.0
+            val DOWN_POSITION = 0.0.radians
         }
 
         private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
         private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
 
-        private val controller = PIDFF(Constants.pidConstants, Constants.ffConstants)
+        private val controller = ArmPIDFF(Constants.pidConstants, Constants.ffConstants)
 
         init {
             val motorConfig = SparkMaxConfig()
@@ -103,21 +118,26 @@ object Shooter : SubsystemBase() {
                 PersistMode.kPersistParameters,
             )
 
-            defaultCommand = down()
+            defaultCommand = doStop() // todo doMoveDown()
 
             SmartDashboard.putData("Shooter/Hood/PID", controller.PID)
-            SmartDashboard.putData("Shooter/Hood/FF", FFSendable(controller.FeedForward))
+            // SmartDashboard.putData("Shooter/Hood/FF", FFSendable(controller.FeedForward))
         }
 
-        fun holdPosition(position: Double): Command = run {
-            controller.setpoint = position
-            motor.set(controller.calculate(absEncoder.get()))
+        fun doStop(): Command = run {
+            motor1.stopMotor()
+            motor2.stopMotor()
         }
 
-        fun toPosition(position: Double): Command =
-            holdPosition(position).withDeadline(waitUntil { controller.atSetpoint() })
+        fun doHoldPosition(position: AngleUnit): Command =
+            startRun({ controller.setpoint = position }) {
+                motor.setVoltage(controller.calculate(absEncoder.get().rotations))
+            }
 
-        fun down() = toPosition(Constants.DOWN_POSITION)
+        fun doMoveToPosition(position: AngleUnit): Command =
+            doHoldPosition(position).withDeadline(waitUntil { controller.atSetpoint() })
+
+        fun doMoveDown() = doHoldPosition(Constants.DOWN_POSITION)
     }
 
     object Feeder : SubsystemBase() {
@@ -142,17 +162,19 @@ object Shooter : SubsystemBase() {
                 PersistMode.kPersistParameters,
             )
 
-            defaultCommand = stop()
+            defaultCommand = doStop()
 
             SmartDashboard.putData("Shooter/Feeder/PID", controller.PID)
             SmartDashboard.putData("Shooter/Feeder/FF", FFSendable(controller.FeedForward))
         }
 
-        fun stop(): Command = runOnce { motor.stopMotor() }
+        fun doStop(): Command = runOnce { motor.stopMotor() }
 
-        fun runSpeed(): Command = run {
-            controller.setpoint = Constants.runningSpeed
-            motor.set(controller.calculate(motor.encoder.velocity))
-        }
+        fun doRunAtPower(power: Double): Command = run { motor.set(power) }
+
+        fun doRunAtSpeed(): Command =
+            startRun({ controller.setpoint = Constants.runningSpeed }) {
+                motor.set(controller.calculate(motor.encoder.velocity))
+            }
     }
 }

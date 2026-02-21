@@ -1,5 +1,6 @@
 package frc.robot
 
+import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Linear.meters
 import beaverlib.utils.Units.Time
 import beaverlib.utils.Units.seconds
@@ -66,7 +67,7 @@ object OI : SubsystemBase() {
      * controllers or [Flight][CommandJoystick].
      */
     fun configureBindings() {
-        // Drivetrain
+        // --- Drivetrain --- /// --- Drivetrain --- ///
         resetGyro
             .debounce(0.5)
             .onTrue(
@@ -104,23 +105,23 @@ object OI : SubsystemBase() {
 
         trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.seconds))
 
-        // Shooter
-        isEnabled.whileTrue(Shooter.runSpeed())
+        /// --- Shooter --- /// --- Shooter --- ///
+        isEnabled.whileTrue(Shooter.doRunAtPower(0.1))
         operatorTrigger.whileTrue(
-            SequentialCommandGroup(Shooter.waitSpeed(), Shooter.Feeder.runSpeed())
+            SequentialCommandGroup(Shooter.waitSpeed(), Shooter.Feeder.doRunAtPower(0.1))
         )
         driverController
             .a()
             .and(trenchDriveTrigger.negate())
-            .whileTrue(Shooter.Hood.toPosition(0.1))
+            .whileTrue(Shooter.Hood.doMoveToPosition(0.1.radians))
 
-        // Intake
+        /// --- Intake --- /// --- Intake --- ///
         highHatBack.whileTrue(Intake.runAtPower(0.05))
         highHatForward.whileTrue(Intake.runAtPower(-0.05))
         operatorController.axisGreaterThan(0, 0.5).onTrue(Intake.Pivot.stow())
         operatorController.axisLessThan(0, -0.5).onTrue(Intake.Pivot.extend())
 
-        // SysID
+        /// --- SysID --- /// --- SysID --- ///
         SmartDashboard.putData(
             "SysIdCommands/Drivetrain/DriveMotors",
             Drivetrain.sysIdDriveMotors(),

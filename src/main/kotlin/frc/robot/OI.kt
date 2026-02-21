@@ -1,7 +1,7 @@
 package frc.robot
 
+import beaverlib.utils.Sugar.clamp
 import beaverlib.utils.Units.Angular.radians
-import beaverlib.utils.Units.Linear.meters
 import beaverlib.utils.Units.Time
 import beaverlib.utils.Units.seconds
 import edu.wpi.first.math.MathUtil
@@ -17,14 +17,11 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
 import frc.robot.commands.swerve.DriveManager
-import frc.robot.commands.swerve.HubAlign
-import frc.robot.commands.swerve.HubDistanceController
-import frc.robot.commands.swerve.LockDrive
 import frc.robot.commands.swerve.TeleopDrive
-import frc.robot.commands.swerve.TrenchAlign
 import frc.robot.engine.DashboardNumber
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet.trenchDriveTrigger
+import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
 import kotlin.math.absoluteValue
 import kotlin.math.pow
@@ -88,43 +85,81 @@ object OI : SubsystemBase() {
                     )
                 )
             )
-        driverController
-            .a()
-            .or(driverController.y())
-            .whileTrue(driveManager.defineDriver(HubAlign()))
-        driverController.b().debounce(0.2).whileTrue(driveManager.defineDriver(TrenchAlign()))
-        driverController.x().debounce(0.2).whileTrue(driveManager.defineDriver(LockDrive()))
-        driverController
-            .y()
-            .whileTrue(
-                driveManager.defineDriver(
-                    HubDistanceController(
-                        desiredDistance = { hubDistance.meters },
-                        moveAround = { translationX },
-                    )
-                )
-            )
+        //        driverController
+        //            .a()
+        //            .or(driverController.y())
+        //            .whileTrue(driveManager.defineDriver(HubAlign()))
+        //
+        // driverController.b().debounce(0.2).whileTrue(driveManager.defineDriver(TrenchAlign()))
+        //
+        // driverController.x().debounce(0.2).whileTrue(driveManager.defineDriver(LockDrive()))
+        //        driverController
+        //            .y()
+        //            .whileTrue(
+        //                driveManager.defineDriver(
+        //                    HubDistanceController(
+        //                        desiredDistance = { hubDistance.meters },
+        //                        moveAround = { translationX },
+        //                    )
+        //                )
+        //            )
 
         trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.seconds))
 
         // Shooter
+        //        operatorController
+        //            .axisLessThan(operatorController.throttleChannel, 0.5)
+        //            .whileTrue(Shooter.runAtPower { (0.5 - operatorController.throttle) * (2 / 3)
+        // })
         operatorController
-            .axisGreaterThan(operatorController.throttleChannel, 0.5)
+            .axisLessThan(operatorController.throttleChannel, 0.5)
             .whileTrue(Shooter.runAtPower(1.0))
+
+        var desiredHoodPosition = 3.0.radians
+        operatorController
+            .button(4)
+            .onTrue(
+                runOnce {
+                    desiredHoodPosition =
+                        (desiredHoodPosition.asRadians - 0.1)
+                            .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
+                            .radians
+                }
+            )
+
+        operatorController
+            .button(6)
+            .onTrue(
+                runOnce {
+                    desiredHoodPosition =
+                        (desiredHoodPosition.asRadians + 0.1)
+                            .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
+                            .radians
+                }
+            )
+
         operatorTrigger.whileTrue(
-            SequentialCommandGroup(/*Shooter.waitSpeed(),*/ Shooter.Feeder.runAtPower(1.0))
+            SequentialCommandGroup(
+                Shooter.Hood.moveToPosition({ desiredHoodPosition }),
+                Shooter.Feeder.getJiggyWithIt().alongWith(Shooter.Hood.stabilize()),
+            )
         )
-        operatorController.button(4).whileTrue(Shooter.Hood.doRunAtkS())
+        //        operatorController.button(4).whileTrue(Shooter.Hood.doRunAtkS())
+        //        operatorController.button(3).whileTrue(Shooter.Hood.stabilize())
+        //        operatorController.button(6).whileTrue(Shooter.Hood.setDownAndReZero())
+
         driverController
             .a()
             .and(trenchDriveTrigger.negate())
             .whileTrue(Shooter.Hood.moveToPosition(0.1.radians))
 
         // Intake
-        //        highHatBack.whileTrue(Intake.runAtPower(0.05))
-        //        highHatForward.whileTrue(Intake.runAtPower(-0.05))
-        //        operatorController.axisGreaterThan(0, 0.5).onTrue(Intake.Pivot.stow())
-        //        operatorController.axisLessThan(0, -0.5).onTrue(Intake.Pivot.extend())
+        highHatBack.whileTrue(Intake.runAtPower(1.0))
+
+        highHatForward.whileTrue(Intake.runAtPower(-1.0))
+        operatorController.button(3).whileTrue(Intake.Pivot.runAtkS())
+        //        operatorController.axisGreaterThan(0, 0.75).onTrue(Intake.Pivot.stow())
+        //        operatorController.axisLessThan(0, -0.75).onTrue(Intake.Pivot.extend())
 
         // SysID
         SmartDashboard.putData(
@@ -135,10 +170,7 @@ object OI : SubsystemBase() {
             "SysIdCommands/Drivetrain/AngleMotors",
             Drivetrain.sysIdAngleMotors(),
         )
-        SmartDashboard.putData(
-            "SysIdCommands/Shooter/Flywheel",
-            Shooter.sysID.fullSysID(),
-        )
+        SmartDashboard.putData("SysIdCommands/Shooter/Flywheel", Shooter.sysID.fullSysID())
     }
 
     /**
@@ -205,7 +237,7 @@ object OI : SubsystemBase() {
     private val rightTrigger
         get() = driverController.rightTriggerAxis
 
-    private val resetGyro: Trigger = driverController.leftTrigger()
+    private val resetGyro: Trigger = driverController.leftBumper()
 
     private val highHatForward: Trigger = operatorController.pov(0)
     private val highHatBack: Trigger = operatorController.pov(180)

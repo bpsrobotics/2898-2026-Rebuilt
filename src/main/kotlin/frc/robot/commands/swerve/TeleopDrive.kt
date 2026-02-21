@@ -28,6 +28,7 @@ class TeleopDrive(
     /** @suppress */
     override fun initialize() {
         initializeLambda()
+        super.initialize()
     }
 
     private var forwardVelocity: Double by DashboardNumberPublisher(0.0, "Teleop/")
@@ -49,13 +50,5 @@ class TeleopDrive(
         vx = forwardVelocity * Drivetrain.maximumSpeed
         vy = strafeVelocity * Drivetrain.maximumSpeed
         omega = angVelocity * Drivetrain.maxAngularSpeed
-    }
-
-    /** @suppress */
-    override fun end(interrupted: Boolean) {}
-
-    /** @suppress */
-    override fun isFinished(): Boolean {
-        return false
     }
 }

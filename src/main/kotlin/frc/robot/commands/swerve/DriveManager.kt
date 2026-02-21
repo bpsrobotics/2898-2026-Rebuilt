@@ -2,6 +2,7 @@ package frc.robot.commands.swerve
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.wpilibj2.command.Command
+import frc.robot.engine.DashboardString
 import frc.robot.subsystems.Drivetrain
 
 class DriveManager : Command() {
@@ -34,6 +35,9 @@ class DriveManager : Command() {
         addRequirements(Drivetrain)
     }
 
+    var requestsDebug by DashboardString("", "DriveManager")
+    var requestsEnabledDebug by DashboardString("", "DriveManager")
+
     private val requests = mutableListOf<DriveRequest>()
 
     fun <T : DriveRequest> defineDriver(rq: T): T {
@@ -42,6 +46,9 @@ class DriveManager : Command() {
     }
 
     override fun execute() {
+        requestsDebug = requests.map { it.priority }.joinToString()
+        requestsEnabledDebug = requests.filter { it.isEnabled }.map { it.priority }.joinToString()
+
         val doLock =
             requests
                 .filter { it.doLock != null && it.isEnabled }

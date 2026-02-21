@@ -5,7 +5,11 @@ package frc.robot
 
 import frc.robot.OI.configureBindings
 import frc.robot.subsystems.Drivetrain
+import frc.robot.subsystems.HedgieHelmet
+import frc.robot.subsystems.Intake
+import frc.robot.subsystems.Shooter
 import frc.robot.subsystems.Vision
+import frc.robot.subsystems.VisionTurningHandler
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -27,9 +31,20 @@ class RobotContainer {
         configureBindings()
     }
 
+    /**
+     * By using the names of the subsystems the JVM will initialize these objects, which can
+     * sometimes take a while so it is good to do it before match starts
+     */
     @Suppress("UnusedExpression")
     private fun initializeObjects() {
         Drivetrain
+        Intake
+        Intake.Pivot
+        Shooter
+        Shooter.Hood
+        Shooter.Feeder
+        HedgieHelmet
+        VisionTurningHandler
         Vision
     }
 }

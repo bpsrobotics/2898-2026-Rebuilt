@@ -1,12 +1,10 @@
 package frc.robot.subsystems
 
-import beaverlib.fieldmap.FieldMapREBUILTWelded
 import beaverlib.utils.Units.Angular.asAngleUnit
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Angular.radiansPerSecond
 import beaverlib.utils.Units.Linear.feetPerSecond
 import beaverlib.utils.Units.Linear.inches
-import beaverlib.utils.Units.Linear.meters
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Pose3d
@@ -26,15 +24,14 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.commands.vision.TargetPoseProvider
+import java.io.File
+import kotlin.jvm.optionals.getOrNull
+import kotlin.math.PI
 import swervelib.SwerveDrive
 import swervelib.SwerveDriveTest
 import swervelib.parser.SwerveParser
 import swervelib.telemetry.SwerveDriveTelemetry
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity
-import java.io.File
-import kotlin.jvm.optionals.getOrNull
-import kotlin.math.PI
 
 object Drivetrain : SubsystemBase() {
     object Constants {
@@ -80,8 +77,8 @@ object Drivetrain : SubsystemBase() {
 
     var updateVisionOdometry = true
 
-    private val targetPoseProvider =
-        TargetPoseProvider(FieldMapREBUILTWelded.teamHub.center, 2.meters) { 0.radians }
+    //    private val targetPoseProvider =
+    //        TargetPoseProvider(FieldMapREBUILTWelded.teamHub.center, 2.meters) { 0.radians }
 
     init {
         // Configure the Telemetry before creating the SwerveDrive to avoid unnecessary objects
@@ -118,7 +115,7 @@ object Drivetrain : SubsystemBase() {
         setVisionMeasurementStdDevs(3.0, 4.0, 5.0)
         // setupPathPlanner()
 
-        targetPoseProvider.initialize()
+        //        targetPoseProvider.initialize()
     }
 
     fun doEnableVisionOdometry(enable: Boolean = true) =
@@ -127,7 +124,7 @@ object Drivetrain : SubsystemBase() {
     override fun periodic() {
         posePublisher.set(pose)
         swerveStatePublisher.set(swerveDrive.states)
-        targetPosePublisher.set(targetPoseProvider.getPose())
+        //        targetPosePublisher.set(targetPoseProvider.getPose())
         Vision.setAllCameraReferences(Pose3d(pose))
         SmartDashboard.putNumber("Odometry/X", pose.x)
         SmartDashboard.putNumber("Odometry/Y", pose.y)

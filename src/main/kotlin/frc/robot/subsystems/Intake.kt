@@ -1,8 +1,8 @@
 package frc.robot.subsystems
 
 import beaverlib.controls.ArmFeedForwardConstants
+import beaverlib.controls.ArmPidFF
 import beaverlib.controls.PIDConstants
-import beaverlib.controls.toArmPidFF
 import beaverlib.utils.Units.Angular.AngleUnit
 import beaverlib.utils.Units.Angular.degrees
 import beaverlib.utils.Units.Angular.radians
@@ -69,7 +69,7 @@ object Intake : SubsystemBase() {
         private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
 
         // PID controller class for pivot subsystem
-        private val controller = Constants.pidConstants.toArmPidFF(Constants.armFFConstants)
+        private val controller = ArmPidFF(Constants.pidConstants, Constants.armFFConstants)
 
         init {
             val motorConfig = SparkMaxConfig()

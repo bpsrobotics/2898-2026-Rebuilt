@@ -50,12 +50,12 @@ object Shooter : SubsystemBase() {
             .encoder
             .velocityConversionFactor(2.0)
         motor1.configure(
-            shooterConfig,
+            shooterConfig.inverted(true),
             ResetMode.kResetSafeParameters,
             PersistMode.kPersistParameters,
         )
         motor2.configure(
-            shooterConfig.inverted(true),
+            shooterConfig.inverted(false),
             ResetMode.kResetSafeParameters,
             PersistMode.kPersistParameters,
         )
@@ -106,6 +106,7 @@ object Shooter : SubsystemBase() {
             val ffConstants = ArmFeedForwardConstants(0.0, 0.0, 0.0)
 
             val DOWN_POSITION = 0.0.radians
+            val kS by DashboardNumber(0.1, "Shooter/Hood/Constants")
         }
 
         private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
@@ -133,10 +134,12 @@ object Shooter : SubsystemBase() {
             motor2.stopMotor()
         }
 
+        fun doRunAtkS(): Command = run { motor.setVoltage(Constants.kS) }
+
         @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun holdPosition(position: AngleUnit): Command =
             startRun({ controller.setpoint = position }) {
-                motor.set(controller.calculate(absEncoder.get().rotations))
+                motor.setVoltage(controller.calculate(absEncoder.get().rotations))
             }
 
         @Suppress("MemberVisibilityCanBePrivate", "unused")

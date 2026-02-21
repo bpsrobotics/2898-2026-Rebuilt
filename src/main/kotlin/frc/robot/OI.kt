@@ -25,7 +25,6 @@ import frc.robot.commands.swerve.TrenchAlign
 import frc.robot.engine.DashboardNumber
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet.trenchDriveTrigger
-import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
 import kotlin.math.absoluteValue
 import kotlin.math.pow
@@ -78,17 +77,14 @@ object OI : SubsystemBase() {
                     .andThen(rumble(GenericHID.RumbleType.kLeftRumble, 0.25, 0.2.seconds))
             )
 
-        Drivetrain.defaultCommand = driveManager
-        isEnabled.whileTrue(
-            driveManager.defineDriver(
-                TeleopDrive(
-                    { translationY * reverseDrive },
-                    { translationX * reverseDrive },
-                    { -turn },
-                    { rightTrigger },
-                )
+        Drivetrain.defaultCommand = driveManager. alongWith(driveManager.defineDriver(
+            TeleopDrive(
+                { translationY * reverseDrive },
+                { translationX * reverseDrive },
+                { -turn },
+                { rightTrigger },
             )
-        )
+        ))
         driverController
             .a()
             .or(driverController.y())
@@ -109,7 +105,8 @@ object OI : SubsystemBase() {
         trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.seconds))
 
         // Shooter
-        isEnabled.whileTrue(Shooter.runAtPower(0.1))
+        operatorController.axisGreaterThan(operatorController.throttleChannel, 0.5)
+            .whileTrue(Shooter.runAtPower(0.1))
         operatorTrigger.whileTrue(
             SequentialCommandGroup(Shooter.waitSpeed(), Shooter.Feeder.runAtPower(0.1))
         )
@@ -119,10 +116,10 @@ object OI : SubsystemBase() {
             .whileTrue(Shooter.Hood.moveToPosition(0.1.radians))
 
         // Intake
-        highHatBack.whileTrue(Intake.runAtPower(0.05))
-        highHatForward.whileTrue(Intake.runAtPower(-0.05))
-        operatorController.axisGreaterThan(0, 0.5).onTrue(Intake.Pivot.stow())
-        operatorController.axisLessThan(0, -0.5).onTrue(Intake.Pivot.extend())
+        //        highHatBack.whileTrue(Intake.runAtPower(0.05))
+        //        highHatForward.whileTrue(Intake.runAtPower(-0.05))
+        //        operatorController.axisGreaterThan(0, 0.5).onTrue(Intake.Pivot.stow())
+        //        operatorController.axisLessThan(0, -0.5).onTrue(Intake.Pivot.extend())
 
         // SysID
         SmartDashboard.putData(

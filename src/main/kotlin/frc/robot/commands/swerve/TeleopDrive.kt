@@ -18,25 +18,17 @@ class TeleopDrive(
     private val getVStrafe: () -> Double,
     private val getOmega: () -> Double,
     private val slowMode: () -> Double,
-    private val initializeLambda: () -> Unit = {},
 ) : DriveManager.DriveRequestBase() {
     override var vx: Double? = 0.0
     override var vy: Double? = 0.0
     override var omega: Double? = 0.0
     override val priority: Int = DriverPriority.BASE_TELEOP.ordinal
 
-    /** @suppress */
-    override fun initialize() {
-        initializeLambda()
-        super.initialize()
-    }
-
     private var forwardVelocity: Double by DashboardNumberPublisher(0.0, "Teleop/")
     private var strafeVelocity: Double by DashboardNumberPublisher(0.0, "Teleop/")
     private var angVelocity: Double by DashboardNumberPublisher(0.0, "Teleop/")
     private var slowModeCalc: Double by DashboardNumberPublisher(0.0, "Teleop/")
 
-    /** @suppress */
     override fun execute() {
         forwardVelocity = getVForward()
         strafeVelocity = getVStrafe()

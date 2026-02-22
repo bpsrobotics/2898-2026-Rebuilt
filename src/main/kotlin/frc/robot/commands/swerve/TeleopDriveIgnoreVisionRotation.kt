@@ -22,7 +22,6 @@ class TeleopDriveIgnoreVisionRotation(
     private val getVStrafe: () -> Double,
     private val getOmega: () -> Double,
     private val slowMode: () -> Double,
-    private val initializeLambda: () -> Unit = {},
 ) : DriveManager.DriveRequestBase() {
     override var vx: Double? = 0.0
     override var vy: Double? = 0.0
@@ -30,9 +29,8 @@ class TeleopDriveIgnoreVisionRotation(
     override val priority: Int = DriverPriority.BASE_TELEOP.ordinal
     private var angleOffset: AngleUnit = 0.0.radians
 
-    /** @suppress */
     override fun initialize() {
-        initializeLambda()
+        super.initialize()
         angleOffset = Drivetrain.pose.rotation.asAngleUnit - Drivetrain.rawYaw
     }
 
@@ -41,7 +39,6 @@ class TeleopDriveIgnoreVisionRotation(
     private var angVelocity: Double by DashboardNumberPublisher(0.0, "Teleop/")
     private var slowModeCalc: Double by DashboardNumberPublisher(0.0, "Teleop/")
 
-    /** @suppress */
     override fun execute() {
         forwardVelocity = getVForward()
         strafeVelocity = getVStrafe()
@@ -61,13 +58,5 @@ class TeleopDriveIgnoreVisionRotation(
         vx = velocity.x
         vy = velocity.y
         omega = angVelocity * Drivetrain.maxAngularSpeed
-    }
-
-    /** @suppress */
-    override fun end(interrupted: Boolean) {}
-
-    /** @suppress */
-    override fun isFinished(): Boolean {
-        return false
     }
 }

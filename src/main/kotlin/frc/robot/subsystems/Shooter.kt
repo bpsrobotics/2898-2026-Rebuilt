@@ -101,6 +101,7 @@ object Shooter : SubsystemBase() {
     @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun stabilize(): Command = run { motor.set(motor1Controller.calculate(motor.encoder.velocity)) }
 
+    @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun waitSpeed(): Command = waitUntil { motor1Controller.atSetpoint() }
 
     @Suppress("MemberVisibilityCanBePrivate", "unused")
@@ -114,6 +115,7 @@ object Shooter : SubsystemBase() {
      *
      * @param powerFun (-1, 1) the portion of max speed to run the motor at
      */
+    @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun runAtPower(powerFun: () -> Double): Command =
         runEnd({ motor.set(powerFun()) }, { motor.stopMotor() })
 
@@ -147,7 +149,7 @@ object Shooter : SubsystemBase() {
             )
             absoluteEncoderOffset = absEncoder.get()
 
-            defaultCommand = setDownAndReZero() // todo doMoveDown()
+            defaultCommand = setDownAndReZero()
 
             SmartDashboard.putData("Shooter/Hood/ArmPID", controller)
         }
@@ -180,7 +182,6 @@ object Shooter : SubsystemBase() {
 
         @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun holdPosition(positionToHold: () -> AngleUnit): Command = run {
-            println(positionToHold)
             controller.setpoint = positionToHold()
             motor.setVoltage(controller.calculate(position))
         }
@@ -199,7 +200,7 @@ object Shooter : SubsystemBase() {
         @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun moveDown() = holdPosition(Constants.DOWN_POSITION)
 
-        fun setDownAndReZero() =
+        fun setDownAndReZero(): Command =
             run { motor.setVoltage(-2.0) }
                 .until { motor.outputCurrent > 15 }
                 .andThen(

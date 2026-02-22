@@ -102,6 +102,18 @@ object OI : SubsystemBase() {
         //                )
         //            )
 
+        // Note: There is no method to directly get the angle of the POV
+        // val forward = 0.degrees
+        // val step = 45.degrees
+        // driverController.povUp().whileTrue(CardinalAlign { forward })
+        // driverController.povUpRight().whileTrue(CardinalAlign { forward + step })
+        // driverController.povRight().whileTrue(CardinalAlign { forward + step * 2.0 })
+        // driverController.povDownRight().whileTrue(CardinalAlign { forward + step * 3.0 })
+        // driverController.povDown().whileTrue(CardinalAlign { forward + step * 4.0 })
+        // driverController.povDownLeft().whileTrue(CardinalAlign { forward + step * 5.0 })
+        // driverController.povLeft().whileTrue(CardinalAlign { forward + step * 6.0 })
+        // driverController.povUpLeft().whileTrue(CardinalAlign { forward + step * 7.0 })
+
         trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.seconds))
 
         // Shooter

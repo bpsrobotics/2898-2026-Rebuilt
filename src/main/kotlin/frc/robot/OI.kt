@@ -68,7 +68,7 @@ object OI : SubsystemBase() {
      * controllers or [Flight][CommandJoystick].
      */
     fun configureBindings() {
-        // Drivetrain
+        /** Drivetrain */
         resetGyro
             .debounce(0.5)
             .onTrue(
@@ -120,7 +120,7 @@ object OI : SubsystemBase() {
 
         trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.seconds))
 
-        Shooter
+        /** Shooter */
         operatorController
             .axisLessThan(operatorController.throttleChannel, 0.5)
             .whileTrue(Shooter.runAtPower { (1.0 - operatorController.throttle * 2) / 3 })
@@ -159,9 +159,7 @@ object OI : SubsystemBase() {
                 Shooter.Hood.moveToPosition({ desiredHoodPosition }),
                 Shooter.Feeder.getJiggyWithIt()
                     .alongWith(Shooter.Hood.holdPosition({ desiredHoodPosition })),
-                Shooter.Hood.moveToPosition { desiredHoodPosition },
-                Shooter.Feeder.getJiggyWithIt().alongWith(Shooter.Hood.stabilize()),
-            )
+                )
         )
         operatorController
             .button(2)
@@ -177,7 +175,7 @@ object OI : SubsystemBase() {
             .and(trenchDriveTrigger.negate())
             .whileTrue(Shooter.Hood.moveToPosition(0.1.radians))
 
-        // Intake
+        /** Intake */
         highHatBack.whileTrue(Intake.runAtPower(1.0))
 
         highHatForward.whileTrue(Intake.runAtPower(-1.0))
@@ -190,7 +188,7 @@ object OI : SubsystemBase() {
         // 0.75).whileTrue(Intake.Pivot.runAtPower(-1.0))
         //        operatorController.axisLessThan(0, -0.75).whileTrue(Intake.Pivot.runAtPower(1.0))
 
-        // SysID
+        /** SysID */
         SmartDashboard.putData(
             "SysIdCommands/Drivetrain/DriveMotors",
             Drivetrain.sysIdDriveMotors(),

@@ -27,7 +27,6 @@ import frc.robot.beaverlib.utils.sysID.BeaverSysIDRoutine
 import frc.robot.engine.DashboardBoolean
 import frc.robot.engine.DashboardNumber
 import frc.robot.engine.FFSendable
-import frc.robot.subsystems.Shooter.Hood.absoluteEncoderOffset
 import kotlin.math.PI
 
 object Shooter : SubsystemBase() {
@@ -101,6 +100,7 @@ object Shooter : SubsystemBase() {
     @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun stabilize(): Command = run { motor.set(motor1Controller.calculate(motor.encoder.velocity)) }
 
+    @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun waitSpeed(): Command = waitUntil { motor1Controller.atSetpoint() }
 
     @Suppress("MemberVisibilityCanBePrivate", "unused")
@@ -114,6 +114,7 @@ object Shooter : SubsystemBase() {
      *
      * @param powerFun (-1, 1) the portion of max speed to run the motor at
      */
+    @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun runAtPower(powerFun: () -> Double): Command =
         runEnd(
             {
@@ -155,7 +156,7 @@ object Shooter : SubsystemBase() {
             )
             absoluteEncoderOffset = absEncoder.get()
 
-            defaultCommand = setDownAndReZero() // todo doMoveDown()
+            defaultCommand = setDownAndReZero()
 
             SmartDashboard.putData("Shooter/Hood/ArmPID", controller)
         }
@@ -180,7 +181,8 @@ object Shooter : SubsystemBase() {
             motorFollower.stopMotor()
         }
 
-        fun doRunAtkS(): Command = run { motor.setVoltage(Constants.kS) }
+        @Suppress("MemberVisibilityCanBePrivate", "unused")
+        fun runAtkS(): Command = run { motor.setVoltage(Constants.kS) }
 
         @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun holdPosition(positionToHold: AngleUnit): Command =
@@ -208,7 +210,7 @@ object Shooter : SubsystemBase() {
         @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun moveDown() = holdPosition(Constants.DOWN_POSITION)
 
-        fun setDownAndReZero() =
+        fun setDownAndReZero(): Command =
             run { motor.setVoltage(-2.0) }
                 .until { motor.outputCurrent > 15 }
                 .andThen(

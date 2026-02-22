@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
 import frc.robot.commands.swerve.DriveManager
 import frc.robot.commands.swerve.TeleopDrive
-import frc.robot.engine.DashboardNumber
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet.trenchDriveTrigger
 import frc.robot.subsystems.Intake
@@ -44,7 +43,6 @@ object OI : SubsystemBase() {
         defaultCommand = rumble(GenericHID.RumbleType.kBothRumble, 0.0)
     }
 
-    private val isEnabled = Trigger { DriverStation.isEnabled() }
     private val reverseDrive =
         if (
             DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
@@ -57,7 +55,7 @@ object OI : SubsystemBase() {
 
     private val driveManager = DriveManager()
 
-    private val hubDistance by DashboardNumber(2.0, "OI")
+    // private val hubDistance by DashboardNumber(2.0, "OI")
 
     /**
      * Use this method to define your trigger->command mappings. Triggers can be created via the
@@ -140,7 +138,7 @@ object OI : SubsystemBase() {
 
         operatorTrigger.whileTrue(
             SequentialCommandGroup(
-                Shooter.Hood.moveToPosition({ desiredHoodPosition }),
+                Shooter.Hood.moveToPosition { desiredHoodPosition },
                 Shooter.Feeder.getJiggyWithIt().alongWith(Shooter.Hood.stabilize()),
             )
         )

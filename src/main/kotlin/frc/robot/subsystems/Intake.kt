@@ -53,6 +53,7 @@ object Intake : SubsystemBase() {
      *
      * @param power (-1, 1) the portion of max speed to run the motor at
      */
+    @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun runAtPower(power: () -> Double): Command =
         runEnd({ motor.set(power()) }, { motor.stopMotor() })
 
@@ -96,10 +97,7 @@ object Intake : SubsystemBase() {
 
         init {
             val motorConfig = SparkMaxConfig()
-            motorConfig
-                .idleMode(SparkBaseConfig.IdleMode.kBrake)
-                // TODO: Tune current limit but Recalc says we need at least 30A
-                .smartCurrentLimit(30)
+            motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(30)
             motor.configure(
                 motorConfig,
                 // The reset mote and persist mode have to do with maintaining
@@ -134,7 +132,8 @@ object Intake : SubsystemBase() {
         @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun runAtkS(): Command = run { motor.setVoltage(controller.feedforward.ks) }
 
-        fun getJiggyWithIt() =
+        @Suppress("MemberVisibilityCanBePrivate", "unused")
+        fun getJiggyWithIt(): Command =
             extend().withTimeout(1.0).andThen(stow().withTimeout(1.0)).repeatedly()
 
         fun extend() = runToPosition(Constants.EXTENDED_POSITION)

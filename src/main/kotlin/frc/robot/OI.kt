@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
 import frc.robot.commands.swerve.DriveManager
 import frc.robot.commands.swerve.TeleopDrive
-import frc.robot.engine.DashboardNumber
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet.trenchDriveTrigger
 import frc.robot.subsystems.Intake
@@ -45,7 +44,6 @@ object OI : SubsystemBase() {
         defaultCommand = rumble(GenericHID.RumbleType.kBothRumble, 0.0)
     }
 
-    private val isEnabled = Trigger { DriverStation.isEnabled() }
     private val reverseDrive
         get() =
             if (
@@ -156,16 +154,16 @@ object OI : SubsystemBase() {
 
         operatorTrigger.whileTrue(
             SequentialCommandGroup(
-                Shooter.Hood.moveToPosition({ desiredHoodPosition }),
+                Shooter.Hood.moveToPosition { desiredHoodPosition },
                 Shooter.Feeder.getJiggyWithIt()
-                    .alongWith(Shooter.Hood.holdPosition({ desiredHoodPosition })),
-                )
+                    .alongWith(Shooter.Hood.holdPosition { desiredHoodPosition }),
+            )
         )
         operatorController
             .button(2)
             .or(operatorController.button(8))
             .and(operatorTrigger.negate())
-            .whileTrue(Shooter.Hood.holdPosition({ desiredHoodPosition }))
+            .whileTrue(Shooter.Hood.holdPosition { desiredHoodPosition })
         //        operatorController.button(4).whileTrue(Shooter.Hood.doRunAtkS())
         //        operatorController.button(3).whileTrue(Shooter.Hood.stabilize())
         //        operatorController.button(6).whileTrue(Shooter.Hood.setDownAndReZero())

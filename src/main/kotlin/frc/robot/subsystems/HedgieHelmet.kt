@@ -12,7 +12,7 @@ fun Vector2.crossesX(origin: Vector2, x: Double): Boolean {
 }
 
 object HedgieHelmet {
-    val trenchDriveTrigger = Trigger { willCollideWithTrench() }
+    val trenchDriveTrigger = Trigger { willCollideWithTrench() && !Vision.cameras.isEmpty() }
 
     private fun willCollideWithTrench(): Boolean {
         val robotVelocityVector: Vector2 = Drivetrain.robotVelocity.vector2 * 2.0

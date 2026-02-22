@@ -115,26 +115,18 @@ object Shooter : SubsystemBase() {
      * @param powerFun (-1, 1) the portion of max speed to run the motor at
      */
     fun runAtPower(powerFun: () -> Double): Command =
-        runEnd(
-            {
-                println(powerFun())
-                motor.set(powerFun())
-            },
-            { motor.stopMotor() },
-        )
+        runEnd({ motor.set(powerFun()) }, { motor.stopMotor() })
 
     object Hood : SubsystemBase() {
         object Constants {
             const val MOTOR_ID = 18
             const val ENCODER_ID = 1
 
-            val pidConstants = PIDConstants(2.5, 0.2, 0.1)
+            val pidConstants = PIDConstants(2.5, 0.4, 0.01)
             val ffConstants = ArmFeedForwardConstants(0.45, 0.1, 0.0)
 
             val DOWN_POSITION = 0.0.radians
-            val TOP_POSITION =
-                MathUtil.inputModulus(absEncoder.get() - absoluteEncoderOffset, -PI, PI).radians
-            val kS by DashboardNumber(0.1, "Shooter/Hood/Constants")
+            val TOP_POSITION = 2.7.radians
         }
 
         private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
@@ -180,8 +172,6 @@ object Shooter : SubsystemBase() {
             motorFollower.stopMotor()
         }
 
-        fun doRunAtkS(): Command = run { motor.setVoltage(Constants.kS) }
-
         @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun holdPosition(positionToHold: AngleUnit): Command =
             startRun({ controller.setpoint = positionToHold }) {
@@ -190,6 +180,7 @@ object Shooter : SubsystemBase() {
 
         @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun holdPosition(positionToHold: () -> AngleUnit): Command = run {
+            println(positionToHold)
             controller.setpoint = positionToHold()
             motor.setVoltage(controller.calculate(position))
         }

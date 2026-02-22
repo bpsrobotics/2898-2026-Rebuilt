@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
+import edu.wpi.first.wpilibj2.command.RunCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick
@@ -45,15 +46,16 @@ object OI : SubsystemBase() {
     }
 
     private val isEnabled = Trigger { DriverStation.isEnabled() }
-    private val reverseDrive =
-        if (
-            DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
-                DriverStation.Alliance.Red
-        ) {
-            -1.0
-        } else {
-            1.0
-        }
+    private val reverseDrive
+        get() =
+            if (
+                DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
+                    DriverStation.Alliance.Red
+            ) {
+                1.0
+            } else {
+                -1.0
+            }
 
     private val driveManager = DriveManager()
 
@@ -106,44 +108,52 @@ object OI : SubsystemBase() {
 
         trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.seconds))
 
-        // Shooter
-        //        operatorController
-        //            .axisLessThan(operatorController.throttleChannel, 0.5)
-        //            .whileTrue(Shooter.runAtPower { (0.5 - operatorController.throttle) * (2 / 3)
-        // })
+        Shooter
         operatorController
             .axisLessThan(operatorController.throttleChannel, 0.5)
-            .whileTrue(Shooter.runAtPower(1.0))
+            .whileTrue(Shooter.runAtPower { (1.0 - operatorController.throttle * 2) / 3 })
+        // (0.5 - operatorController.throttle) * (2 / 3)
+        //        operatorController
+        //            .axisLessThan(operatorController.throttleChannel, 0.5)
+        //            .whileTrue(Shooter.runAtPower(1.0))
 
-        var desiredHoodPosition = 3.0.radians
+        var desiredHoodPosition = 0.5.radians
         operatorController
             .button(4)
-            .onTrue(
-                runOnce {
+            .whileTrue(
+                RunCommand({
                     desiredHoodPosition =
-                        (desiredHoodPosition.asRadians - 0.1)
+                        (desiredHoodPosition.asRadians - 0.025)
                             .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
                             .radians
-                }
+                    println(desiredHoodPosition)
+                })
             )
 
         operatorController
             .button(6)
-            .onTrue(
-                runOnce {
+            .whileTrue(
+                RunCommand({
                     desiredHoodPosition =
-                        (desiredHoodPosition.asRadians + 0.1)
+                        (desiredHoodPosition.asRadians + 0.025)
                             .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
                             .radians
-                }
+                    println(desiredHoodPosition)
+                })
             )
 
         operatorTrigger.whileTrue(
             SequentialCommandGroup(
                 Shooter.Hood.moveToPosition({ desiredHoodPosition }),
-                Shooter.Feeder.getJiggyWithIt().alongWith(Shooter.Hood.stabilize()),
+                Shooter.Feeder.getJiggyWithIt()
+                    .alongWith(Shooter.Hood.holdPosition({ desiredHoodPosition })),
             )
         )
+        operatorController
+            .button(2)
+            .or(operatorController.button(8))
+            .and(operatorTrigger.negate())
+            .whileTrue(Shooter.Hood.holdPosition({ desiredHoodPosition }))
         //        operatorController.button(4).whileTrue(Shooter.Hood.doRunAtkS())
         //        operatorController.button(3).whileTrue(Shooter.Hood.stabilize())
         //        operatorController.button(6).whileTrue(Shooter.Hood.setDownAndReZero())
@@ -157,9 +167,14 @@ object OI : SubsystemBase() {
         highHatBack.whileTrue(Intake.runAtPower(1.0))
 
         highHatForward.whileTrue(Intake.runAtPower(-1.0))
-        operatorController.button(3).whileTrue(Intake.Pivot.runAtkS())
-        //        operatorController.axisGreaterThan(0, 0.75).onTrue(Intake.Pivot.stow())
-        //        operatorController.axisLessThan(0, -0.75).onTrue(Intake.Pivot.extend())
+
+        operatorController.button(5).whileTrue(Intake.Pivot.runAtPower(1.0))
+        operatorController.button(3).whileTrue(Intake.Pivot.runAtPower(-1.0))
+        //
+        // .whileTrue(Intake.Pivot.runAtkS())
+        //        operatorController.axisGreaterThan(0,
+        // 0.75).whileTrue(Intake.Pivot.runAtPower(-1.0))
+        //        operatorController.axisLessThan(0, -0.75).whileTrue(Intake.Pivot.runAtPower(1.0))
 
         // SysID
         SmartDashboard.putData(
@@ -237,7 +252,7 @@ object OI : SubsystemBase() {
     private val rightTrigger
         get() = driverController.rightTriggerAxis
 
-    private val resetGyro: Trigger = driverController.leftBumper()
+    private val resetGyro: Trigger = driverController.rightBumper()
 
     private val highHatForward: Trigger = operatorController.pov(0)
     private val highHatBack: Trigger = operatorController.pov(180)

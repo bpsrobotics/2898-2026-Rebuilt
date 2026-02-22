@@ -109,7 +109,11 @@ object Drivetrain : SubsystemBase() {
                 )
                     return
                 val newPose = camera.getMultiTagPoseWithFallback(result) ?: return
-                addVisionMeasurement(newPose.toPose2d(), result.timestampSeconds)
+                addVisionMeasurement(
+                    newPose.toPose2d(),
+                    result.timestampSeconds,
+                    DriverStation.isTeleopEnabled(),
+                )
             },
         )
         setVisionMeasurementStdDevs(3.0, 4.0, 5.0)
@@ -299,8 +303,17 @@ object Drivetrain : SubsystemBase() {
      * @param measurement The pose measurement to add.
      * @param timestamp The timestamp of the pose measurement.
      */
-    private fun addVisionMeasurement(measurement: Pose2d, timestamp: Double) {
-        swerveDrive.addVisionMeasurement(measurement, timestamp)
+    private fun addVisionMeasurement(
+        measurement: Pose2d,
+        timestamp: Double,
+        updateRotation: Boolean = true,
+    ) {
+        if (updateRotation) swerveDrive.addVisionMeasurement(measurement, timestamp)
+        else
+            swerveDrive.addVisionMeasurement(
+                Pose2d(measurement.x, measurement.y, pose.rotation),
+                timestamp,
+            )
     }
 
     /**

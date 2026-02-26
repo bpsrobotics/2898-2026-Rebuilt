@@ -27,6 +27,7 @@ import frc.robot.beaverlib.utils.sysID.BeaverSysIDRoutine
 import frc.robot.engine.DashboardBoolean
 import frc.robot.engine.DashboardNumber
 import frc.robot.engine.FFSendable
+import frc.robot.engine.HedgieSparkMax
 import frc.robot.subsystems.Shooter.Hood.absoluteEncoderOffset
 import kotlin.math.PI
 
@@ -42,8 +43,8 @@ object Shooter : SubsystemBase() {
         val runningSpeed by DashboardNumber(0.0, "Shooter/Constants")
     }
 
-    private val motor = SparkMax(Constants.MOTOR_1_ID, SparkLowLevel.MotorType.kBrushless)
-    private val motorFollower = SparkMax(Constants.MOTOR_2_ID, SparkLowLevel.MotorType.kBrushless)
+    private val motor = HedgieSparkMax(Constants.MOTOR_1_ID, SparkLowLevel.MotorType.kBrushless)
+    private val motorFollower = HedgieSparkMax(Constants.MOTOR_2_ID, SparkLowLevel.MotorType.kBrushless)
 
     private val motor1Controller = PidFF(Constants.motor1PIDConstants, Constants.motor1FFConstants)
 
@@ -77,8 +78,9 @@ object Shooter : SubsystemBase() {
 
         defaultCommand = stop()
 
-        SmartDashboard.putData("Shooter/motor1/PID", motor1Controller)
-        SmartDashboard.putData("Shooter/motor1/FF", FFSendable(motor1Controller.feedforward))
+        SmartDashboard.putData("Shooter/motor/PID", motor1Controller)
+        SmartDashboard.putData("Shooter/motor", motor)
+        SmartDashboard.putData("Shooter/followerMotor", motorFollower)
     }
 
     var motor1Current by DashboardNumber(0.0, "Shooter")
@@ -131,7 +133,7 @@ object Shooter : SubsystemBase() {
             val TOP_POSITION = 2.7.radians
         }
 
-        private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
+        private val motor = HedgieSparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
 
         private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
 
@@ -152,6 +154,7 @@ object Shooter : SubsystemBase() {
             defaultCommand = setDownAndReZero()
 
             SmartDashboard.putData("Shooter/Hood/ArmPID", controller)
+            SmartDashboard.putData("Shooter/Hood/motor", motor)
         }
 
         val position: AngleUnit
@@ -220,7 +223,7 @@ object Shooter : SubsystemBase() {
             val runningSpeed by DashboardNumber(100.0, "Shooter/Feeder/Constants")
         }
 
-        private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
+        private val motor = HedgieSparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
         private val controller = PidFF(Constants.pidConstants, Constants.ffConstants)
 
         init {
@@ -235,6 +238,7 @@ object Shooter : SubsystemBase() {
             defaultCommand = stop()
 
             SmartDashboard.putData("Shooter/Feeder/PidFF", controller)
+            SmartDashboard.putData("Shooter/Feeder/motor", motor)
         }
 
         @Suppress("MemberVisibilityCanBePrivate", "unused")

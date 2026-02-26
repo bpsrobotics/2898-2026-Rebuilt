@@ -20,13 +20,14 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.engine.DashboardNumber
+import frc.robot.engine.HedgieSparkMax
 
 object Intake : SubsystemBase() {
     private object Constants {
         const val MOTOR_ID = 13
     }
 
-    private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
+    private val motor = HedgieSparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
 
     init {
         // Intake motor initialization stuff
@@ -34,11 +35,8 @@ object Intake : SubsystemBase() {
         motorConfig.idleMode(SparkBaseConfig.IdleMode.kCoast).smartCurrentLimit(20).inverted(true)
         motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
         defaultCommand = stop()
-    }
 
-    override fun periodic() {
-        SmartDashboard.putNumber("Intake/motorCurrent", motor.outputCurrent)
-        SmartDashboard.putNumber("Intake motor temperature:", motor.motorTemperature)
+        SmartDashboard.putData("Intake/motor", motor)
     }
 
     /**
@@ -73,11 +71,8 @@ object Intake : SubsystemBase() {
             val EXTENDED_POSITION = 0.803673142114475.radians
         }
 
-        var encoderPosition by DashboardNumber(0.0, "Intake/Pivot")
-        var motorCurrent by DashboardNumber(0.0, "Intake/Pivot")
-
         // Initializing brushless motor with SparkMAX motor controller
-        private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
+        private val motor = HedgieSparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
 
         // Use encoder values for PID tuning
         private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
@@ -90,11 +85,6 @@ object Intake : SubsystemBase() {
                 MathUtil.inputModulus(absEncoder.get() + Constants.ENCODER_OFFSET, -0.5, 0.5)
                     .rotations
 
-        override fun periodic() {
-            encoderPosition = position.asRadians
-            motorCurrent = motor.outputCurrent
-        }
-
         init {
             val motorConfig = SparkMaxConfig()
             motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(30)
@@ -106,6 +96,7 @@ object Intake : SubsystemBase() {
                 PersistMode.kPersistParameters,
             )
             SmartDashboard.putData("Intake/Pivot/ArmPidFF", controller)
+            SmartDashboard.putData("Intake/Pivot/motor", Intake.motor)
 
             // Stabilize the wrist if nothing else is happening
             defaultCommand = stop()

@@ -19,15 +19,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import frc.robot.engine.DashboardNumber
-import frc.robot.engine.HedgieSparkMax
 
 object Intake : SubsystemBase() {
     private object Constants {
         const val MOTOR_ID = 13
     }
 
-    private val motor = HedgieSparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
+    private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
 
     init {
         // Intake motor initialization stuff
@@ -36,7 +34,7 @@ object Intake : SubsystemBase() {
         motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
         defaultCommand = stop()
 
-        SmartDashboard.putData("Intake/motor", motor)
+        // SmartDashboard.putData("Intake/motor", motor)
     }
 
     /**
@@ -72,7 +70,7 @@ object Intake : SubsystemBase() {
         }
 
         // Initializing brushless motor with SparkMAX motor controller
-        private val motor = HedgieSparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
+        private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
 
         // Use encoder values for PID tuning
         private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
@@ -96,7 +94,7 @@ object Intake : SubsystemBase() {
                 PersistMode.kPersistParameters,
             )
             SmartDashboard.putData("Intake/Pivot/ArmPidFF", controller)
-            SmartDashboard.putData("Intake/Pivot/motor", Intake.motor)
+            // SmartDashboard.putData("Intake/Pivot/motor", Intake.motor)
 
             // Stabilize the wrist if nothing else is happening
             defaultCommand = stop()

@@ -1,6 +1,7 @@
 package frc.robot
 
 import beaverlib.utils.Sugar.clamp
+import beaverlib.utils.Units.Angular.RPM
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Time
 import beaverlib.utils.Units.seconds
@@ -121,7 +122,9 @@ object OI : SubsystemBase() {
         /** Shooter */
         operatorController
             .axisLessThan(operatorController.throttleChannel, 0.5)
-            .whileTrue(Shooter.runAtPower { (1.0 - operatorController.throttle * 2) / 3 })
+            .whileTrue(
+                Shooter.runAtSpeed { (6000 * ((1.0 - operatorController.throttle * 2) / 3)).RPM }
+            )
         // (0.5 - operatorController.throttle) * (2 / 3)
         //        operatorController
         //            .axisLessThan(operatorController.throttleChannel, 0.5)
@@ -180,6 +183,8 @@ object OI : SubsystemBase() {
 
         operatorController.button(5).whileTrue(Intake.Pivot.runAtPower(1.0))
         operatorController.button(3).whileTrue(Intake.Pivot.runAtPower(-1.0))
+        operatorController.button(11).whileTrue(Shooter.Hood.runAtDashboardVoltage())
+
         //
         // .whileTrue(Intake.Pivot.runAtkS())
         //        operatorController.axisGreaterThan(0,

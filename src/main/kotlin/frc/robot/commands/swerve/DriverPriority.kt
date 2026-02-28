@@ -5,6 +5,7 @@ enum class DriverPriority {
     TRENCH_ALIGN,
     HUB_ALIGN,
     HUB_DISTANCE,
+    MOVE_TO,
     CARDINAL_ALIGN,
     LOCK,
 }

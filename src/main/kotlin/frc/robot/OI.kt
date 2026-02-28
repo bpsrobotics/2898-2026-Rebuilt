@@ -2,6 +2,7 @@ package frc.robot
 
 import beaverlib.utils.Sugar.clamp
 import beaverlib.utils.Units.Angular.RPM
+import beaverlib.utils.Units.Angular.degrees
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Time
 import beaverlib.utils.Units.seconds
@@ -18,7 +19,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
+import frc.robot.commands.collectShooterAngles
+import frc.robot.commands.swerve.CardinalAlign
 import frc.robot.commands.swerve.DriveManager
+import frc.robot.commands.swerve.LockDrive
 import frc.robot.commands.swerve.TeleopDrive
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet.trenchDriveTrigger
@@ -93,7 +97,7 @@ object OI : SubsystemBase() {
         //
         // driverController.b().debounce(0.2).whileTrue(driveManager.defineDriver(TrenchAlign()))
         //
-        // driverController.x().debounce(0.2).whileTrue(driveManager.defineDriver(LockDrive()))
+        driverController.x().debounce(0.2).whileTrue(driveManager.defineDriver(LockDrive()))
         //        driverController
         //            .y()
         //            .whileTrue(
@@ -106,16 +110,30 @@ object OI : SubsystemBase() {
         //            )
 
         // Note: There is no method to directly get the angle of the POV
-        // val forward = 0.degrees
-        // val step = 45.degrees
-        // driverController.povUp().whileTrue(CardinalAlign { forward })
-        // driverController.povUpRight().whileTrue(CardinalAlign { forward + step })
-        // driverController.povRight().whileTrue(CardinalAlign { forward + step * 2.0 })
-        // driverController.povDownRight().whileTrue(CardinalAlign { forward + step * 3.0 })
-        // driverController.povDown().whileTrue(CardinalAlign { forward + step * 4.0 })
-        // driverController.povDownLeft().whileTrue(CardinalAlign { forward + step * 5.0 })
-        // driverController.povLeft().whileTrue(CardinalAlign { forward + step * 6.0 })
-        // driverController.povUpLeft().whileTrue(CardinalAlign { forward + step * 7.0 })
+        val forward = 0.degrees
+        val step = (-45).degrees
+        driverController.povUp().whileTrue(driveManager.defineDriver(CardinalAlign { forward }))
+        driverController
+            .povUpRight()
+            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step }))
+        driverController
+            .povRight()
+            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step * 2.0 }))
+        driverController
+            .povDownRight()
+            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step * 3.0 }))
+        driverController
+            .povDown()
+            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step * 4.0 }))
+        driverController
+            .povDownLeft()
+            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step * 5.0 }))
+        driverController
+            .povLeft()
+            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step * 6.0 }))
+        driverController
+            .povUpLeft()
+            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step * 7.0 }))
 
         trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.seconds))
 
@@ -201,6 +219,7 @@ object OI : SubsystemBase() {
             Drivetrain.sysIdAngleMotors(),
         )
         SmartDashboard.putData("SysIdCommands/Shooter/Flywheel", Shooter.sysID.fullSysID())
+        SmartDashboard.putData("SysIdCommands/Shooter/HoodAngles", collectShooterAngles())
     }
 
     /**

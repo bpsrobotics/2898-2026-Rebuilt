@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
+import frc.robot.commands.collectShooterAngles
 import frc.robot.commands.swerve.CardinalAlign
 import frc.robot.commands.swerve.DriveManager
 import frc.robot.commands.swerve.LockDrive
@@ -213,6 +214,7 @@ object OI : SubsystemBase() {
             Drivetrain.sysIdAngleMotors(),
         )
         SmartDashboard.putData("SysIdCommands/Shooter/Flywheel", Shooter.sysID.fullSysID())
+        SmartDashboard.putData("SysIdCommands/Shooter/HoodAngles", collectShooterAngles())
     }
 
     /**

@@ -34,6 +34,9 @@ class SparkWrapper(val deviceId: Int, motorType: MotorType, configurer: SparkMax
     val velocity
         get() = (motor?.encoder?.velocity ?: 0.0).RPM
 
+    val outputCurrent
+        get() = (motor?.outputCurrent ?: 0.0)
+
     init {
         config.configurer()
         val motor = SparkMax(deviceId, motorType)

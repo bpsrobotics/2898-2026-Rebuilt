@@ -7,10 +7,7 @@ import beaverlib.utils.Units.Angular.AngleUnit
 import beaverlib.utils.Units.Angular.degrees
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Angular.rotations
-import com.revrobotics.PersistMode
-import com.revrobotics.ResetMode
 import com.revrobotics.spark.SparkLowLevel
-import com.revrobotics.spark.SparkMax
 import com.revrobotics.spark.config.SparkBaseConfig
 import com.revrobotics.spark.config.SparkMaxConfig
 import edu.wpi.first.math.MathUtil
@@ -19,22 +16,25 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import frc.robot.engine.SparkWrapper
 
 object Intake : SubsystemBase() {
     private object Constants {
         const val MOTOR_ID = 13
     }
 
-    private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
+    private val motor =
+        SparkWrapper(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless) {
+            idleMode(SparkBaseConfig.IdleMode.kCoast)
+            smartCurrentLimit(20)
+            inverted(true)
+        }
 
     init {
         // Intake motor initialization stuff
-        val motorConfig = SparkMaxConfig()
-        motorConfig.idleMode(SparkBaseConfig.IdleMode.kCoast).smartCurrentLimit(20).inverted(true)
-        motor.configure(motorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
         defaultCommand = stop()
 
-        // SmartDashboard.putData("Intake/motor", motor)
+        SmartDashboard.putData("Intake/motor", motor)
     }
 
     /**
@@ -70,7 +70,15 @@ object Intake : SubsystemBase() {
         }
 
         // Initializing brushless motor with SparkMAX motor controller
-        private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
+        private val motor =
+            SparkWrapper(
+                Constants.MOTOR_ID,
+                SparkLowLevel.MotorType.kBrushless,
+                {
+                    idleMode(SparkBaseConfig.IdleMode.kBrake)
+                    smartCurrentLimit(30)
+                },
+            )
 
         // Use encoder values for PID tuning
         private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
@@ -85,14 +93,7 @@ object Intake : SubsystemBase() {
 
         init {
             val motorConfig = SparkMaxConfig()
-            motorConfig.idleMode(SparkBaseConfig.IdleMode.kBrake).smartCurrentLimit(30)
-            motor.configure(
-                motorConfig,
-                // The reset mote and persist mode have to do with maintaining
-                // settings after a power cycle.
-                ResetMode.kResetSafeParameters,
-                PersistMode.kPersistParameters,
-            )
+
             SmartDashboard.putData("Intake/Pivot/ArmPidFF", controller)
             // SmartDashboard.putData("Intake/Pivot/motor", Intake.motor)
 

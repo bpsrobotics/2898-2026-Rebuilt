@@ -1,11 +1,13 @@
 package frc.robot
 
+import beaverlib.fieldmap.FieldMapREBUILTWelded
 import beaverlib.utils.Sugar.clamp
 import beaverlib.utils.Units.Angular.RPM
 import beaverlib.utils.Units.Angular.degrees
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Time
 import beaverlib.utils.Units.seconds
+import beaverlib.utils.geometry.vector2
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.GenericHID
@@ -24,6 +26,7 @@ import frc.robot.commands.swerve.CardinalAlign
 import frc.robot.commands.swerve.DriveManager
 import frc.robot.commands.swerve.LockDrive
 import frc.robot.commands.swerve.TeleopDrive
+import frc.robot.engine.DashboardNumber
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet.trenchDriveTrigger
 import frc.robot.subsystems.Intake
@@ -63,6 +66,8 @@ object OI : SubsystemBase() {
     private val driveManager = DriveManager()
 
     // private val hubDistance by DashboardNumber(2.0, "OI")
+    val desiredHoodAngle by DashboardNumber(0.0, "OI", true)
+    val desiredRPM by DashboardNumber(6000.0, "OI", true)
 
     /**
      * Use this method to define your trigger->command mappings. Triggers can be created via the
@@ -138,11 +143,20 @@ object OI : SubsystemBase() {
         trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.seconds))
 
         /** Shooter */
+        //        operatorController
+        //            .axisLessThan(operatorController.throttleChannel, 0.5)
+        //            .whileTrue(
+        //                Shooter.runAtSpeed { (6000 * ((1.0 - operatorController.throttle * 2) /
+        // 3)).RPM }
+        //            )
         operatorController
             .axisLessThan(operatorController.throttleChannel, 0.5)
             .whileTrue(
-                Shooter.runAtSpeed { (6000 * ((1.0 - operatorController.throttle * 2) / 3)).RPM }
+                Shooter.runAtSpeed {
+                    (desiredRPM * ((1.0 - operatorController.throttle * 2) / 3)).RPM
+                }
             )
+
         // (0.5 - operatorController.throttle) * (2 / 3)
         //        operatorController
         //            .axisLessThan(operatorController.throttleChannel, 0.5)
@@ -175,9 +189,9 @@ object OI : SubsystemBase() {
 
         operatorTrigger.whileTrue(
             SequentialCommandGroup(
-                Shooter.Hood.moveToPosition { desiredHoodPosition },
+                Shooter.Hood.moveToPosition { desiredHoodAngle.radians },
                 Shooter.Feeder.getJiggyWithIt()
-                    .alongWith(Shooter.Hood.holdPosition { desiredHoodPosition }),
+                    .alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians }),
             )
         )
         operatorController
@@ -192,7 +206,15 @@ object OI : SubsystemBase() {
         driverController
             .a()
             .and(trenchDriveTrigger.negate())
-            .whileTrue(Shooter.Hood.moveToPosition(0.1.radians))
+            .whileTrue(
+                Shooter.Hood.moveToPosition {
+                    Shooter.Hood.Constants.kinematics
+                        .calculate(
+                            Drivetrain.pose.vector2.distance(FieldMapREBUILTWelded.teamHub.center)
+                        )
+                        .radians
+                }
+            )
 
         /** Intake */
         highHatBack.whileTrue(Intake.runAtPower(1.0))
@@ -201,6 +223,7 @@ object OI : SubsystemBase() {
 
         operatorController.button(5).whileTrue(Intake.Pivot.runAtPower(1.0))
         operatorController.button(3).whileTrue(Intake.Pivot.runAtPower(-1.0))
+
         operatorController.button(11).whileTrue(Shooter.Hood.runAtDashboardVoltage())
 
         //
@@ -218,7 +241,7 @@ object OI : SubsystemBase() {
             "SysIdCommands/Drivetrain/AngleMotors",
             Drivetrain.sysIdAngleMotors(),
         )
-        SmartDashboard.putData("SysIdCommands/Shooter/Flywheel", Shooter.sysID.fullSysID())
+        // SmartDashboard.putData("SysIdCommands/Shooter/Flywheel", Shooter.sysID.fullSysID())
         SmartDashboard.putData("SysIdCommands/Shooter/HoodAngles", collectShooterAngles())
     }
 

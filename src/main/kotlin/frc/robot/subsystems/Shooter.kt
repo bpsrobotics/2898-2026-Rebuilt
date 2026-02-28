@@ -36,9 +36,9 @@ object Shooter : SubsystemBase() {
         const val MOTOR_1_ID = 16
         const val MOTOR_2_ID = 17
 
-        val motor1PIDConstants = PIDConstants(0.001 * 12, 0.00001 * 12, 0.0001 * 12)
+        val motor1PIDConstants = PIDConstants(0.012, 0.00032, 0.0012 * 12)
 
-        val motor1FFConstants = SimpleMotorFeedForwardConstants(0.047 * 12, 0.00004006333 * 12, 0.0)
+        val motor1FFConstants = SimpleMotorFeedForwardConstants(0.564, 0.00078075996, 0.0)
 
         val runningSpeed by DashboardNumber(0.0, "Shooter/Constants")
     }

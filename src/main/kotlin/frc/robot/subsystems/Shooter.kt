@@ -5,15 +5,13 @@ import beaverlib.controls.ArmPidFF
 import beaverlib.controls.PIDConstants
 import beaverlib.controls.PidFF
 import beaverlib.controls.SimpleMotorFeedForwardConstants
+import beaverlib.utils.Sugar.clamp
 import beaverlib.utils.Units.Angular.AngleUnit
 import beaverlib.utils.Units.Angular.AngularVelocity
 import beaverlib.utils.Units.Angular.asRPM
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Angular.rotations
-import com.revrobotics.PersistMode
-import com.revrobotics.ResetMode
 import com.revrobotics.spark.SparkLowLevel
-import com.revrobotics.spark.SparkMax
 import com.revrobotics.spark.config.SparkBaseConfig
 import com.revrobotics.spark.config.SparkMaxConfig
 import edu.wpi.first.math.MathUtil
@@ -24,10 +22,11 @@ import edu.wpi.first.wpilibj2.command.Commands.waitUntil
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.WaitCommand
-import frc.robot.beaverlib.utils.sysID.BeaverSysIDMotor
-import frc.robot.beaverlib.utils.sysID.BeaverSysIDRoutine
+import frc.engine.utils.Polynomial
 import frc.robot.engine.DashboardBoolean
 import frc.robot.engine.DashboardNumber
+import frc.robot.engine.SparkWrapper
+import frc.robot.subsystems.Shooter.Constants.MOTOR_1_ID
 import frc.robot.subsystems.Shooter.Hood.absoluteEncoderOffset
 import kotlin.math.PI
 
@@ -36,51 +35,32 @@ object Shooter : SubsystemBase() {
         const val MOTOR_1_ID = 16
         const val MOTOR_2_ID = 17
 
-        val motor1PIDConstants = PIDConstants(0.012, 0.00032, 0.0012 * 12)
+        val motor1PIDConstants = PIDConstants(0.005, 0.00032, 0.0012)
 
-        val motor1FFConstants = SimpleMotorFeedForwardConstants(0.564, 0.00078075996, 0.0)
+        val motor1FFConstants = SimpleMotorFeedForwardConstants(0.564, 0.00098075996, 0.0)
 
         val runningSpeed by DashboardNumber(0.0, "Shooter/Constants")
     }
 
-    private val motor = SparkMax(Constants.MOTOR_1_ID, SparkLowLevel.MotorType.kBrushless)
-    private val motorFollower = SparkMax(Constants.MOTOR_2_ID, SparkLowLevel.MotorType.kBrushless)
+    private val motor =
+        SparkWrapper(Constants.MOTOR_1_ID, SparkLowLevel.MotorType.kBrushless) {
+            idleMode(SparkBaseConfig.IdleMode.kCoast)
+            smartCurrentLimit(20)
+            inverted(true)
+            encoder.velocityConversionFactor(2.0)
+        }
+    private val motorFollower =
+        SparkWrapper(Constants.MOTOR_2_ID, SparkLowLevel.MotorType.kBrushless) {
+            apply(motor.config)
+            follow(MOTOR_1_ID, true)
+        }
 
     private val motor1Controller = PidFF(Constants.motor1PIDConstants, Constants.motor1FFConstants)
 
     init {
-        val shooterConfig = SparkMaxConfig()
-        shooterConfig
-            .idleMode(SparkBaseConfig.IdleMode.kCoast)
-            .smartCurrentLimit(20)
-            .inverted(true)
-            .encoder
-            .velocityConversionFactor(2.0)
-
-        val followerConfig = SparkMaxConfig()
-        followerConfig
-            .idleMode(SparkBaseConfig.IdleMode.kCoast)
-            .smartCurrentLimit(20)
-            .follow(motor, true)
-            .encoder
-            .velocityConversionFactor(2.0)
-
-        motor.configure(
-            shooterConfig,
-            ResetMode.kResetSafeParameters,
-            PersistMode.kPersistParameters,
-        )
-        motorFollower.configure(
-            followerConfig,
-            ResetMode.kResetSafeParameters,
-            PersistMode.kPersistParameters,
-        )
-
         defaultCommand = stop()
 
         SmartDashboard.putData("Shooter/motor/PID", motor1Controller)
-        // SmartDashboard.putData("Shooter/motor", motor)
-        // SmartDashboard.putData("Shooter/followerMotor", motorFollower)
     }
 
     var motor1Velocity by DashboardNumber(0.0, "Shooter")
@@ -89,14 +69,11 @@ object Shooter : SubsystemBase() {
     var motor1Current by DashboardNumber(0.0, "Shooter")
     var motor2Current by DashboardNumber(0.0, "Shooter")
 
-    override fun periodic() {
-        motor1Velocity = motor.encoder.velocity
-        motor1Current = motor.outputCurrent
-        motor2Current = motorFollower.outputCurrent
-    }
+    override fun periodic() {}
 
-    val sysID: BeaverSysIDRoutine =
-        BeaverSysIDRoutine(this, BeaverSysIDMotor("ShooterMotor", motor))
+    /*val sysID: BeaverSysIDRoutine =
+    BeaverSysIDRoutine(this, BeaverSysIDMotor("ShooterMotor", motor))*/
+    var motorVoltage: Double by DashboardNumber(0.0, "Shooter")
 
     @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun stop(): Command = runOnce {
@@ -105,7 +82,10 @@ object Shooter : SubsystemBase() {
     }
 
     @Suppress("MemberVisibilityCanBePrivate", "unused")
-    fun stabilize(): Command = run { motor.set(motor1Controller.calculate(motor.encoder.velocity)) }
+    fun stabilize(): Command = run {
+        motorVoltage = motor1Controller.calculate(motor.velocity.asRPM)
+        motor.set(motor1Controller.calculate(motor.velocity.asRPM).clamp(0.0, 12.0))
+    }
 
     @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun waitSpeed(): Command = waitUntil { motor1Controller.atSetpoint() }
@@ -117,7 +97,8 @@ object Shooter : SubsystemBase() {
     @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun runAtSpeed(speedLambda: () -> AngularVelocity): Command = run {
         motor1Controller.setpoint = speedLambda().asRPM
-        motor.setVoltage(motor1Controller.calculate(motor.encoder.velocity))
+        motorVoltage = motor1Controller.calculate(motor.velocity.asRPM)
+        motor.setVoltage(motor1Controller.calculate(motor.velocity.asRPM).clamp(0.0, 12.0))
     }
 
     val desiredSpeed: Double by DashboardNumber(0.0, "Shooter")
@@ -147,7 +128,11 @@ object Shooter : SubsystemBase() {
             val TOP_POSITION = 2.7.radians
         }
 
-        private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
+        private val motor =
+            SparkWrapper(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless) {
+                idleMode(SparkBaseConfig.IdleMode.kCoast)
+                smartCurrentLimit(30)
+            }
 
         private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
 
@@ -157,15 +142,11 @@ object Shooter : SubsystemBase() {
 
         init {
             val motorConfig = SparkMaxConfig()
-            motorConfig.idleMode(SparkBaseConfig.IdleMode.kCoast).smartCurrentLimit(30)
-            motor.configure(
-                motorConfig,
-                ResetMode.kResetSafeParameters,
-                PersistMode.kPersistParameters,
-            )
+
             absoluteEncoderOffset = absEncoder.get()
 
             defaultCommand = setDownAndReZero()
+            controller.pid.setTolerance(0.02)
 
             SmartDashboard.putData("Shooter/Hood/ArmPID", controller)
             // SmartDashboard.putData("Shooter/Hood/motor", motor)
@@ -248,18 +229,14 @@ object Shooter : SubsystemBase() {
             val runningSpeed by DashboardNumber(100.0, "Shooter/Feeder/Constants")
         }
 
-        private val motor = SparkMax(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless)
+        private val motor =
+            SparkWrapper(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless) {
+                idleMode(SparkBaseConfig.IdleMode.kCoast)
+                smartCurrentLimit(30)
+            }
         private val controller = PidFF(Constants.pidConstants, Constants.ffConstants)
 
         init {
-            val motorConfig = SparkMaxConfig()
-            motorConfig.idleMode(SparkBaseConfig.IdleMode.kCoast).smartCurrentLimit(30)
-            motor.configure(
-                motorConfig,
-                ResetMode.kResetSafeParameters,
-                PersistMode.kPersistParameters,
-            )
-
             defaultCommand = stop()
 
             SmartDashboard.putData("Shooter/Feeder/PidFF", controller)
@@ -275,7 +252,7 @@ object Shooter : SubsystemBase() {
         @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun runAtSpeed(): Command =
             startRun({ controller.setpoint = Constants.runningSpeed }) {
-                motor.set(controller.calculate(motor.encoder.velocity))
+                motor.set(controller.calculate(motor.velocity.asRPM))
             }
 
         fun getJiggyWithIt(): Command =
@@ -284,11 +261,5 @@ object Shooter : SubsystemBase() {
                     runAtPower(-1.0).withTimeout(0.5),
                 )
                 .repeatedly()
-
-        var motorCurrent by DashboardNumber(0.0, "Shooter/Indexer")
-
-        override fun periodic() {
-            motorCurrent = motor.outputCurrent
-        }
     }
 }

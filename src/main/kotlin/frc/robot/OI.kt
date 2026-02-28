@@ -3,6 +3,7 @@ package frc.robot
 import beaverlib.fieldmap.FieldMapREBUILTWelded
 import beaverlib.utils.Sugar.clamp
 import beaverlib.utils.Units.Angular.RPM
+import beaverlib.utils.Units.Angular.degrees
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Linear.meters
 import beaverlib.utils.Units.Time
@@ -21,11 +22,13 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
+import frc.robot.commands.swerve.CardinalAlign
 import frc.robot.commands.swerve.DriveManager
 import frc.robot.commands.swerve.HubAlign
 import frc.robot.commands.swerve.HubDistanceController
 import frc.robot.commands.swerve.LockDrive
 import frc.robot.commands.swerve.TeleopDrive
+import frc.robot.commands.swerve.TrenchAlign
 import frc.robot.engine.DashboardNumber
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet.trenchDriveTrigger
@@ -264,7 +267,7 @@ object OI : SubsystemBase() {
             Drivetrain.sysIdAngleMotors(),
         )
         // SmartDashboard.putData("SysIdCommands/Shooter/Flywheel", Shooter.sysID.fullSysID())
-        SmartDashboard.putData("SysIdCommands/Shooter/HoodAngles", collectShooterAngles())
+        // SmartDashboard.putData("SysIdCommands/Shooter/HoodAngles", collectShooterAngles())
     }
 
     /**

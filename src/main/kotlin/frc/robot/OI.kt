@@ -4,6 +4,7 @@ import beaverlib.fieldmap.FieldMapREBUILTWelded
 import beaverlib.utils.Sugar.clamp
 import beaverlib.utils.Units.Angular.RPM
 import beaverlib.utils.Units.Angular.radians
+import beaverlib.utils.Units.Linear.meters
 import beaverlib.utils.Units.Time
 import beaverlib.utils.Units.seconds
 import beaverlib.utils.geometry.vector2
@@ -21,7 +22,11 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.OI.process
 import frc.robot.commands.swerve.DriveManager
+import frc.robot.commands.swerve.HubAlign
+import frc.robot.commands.swerve.HubDistanceController
+import frc.robot.commands.swerve.LockDrive
 import frc.robot.commands.swerve.TeleopDrive
+import frc.robot.commands.swerve.TrenchAlign
 import frc.robot.engine.DashboardNumber
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet.trenchDriveTrigger
@@ -62,8 +67,9 @@ object OI : SubsystemBase() {
     private val driveManager = DriveManager()
 
     // private val hubDistance by DashboardNumber(2.0, "OI")
-    val desiredHoodAngle by DashboardNumber(0.0, "OI", true)
-    val desiredRPM by DashboardNumber(6000.0, "OI", true)
+    val desiredHoodAngle by DashboardNumber(1.3, "OI", true)
+    val desiredRPM by DashboardNumber(4000.0, "OI", true)
+    val desiredShooterPower by DashboardNumber(1.0, "OI", true)
 
     /**
      * Use this method to define your trigger->command mappings. Triggers can be created via the
@@ -94,21 +100,35 @@ object OI : SubsystemBase() {
         //        driverController
         //            .a()
         //            .or(driverController.y())
-        //            .whileTrue(driveManager.defineDriver(HubAlign()))
-        //
-        // driverController.b().debounce(0.2).whileTrue(driveManager.defineDriver(TrenchAlign()))
-        //
-        // driverController.x().debounce(0.2).whileTrue(driveManager.defineDriver(LockDrive()))
-        //        driverController
-        //            .y()
-        //            .whileTrue(
-        //                driveManager.defineDriver(
-        //                    HubDistanceController(
-        //                        desiredDistance = { hubDistance.meters },
-        //                        moveAround = { translationX },
-        //                    )
-        //                )
-        //            )
+        driverController
+            .a()
+            .or(driverController.y())
+            .whileTrue(driveManager.defineDriver(HubAlign()))
+            .and(trenchDriveTrigger.negate())
+            .whileTrue(
+                Shooter.Hood.holdPosition {
+                    Shooter.Hood.Constants.kinematics
+                        .calculate(
+                            Drivetrain.pose.vector2.distance(FieldMapREBUILTWelded.teamHub.center)
+                        )
+                        .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
+                        .radians
+                }
+            )
+
+        driverController.b().debounce(0.2).whileTrue(driveManager.defineDriver(TrenchAlign()))
+
+        driverController.x().debounce(0.2).whileTrue(driveManager.defineDriver(LockDrive()))
+        driverController
+            .y()
+            .whileTrue(
+                driveManager.defineDriver(
+                    HubDistanceController(
+                        desiredDistance = { 2.0.meters },
+                        moveAround = { translationX },
+                    )
+                )
+            )
 
         // Note: There is no method to directly get the angle of the POV
         // val forward = 0.degrees
@@ -169,13 +189,18 @@ object OI : SubsystemBase() {
                 })
             )
 
-        operatorTrigger.whileTrue(
-            SequentialCommandGroup(
-                Shooter.Hood.moveToPosition { desiredHoodAngle.radians },
-                Shooter.Feeder.getJiggyWithIt()
-                    .alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians }),
+        operatorTrigger
+            .and(driverController.a().negate())
+            .whileTrue(
+                SequentialCommandGroup(
+                    Shooter.Hood.moveToPosition { desiredHoodAngle.radians },
+                    Shooter.Feeder.getJiggyWithIt()
+                        .alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians }),
+                )
             )
-        )
+        operatorTrigger
+            .and(driverController.a())
+            .whileTrue(SequentialCommandGroup(Shooter.Feeder.getJiggyWithIt()))
         operatorController
             .button(2)
             .or(operatorController.button(8))
@@ -185,28 +210,15 @@ object OI : SubsystemBase() {
         //        operatorController.button(3).whileTrue(Shooter.Hood.stabilize())
         //        operatorController.button(6).whileTrue(Shooter.Hood.setDownAndReZero())
 
-        driverController
-            .a()
-            .and(trenchDriveTrigger.negate())
-            .whileTrue(
-                Shooter.Hood.moveToPosition {
-                    Shooter.Hood.Constants.kinematics
-                        .calculate(
-                            Drivetrain.pose.vector2.distance(FieldMapREBUILTWelded.teamHub.center)
-                        )
-                        .radians
-                }
-            )
-
         /** Intake */
         highHatBack.whileTrue(Intake.runAtPower(1.0))
-
         highHatForward.whileTrue(Intake.runAtPower(-1.0))
 
         operatorController.button(5).whileTrue(Intake.Pivot.runAtPower(1.0))
         operatorController.button(3).whileTrue(Intake.Pivot.runAtPower(-1.0))
 
         operatorController.button(11).whileTrue(Shooter.Hood.runAtDashboardVoltage())
+        operatorController.button(12).whileTrue(Shooter.runAtPower { desiredShooterPower })
 
         //
         // .whileTrue(Intake.Pivot.runAtkS())

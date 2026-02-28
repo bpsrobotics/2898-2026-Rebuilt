@@ -1,10 +1,12 @@
 package frc.robot.subsystems
 
+import beaverlib.fieldmap.FieldMapREBUILTWelded
 import beaverlib.utils.Units.Angular.asAngleUnit
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Angular.radiansPerSecond
 import beaverlib.utils.Units.Linear.feetPerSecond
 import beaverlib.utils.Units.Linear.inches
+import beaverlib.utils.geometry.vector2
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Pose3d
@@ -24,6 +26,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
+import frc.robot.engine.DashboardNumber
 import java.io.File
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.PI
@@ -58,6 +61,7 @@ object Drivetrain : SubsystemBase() {
         // val BUMPER_WIDTH = 35.inches
     }
 
+    var distToHub: Double by DashboardNumber(0.0, "Odometry")
     private val swerveDrive: SwerveDrive
 
     /** The maximum speed of the swerve drive */
@@ -108,15 +112,24 @@ object Drivetrain : SubsystemBase() {
                     !result.multitagResult.isPresent && (result.targets.first().poseAmbiguity > 0.3)
                 )
                     return
-                val newPose = camera.getMultiTagPoseWithFallback(result) ?: return
-                addVisionMeasurement(
-                    newPose.toPose2d(),
-                    result.timestampSeconds,
-                    DriverStation.isTeleopEnabled(),
-                )
+                val newPose = camera.getMultiTagPoseWithFallback(result)?.toPose2d() ?: return
+                addVisionMeasurement(newPose, result.timestampSeconds, true)
             },
         )
         setVisionMeasurementStdDevs(3.0, 4.0, 5.0)
+
+        if (
+            DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
+                DriverStation.Alliance.Red
+        ) {
+            resetOdometry(
+                Pose2d(
+                    FieldMapREBUILTWelded.FieldLength.asMeters,
+                    FieldMapREBUILTWelded.FieldHeight.asMeters,
+                    Rotation2d(PI),
+                )
+            )
+        }
         // setupPathPlanner()
 
         //        targetPoseProvider.initialize()
@@ -127,12 +140,17 @@ object Drivetrain : SubsystemBase() {
 
     override fun periodic() {
         posePublisher.set(pose)
+        distToHub = pose.vector2.distance(FieldMapREBUILTWelded.teamHub.center)
         swerveStatePublisher.set(swerveDrive.states)
         //        targetPosePublisher.set(targetPoseProvider.getPose())
         Vision.setAllCameraReferences(Pose3d(pose))
         SmartDashboard.putNumber("Odometry/X", pose.x)
         SmartDashboard.putNumber("Odometry/Y", pose.y)
         SmartDashboard.putNumber("Odometry/HEADING", pose.rotation.radians)
+        SmartDashboard.putString(
+            "Odometry/FieldPos",
+            FieldMapREBUILTWelded.getPoseAllianceArea(pose).toString(),
+        )
     }
 
     fun getAlliance(): DriverStation.Alliance =

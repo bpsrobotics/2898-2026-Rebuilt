@@ -135,7 +135,8 @@ class SparkWrapper(val deviceId: Int, motorType: MotorType, configurer: SparkMax
         return result.joinToString()
     }
 
-    override fun initSendable(builder: SendableBuilder) {
+    override fun initSendable(builder: SendableBuilder?) {
+        if (builder == null) return
         builder.setSmartDashboardType("SparkWrapper")
         builder.addDoubleProperty("position", { motor?.encoder?.position ?: Double.NaN }, null)
         builder.addDoubleProperty("velocity", { motor?.encoder?.velocity ?: Double.NaN }, null)
@@ -155,12 +156,12 @@ class SparkWrapper(val deviceId: Int, motorType: MotorType, configurer: SparkMax
         )
         builder.addStringProperty(
             "warnings",
-            { motor?.warnings?.let { stringifyWarnings(it) } },
+            { motor?.warnings?.let { stringifyWarnings(it) } ?: "NotPresent" },
             null,
         )
         builder.addStringProperty(
             "stickyWarnings",
-            { motor?.stickyWarnings?.let { stringifyWarnings(it) } },
+            { motor?.stickyWarnings?.let { stringifyWarnings(it) } ?: "NotPresent" },
             null,
         )
         builder.addBooleanProperty(

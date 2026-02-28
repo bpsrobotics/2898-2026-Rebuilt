@@ -13,7 +13,6 @@ import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Angular.rotations
 import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.config.SparkBaseConfig
-import com.revrobotics.spark.config.SparkMaxConfig
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -35,9 +34,9 @@ object Shooter : SubsystemBase() {
         const val MOTOR_1_ID = 16
         const val MOTOR_2_ID = 17
 
-        val motor1PIDConstants = PIDConstants(0.005, 0.00032, 0.0012)
+        val motor1PIDConstants = PIDConstants(0.005, 0.0, 0.0)
 
-        val motor1FFConstants = SimpleMotorFeedForwardConstants(0.564, 0.00098075996, 0.0)
+        val motor1FFConstants = SimpleMotorFeedForwardConstants(0.3, 0.00110075996, 0.0)
 
         val runningSpeed by DashboardNumber(0.0, "Shooter/Constants")
     }
@@ -114,7 +113,7 @@ object Shooter : SubsystemBase() {
      */
     @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun runAtPower(powerFun: () -> Double): Command =
-        runEnd({ motor.set(powerFun()) }, { motor.stopMotor() })
+        runEnd({ motor.setVoltage(powerFun()) }, { motor.stopMotor() })
 
     object Hood : SubsystemBase() {
         object Constants {
@@ -143,8 +142,6 @@ object Shooter : SubsystemBase() {
         var absoluteEncoderOffset = 0.4060916601522915
 
         init {
-            val motorConfig = SparkMaxConfig()
-
             absoluteEncoderOffset = absEncoder.get()
 
             defaultCommand = setDownAndReZero()

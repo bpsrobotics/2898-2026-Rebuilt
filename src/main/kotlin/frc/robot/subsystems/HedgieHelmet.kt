@@ -15,9 +15,9 @@ object HedgieHelmet {
     val trenchDriveTrigger = Trigger { willCollideWithTrench() && !Vision.cameras.isEmpty() }
 
     private fun willCollideWithTrench(): Boolean {
-        val robotVelocityVector: Vector2 = Drivetrain.robotVelocity.vector2 * 2.0
+        val robotVelocityVector: Vector2 = Drivetrain.robotVelocity.vector2 * 0.2
         val robotPoseVector: Vector2 = Drivetrain.pose.vector2
-        val robotWidthVector = Vector2(Drivetrain.Constants.ROBOT_WIDTH.asMeters, 0.0)
+        val robotWidthVector = Vector2(Drivetrain.Constants.ROBOT_WIDTH.asMeters / 2, 0.0)
 
         for (area in
             arrayOf(

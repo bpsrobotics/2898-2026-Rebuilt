@@ -3,6 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot
 
+import com.ctre.phoenix6.SignalLogger
 import frc.robot.OI.configureBindings
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet
@@ -24,6 +25,8 @@ class RobotContainer {
 
     /** The container for the robot. Contains subsystems, OI devices, and commands. */
     init {
+        SignalLogger.stop()
+
         initializeObjects()
 
         Autos.addAutos()

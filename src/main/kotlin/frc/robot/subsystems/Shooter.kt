@@ -126,6 +126,8 @@ object Shooter : SubsystemBase() {
 
             val DOWN_POSITION = 0.0.radians
             val TOP_POSITION = 2.7.radians
+
+            val kinematics = Polynomial(0.0769534, -0.645265, 1.99822, -0.691235)
         }
 
         private val motor =

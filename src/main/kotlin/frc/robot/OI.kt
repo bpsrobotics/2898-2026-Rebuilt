@@ -1,10 +1,12 @@
 package frc.robot
 
+import beaverlib.fieldmap.FieldMapREBUILTWelded
 import beaverlib.utils.Sugar.clamp
 import beaverlib.utils.Units.Angular.RPM
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Time
 import beaverlib.utils.Units.seconds
+import beaverlib.utils.geometry.vector2
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.GenericHID
@@ -186,7 +188,15 @@ object OI : SubsystemBase() {
         driverController
             .a()
             .and(trenchDriveTrigger.negate())
-            .whileTrue(Shooter.Hood.moveToPosition(0.1.radians))
+            .whileTrue(
+                Shooter.Hood.moveToPosition {
+                    Shooter.Hood.Constants.kinematics
+                        .calculate(
+                            Drivetrain.pose.vector2.distance(FieldMapREBUILTWelded.teamHub.center)
+                        )
+                        .radians
+                }
+            )
 
         /** Intake */
         highHatBack.whileTrue(Intake.runAtPower(1.0))

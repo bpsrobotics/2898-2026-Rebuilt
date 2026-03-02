@@ -4,7 +4,8 @@
 package frc.robot
 
 import com.ctre.phoenix6.SignalLogger
-import frc.robot.OI.configureBindings
+import frc.robot.OI.DriverAndOperatorBindings
+import frc.robot.OI.OI
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet
 import frc.robot.subsystems.Intake
@@ -31,7 +32,7 @@ class RobotContainer {
 
         Autos.addAutos()
 
-        configureBindings()
+        OI.DriverAndOperatorBindings()
     }
 
     /**

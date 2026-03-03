@@ -13,6 +13,7 @@ import beaverlib.utils.Units.Linear.metersPerSecond
 import beaverlib.utils.Units.Linear.metersPerSecondSquared
 import beaverlib.utils.Units.lb
 import com.pathplanner.lib.auto.AutoBuilder
+import com.pathplanner.lib.auto.NamedCommands
 import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.RobotConfig
 import com.pathplanner.lib.controllers.PPHolonomicDriveController
@@ -28,9 +29,51 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import frc.robot.subsystems.Drivetrain
+import frc.robot.subsystems.Intake
+import frc.robot.subsystems.Shooter
 import kotlin.math.PI
 
 object Autos {
+    init {
+        // Register commands
+
+        // Spins the shooter up to speed
+        NamedCommands.registerCommand(
+            "SpinUpShooter",
+            Shooter.runAtSpeed()
+        )
+
+        // Wait until shooter is up to speed, does not spin it up
+        NamedCommands.registerCommand(
+            "WaitForShooter",
+            Shooter.waitSpeed()
+        )
+
+        // Lowers the intake
+        NamedCommands.registerCommand(
+            "ExtendIntake",
+            Intake.Pivot.extend()
+        )
+
+        // Raises the intake
+        NamedCommands.registerCommand(
+            "StowIntake",
+            Intake.Pivot.stow()
+        )
+
+        // Spins the intake
+        NamedCommands.registerCommand(
+            "RunIntake",
+            Intake.runAtPower(1.0)
+        )
+
+        // Stops the intake
+        NamedCommands.registerCommand(
+            "StopIntake",
+            Intake.stop()
+        )
+    }
+
     object Constants {
         val robotConfig =
             RobotConfig(
@@ -66,7 +109,11 @@ object Autos {
     val autonomousCommand: Command
         get() = autoCommandChooser.selected
 
-    private val autos = mapOf<String, Command>()
+    private val autos = mapOf<String, Command>(
+        "Spin Up Flywheel" to AutoBuilder.buildAuto("SpinUpFlywheel"),
+        "Drive Forward" to AutoBuilder.buildAuto("DriveForward"),
+        "Left Trench - Collect Fuel Safe" to AutoBuilder.buildAuto("LeftTrench-CollectFuelSafe"),
+    )
 
     fun addAutos() {
         autoCommandChooser.setDefaultOption("No Auto", InstantCommand())

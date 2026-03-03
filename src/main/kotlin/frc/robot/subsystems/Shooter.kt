@@ -41,6 +41,9 @@ object Shooter : SubsystemBase() {
         val runningSpeed by DashboardNumber(0.0, "Shooter/Constants")
     }
 
+    val atSpeed
+        get() = motor1Controller.atSetpoint()
+
     private val motor =
         SparkWrapper(Constants.MOTOR_1_ID, SparkLowLevel.MotorType.kBrushless) {
             idleMode(SparkBaseConfig.IdleMode.kCoast)
@@ -126,7 +129,7 @@ object Shooter : SubsystemBase() {
             val DOWN_POSITION = 0.0.radians
             val TOP_POSITION = 2.7.radians
 
-            val kinematics = Polynomial(0.0769534, -0.645265, 1.99822, -0.691235)
+            val kinematics = Polynomial(0.0930196, -0.764742, 2.27462, -0.888192)
         }
 
         private val motor =

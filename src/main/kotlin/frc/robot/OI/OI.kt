@@ -143,7 +143,7 @@ object OI : SubsystemBase() {
     val operatorTrigger: Trigger = operatorController.trigger()
 
     /** Rumbles the driver controller continuously until interrupted. */
-    private fun rumble(side: GenericHID.RumbleType, power: Double): Command =
+    fun rumble(side: GenericHID.RumbleType, power: Double): Command =
         runEnd(
             { driverController.setRumble(side, power) },
             { driverController.setRumble(side, 0.0) },

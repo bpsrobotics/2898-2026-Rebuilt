@@ -140,7 +140,12 @@ object Drivetrain : SubsystemBase() {
 
     override fun periodic() {
         posePublisher.set(pose)
-        distToHub = pose.vector2.distance(FieldMapREBUILTWelded.teamHub.center)
+
+        val hub = runCatching { FieldMapREBUILTWelded.teamHub }.getOrNull()
+        if (hub != null) {
+            distToHub = pose.vector2.distance(hub.center)
+        }
+
         swerveStatePublisher.set(swerveDrive.states)
         //        targetPosePublisher.set(targetPoseProvider.getPose())
         Vision.setAllCameraReferences(Pose3d(pose))

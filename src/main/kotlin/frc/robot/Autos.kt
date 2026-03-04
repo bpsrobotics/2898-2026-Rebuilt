@@ -109,11 +109,7 @@ object Autos {
     val autonomousCommand: Command
         get() = autoCommandChooser.selected
 
-    private val autos = mapOf<String, Command>(
-        "Spin Up Flywheel" to AutoBuilder.buildAuto("SpinUpFlywheel"),
-        "Drive Forward" to AutoBuilder.buildAuto("DriveForward"),
-        "Left Trench - Collect Fuel Safe" to AutoBuilder.buildAuto("LeftTrench-CollectFuelSafe"),
-    )
+    private val autos: Map<String, Command>
 
     fun addAutos() {
         autoCommandChooser.setDefaultOption("No Auto", InstantCommand())
@@ -139,6 +135,12 @@ object Autos {
             Constants.robotConfig,
             { Drivetrain.getAlliance() == DriverStation.Alliance.Red },
             Drivetrain, // Reference to this subsystem to set requirements
+        )
+
+        autos = mapOf<String, Command>(
+            "Spin Up Flywheel" to AutoBuilder.buildAuto("SpinUpFlywheel"),
+            "Drive Forward" to AutoBuilder.buildAuto("DriveForward"),
+            "Left Trench - Collect Fuel Safe" to AutoBuilder.buildAuto("LeftTrench-CollectFuelSafe"),
         )
     }
 

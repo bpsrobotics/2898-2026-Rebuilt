@@ -1,4 +1,4 @@
-package frc.robot.OI
+package frc.robot.input
 
 import beaverlib.fieldmap.FieldMapREBUILTWelded
 import beaverlib.utils.Sugar.clamp
@@ -10,6 +10,7 @@ import beaverlib.utils.Units.seconds
 import beaverlib.utils.geometry.vector2
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj2.command.InstantCommand
+import edu.wpi.first.wpilibj2.command.RunCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.commands.swerve.CardinalAlign
@@ -17,12 +18,13 @@ import frc.robot.commands.swerve.HubAlign
 import frc.robot.commands.swerve.HubDistanceController
 import frc.robot.commands.swerve.LockDrive
 import frc.robot.commands.swerve.TeleopDrive
+import frc.robot.commands.swerve.TrenchAlign
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
 
-fun OI.DriverOnly() {
+fun OI.driverAndOperatorBindings() {
     /** Drivetrain */
     // Reset Gyro
     resetGyro
@@ -39,7 +41,7 @@ fun OI.DriverOnly() {
                     { translationY * reverseDrive },
                     { translationX * reverseDrive },
                     { -turn },
-                    { driverController.leftTriggerAxis },
+                    { rightTrigger },
                 )
             )
         )
@@ -61,8 +63,7 @@ fun OI.DriverOnly() {
             }
         )
 
-    // driverController.b().debounce(0.2).whileTrue(driveManager.defineDriver(TrenchAlign()))
-    driverController.b().whileTrue(Shooter.Hood.holdPosition { desiredHoodAngle.radians })
+    driverController.b().debounce(0.2).whileTrue(driveManager.defineDriver(TrenchAlign()))
     driverController.x().debounce(0.2).whileTrue(driveManager.defineDriver(LockDrive()))
     driverController
         .y()
@@ -112,32 +113,54 @@ fun OI.DriverOnly() {
     )
 
     /** Shooter */
-    driverController
-        .leftBumper()
-        .whileTrue(Shooter.runAtSpeed { desiredRPM.RPM })
-        .and { Shooter.atSpeed }
-        .onTrue(rumble(GenericHID.RumbleType.kLeftRumble, 0.8, 1.0.seconds))
+    operatorController
+        .axisLessThan(operatorController.throttleChannel, 0.5)
+        .whileTrue(
+            Shooter.runAtSpeed { (desiredRPM * ((1.0 - operatorController.throttle * 2) / 3)).RPM }
+        )
 
-    //    driverController
-    //        .rightTrigger()
-    //        .and(driverController.a().negate())
-    //        .whileTrue(
-    //            SequentialCommandGroup(
-    //                Shooter.Hood.moveToPosition { 1.3.radians },
-    //                Shooter.Feeder.getJiggyWithIt().alongWith(Shooter.Hood.holdPosition {
-    // 1.3.radians }),
-    //            )
-    //        )
-    driverController
-        .rightTrigger()
-        //        .and(driverController.a())
-        .whileTrue(SequentialCommandGroup(Shooter.Feeder.runAtPower(1.0)))
-    //    driverController.rightTrigger()
-    //        .and(driverController.a().negate())
-    //        .button(2)
-    //        .or(operatorController.button(8))
-    //        .and(operatorTrigger.negate())
-    //        .whileTrue(Shooter.Hood.holdPosition { 1.3.radians })
+    var desiredHoodPosition = 0.5.radians
+    operatorController
+        .button(4)
+        .whileTrue(
+            RunCommand({
+                desiredHoodPosition =
+                    (desiredHoodPosition.asRadians - 0.025)
+                        .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
+                        .radians
+                println(desiredHoodPosition)
+            })
+        )
+
+    operatorController
+        .button(6)
+        .whileTrue(
+            RunCommand({
+                desiredHoodPosition =
+                    (desiredHoodPosition.asRadians + 0.025)
+                        .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
+                        .radians
+                println(desiredHoodPosition)
+            })
+        )
+
+    operatorTrigger
+        .and(driverController.a().negate())
+        .whileTrue(
+            SequentialCommandGroup(
+                Shooter.Hood.moveToPosition { desiredHoodAngle.radians },
+                Shooter.Feeder.getJiggyWithIt()
+                    .alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians }),
+            )
+        )
+    operatorTrigger
+        .and(driverController.a())
+        .whileTrue(SequentialCommandGroup(Shooter.Feeder.getJiggyWithIt()))
+    operatorController
+        .button(2)
+        .or(operatorController.button(8))
+        .and(operatorTrigger.negate())
+        .whileTrue(Shooter.Hood.holdPosition { desiredHoodPosition })
     //        operatorController.button(4).whileTrue(Shooter.Hood.doRunAtkS())
     //        operatorController.button(3).whileTrue(Shooter.Hood.stabilize())
     //        operatorController.button(6).whileTrue(Shooter.Hood.setDownAndReZero())

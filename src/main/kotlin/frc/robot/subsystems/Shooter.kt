@@ -25,8 +25,6 @@ import frc.engine.utils.Polynomial
 import frc.robot.engine.DashboardBoolean
 import frc.robot.engine.DashboardNumber
 import frc.robot.engine.SparkWrapper
-import frc.robot.subsystems.Shooter.Constants.MOTOR_1_ID
-import frc.robot.subsystems.Shooter.Hood.absoluteEncoderOffset
 import kotlin.math.PI
 
 object Shooter : SubsystemBase() {
@@ -54,7 +52,7 @@ object Shooter : SubsystemBase() {
     private val motorFollower =
         SparkWrapper(Constants.MOTOR_2_ID, SparkLowLevel.MotorType.kBrushless) {
             apply(motor.config)
-            follow(MOTOR_1_ID, true)
+            follow(Constants.MOTOR_1_ID, true)
         }
 
     private val motor1Controller = PidFF(Constants.motor1PIDConstants, Constants.motor1FFConstants)
@@ -64,12 +62,6 @@ object Shooter : SubsystemBase() {
 
         SmartDashboard.putData("Shooter/motor/PID", motor1Controller)
     }
-
-    var motor1Velocity by DashboardNumber(0.0, "Shooter")
-    var motor1DesiredPower by DashboardNumber(0.0, "Shooter")
-
-    var motor1Current by DashboardNumber(0.0, "Shooter")
-    var motor2Current by DashboardNumber(0.0, "Shooter")
 
     override fun periodic() {}
 
@@ -102,12 +94,6 @@ object Shooter : SubsystemBase() {
         motorVoltage = motor1Controller.calculate(motor.velocity.asRPM)
         motor.setVoltage(motor1Controller.calculate(motor.velocity.asRPM).clamp(0.0, 12.0))
     }
-
-    val desiredSpeed: Double by DashboardNumber(0.0, "Shooter")
-
-    fun runAtDashboardPower(): Command = run { motor.set(motor1DesiredPower) }
-
-    fun runAtPower(power: Double): Command = run { motor.set(power) }
 
     /**
      * Run the Intake at the given speed

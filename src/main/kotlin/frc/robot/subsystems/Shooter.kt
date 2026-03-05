@@ -1,10 +1,10 @@
 package frc.robot.subsystems
 
 import beaverlib.controls.ArmFeedForwardConstants
-import beaverlib.controls.ArmPidFF
 import beaverlib.controls.PIDConstants
 import beaverlib.controls.PidFF
 import beaverlib.controls.SimpleMotorFeedForwardConstants
+import beaverlib.utils.MovingAverage
 import beaverlib.utils.Sugar.clamp
 import beaverlib.utils.Units.Angular.AngleUnit
 import beaverlib.utils.Units.Angular.AngularVelocity
@@ -22,10 +22,9 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.WaitCommand
 import frc.engine.utils.Polynomial
-import frc.robot.engine.DashboardBoolean
 import frc.robot.engine.DashboardNumber
+import frc.robot.engine.HoodPIDFF
 import frc.robot.engine.SparkWrapper
-import frc.robot.subsystems.Shooter.Constants.MOTOR_1_ID
 import frc.robot.subsystems.Shooter.Hood.absoluteEncoderOffset
 import kotlin.math.PI
 
@@ -54,7 +53,7 @@ object Shooter : SubsystemBase() {
     private val motorFollower =
         SparkWrapper(Constants.MOTOR_2_ID, SparkLowLevel.MotorType.kBrushless) {
             apply(motor.config)
-            follow(MOTOR_1_ID, true)
+            follow(Constants.MOTOR_1_ID, true)
         }
 
     private val motor1Controller = PidFF(Constants.motor1PIDConstants, Constants.motor1FFConstants)
@@ -118,18 +117,19 @@ object Shooter : SubsystemBase() {
     fun runAtPower(powerFun: () -> Double): Command =
         runEnd({ motor.setVoltage(powerFun()) }, { motor.stopMotor() })
 
+    @Suppress("MemberVisibilityCanBePrivate", "unused")
     object Hood : SubsystemBase() {
         object Constants {
             const val MOTOR_ID = 18
             const val ENCODER_ID = 1
 
-            val pidConstants = PIDConstants(1.5, 0.4, 0.4)
-            val ffConstants = ArmFeedForwardConstants(0.25, 0.1, 0.0)
+            val pidConstants = PIDConstants(2.0, 0.05, 1.0)
+            val ffConstants = ArmFeedForwardConstants(0.0, 0.20, 0.0)
 
             val DOWN_POSITION = 0.0.radians
             val TOP_POSITION = 2.7.radians
 
-            val kinematics = Polynomial(0.0930196, -0.764742, 2.27462, -0.888192)
+            val kinematics = Polynomial(0.0280235, -0.243837, 1.00593, 0.172423)
         }
 
         private val motor =
@@ -140,80 +140,78 @@ object Shooter : SubsystemBase() {
 
         private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
 
-        private val controller = ArmPidFF(Constants.pidConstants, Constants.ffConstants)
+        private val controller = HoodPIDFF(Constants.pidConstants, Constants.ffConstants)
 
-        var absoluteEncoderOffset = 0.4060916601522915
+        private var absoluteEncoderOffset = 0.4060916601522915
 
         init {
             absoluteEncoderOffset = absEncoder.get()
 
             defaultCommand = setDownAndReZero()
-            controller.pid.setTolerance(0.02)
+            controller.pid.setTolerance(0.04)
 
             SmartDashboard.putData("Shooter/Hood/ArmPID", controller)
-            // SmartDashboard.putData("Shooter/Hood/motor", motor)
         }
 
         val position: AngleUnit
             get() =
                 MathUtil.inputModulus(absEncoder.get() - absoluteEncoderOffset, -PI, PI).rotations
 
+        var setpoint
+            get() = controller.setpoint
+            set(new: AngleUnit) {
+                controller.setpoint = new
+            }
+
+        val atSetpoint
+            get() = controller.atSetpoint()
+
         var hoodEncoderPosition by DashboardNumber(0.0, "Shooter/Hood")
-        var hoodEncoderConnected by DashboardBoolean(false, "Shooter/Hood")
         var rawEncoderPosition by DashboardNumber(0.0, "Shooter/Hood")
         var motorVoltage by DashboardNumber(0.0, "Shooter/Hood")
 
         override fun periodic() {
             hoodEncoderPosition = position.asRadians
-            hoodEncoderConnected = absEncoder.isConnected
             rawEncoderPosition = absEncoder.get()
         }
 
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
-        fun stop(): Command = run {
-            motor.stopMotor()
-            motorFollower.stopMotor()
-        }
-
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
-        fun holdPosition(positionToHold: AngleUnit): Command =
-            startRun({ controller.setpoint = positionToHold }) {
-                motorVoltage = controller.calculate(position)
-                motor.setVoltage(controller.calculate(position))
-            }
-
-        val desiredVoltage: Double by DashboardNumber(0.0, "Shooter/Hood")
-
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
-        fun runAtDashboardVoltage(): Command = run {
-            motorVoltage = desiredVoltage
-            motor.setVoltage(desiredVoltage)
-        }
-
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
-        fun holdPosition(positionToHold: () -> AngleUnit): Command = run {
-            controller.setpoint = positionToHold()
+        fun applyController(setpoint: AngleUnit? = null) {
+            if (setpoint != null)
+                controller.setpoint =
+                    setpoint.asRadians.clamp(0.0, Constants.TOP_POSITION.asRadians).radians
             motorVoltage = controller.calculate(position)
             motor.setVoltage(controller.calculate(position))
         }
 
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
-        fun stabilize(): Command = run { motor.setVoltage(controller.calculate(position)) }
+        fun stop(): Command = run { motor.stopMotor() }
 
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
+        fun runAtVoltage(desiredVoltage: Double): Command = run {
+            motorVoltage = desiredVoltage
+            motor.setVoltage(desiredVoltage)
+        }
+
+        fun holdPosition(positionToHold: AngleUnit): Command =
+            startRun({ controller.setpoint = positionToHold }) { applyController() }
+
+        fun holdPosition(positionToHold: () -> AngleUnit): Command = run {
+            applyController(positionToHold())
+        }
+
+        fun stabilize(): Command = run { applyController() }
+
         fun moveToPosition(positionToHold: AngleUnit): Command =
             holdPosition(positionToHold).withDeadline(waitUntil { controller.atSetpoint() })
 
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun moveToPosition(positionToHold: () -> AngleUnit): Command =
             holdPosition(positionToHold).withDeadline(waitUntil { controller.atSetpoint() })
 
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun moveDown() = holdPosition(Constants.DOWN_POSITION)
 
+        val currentAverage: MovingAverage = MovingAverage(3)
+
         fun setDownAndReZero(): Command =
-            run { motor.setVoltage(-2.0) }
-                .until { motor.outputCurrent > 15 }
+            startRun({ currentAverage.clear() }) { motor.setVoltage(-2.0) }
+                .until { currentAverage.add(motor.outputCurrent) > 15 }
                 .andThen(
                     WaitCommand(0.5),
                     runOnce { absoluteEncoderOffset = absEncoder.get() },
@@ -221,6 +219,7 @@ object Shooter : SubsystemBase() {
                 )
     }
 
+    @Suppress("MemberVisibilityCanBePrivate", "unused")
     object Feeder : SubsystemBase() {
         private object Constants {
             const val MOTOR_ID = 15
@@ -242,16 +241,12 @@ object Shooter : SubsystemBase() {
             defaultCommand = stop()
 
             SmartDashboard.putData("Shooter/Feeder/PidFF", controller)
-            // SmartDashboard.putData("Shooter/Feeder/motor", motor)
         }
 
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun stop(): Command = runOnce { motor.stopMotor() }
 
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun runAtPower(power: Double): Command = run { motor.set(power) }
 
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun runAtSpeed(): Command =
             startRun({ controller.setpoint = Constants.runningSpeed }) {
                 motor.set(controller.calculate(motor.velocity.asRPM))

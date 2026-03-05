@@ -172,6 +172,5 @@ fun OI.DriverAndOperatorBindings() {
     operatorController.button(5).whileTrue(Intake.Pivot.runAtPower(1.0))
     operatorController.button(3).whileTrue(Intake.Pivot.runAtPower(-1.0))
 
-    operatorController.button(11).whileTrue(Shooter.Hood.runAtDashboardVoltage())
     operatorController.button(12).whileTrue(Shooter.runAtPower { desiredShooterPower })
 }

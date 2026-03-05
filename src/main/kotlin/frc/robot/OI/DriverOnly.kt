@@ -1,13 +1,10 @@
 package frc.robot.OI
 
-import beaverlib.fieldmap.FieldMapREBUILTWelded
-import beaverlib.utils.Sugar.clamp
 import beaverlib.utils.Units.Angular.RPM
 import beaverlib.utils.Units.Angular.degrees
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Linear.meters
 import beaverlib.utils.Units.seconds
-import beaverlib.utils.geometry.vector2
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
@@ -21,6 +18,7 @@ import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
+import frc.robot.subsystems.VisionTurningHandler
 
 fun OI.DriverOnly() {
     /** Drivetrain */
@@ -50,16 +48,7 @@ fun OI.DriverOnly() {
         .or(driverController.y())
         .whileTrue(driveManager.defineDriver(HubAlign()))
         .and(HedgieHelmet.trenchDriveTrigger.negate())
-        .whileTrue(
-            Shooter.Hood.holdPosition {
-                Shooter.Hood.Constants.kinematics
-                    .calculate(
-                        Drivetrain.pose.vector2.distance(FieldMapREBUILTWelded.teamHub.center)
-                    )
-                    .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
-                    .radians
-            }
-        )
+        .whileTrue(Shooter.Hood.holdPosition { VisionTurningHandler.goalHoodAngle })
 
     // driverController.b().debounce(0.2).whileTrue(driveManager.defineDriver(TrenchAlign()))
     driverController.b().whileTrue(Shooter.Hood.holdPosition { desiredHoodAngle.radians })
@@ -130,6 +119,7 @@ fun OI.DriverOnly() {
     //        )
     driverController
         .rightTrigger()
+        .and { VisionTurningHandler.canFire }
         //        .and(driverController.a())
         .whileTrue(SequentialCommandGroup(Shooter.Feeder.runAtPower(1.0)))
     //    driverController.rightTrigger()
@@ -149,6 +139,5 @@ fun OI.DriverOnly() {
     operatorController.button(5).whileTrue(Intake.Pivot.runAtPower(1.0))
     operatorController.button(3).whileTrue(Intake.Pivot.runAtPower(-1.0))
 
-    operatorController.button(11).whileTrue(Shooter.Hood.runAtDashboardVoltage())
     operatorController.button(12).whileTrue(Shooter.runAtPower { desiredShooterPower })
 }

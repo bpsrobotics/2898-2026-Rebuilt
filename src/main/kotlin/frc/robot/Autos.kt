@@ -141,6 +141,7 @@ object Autos {
             "Spin Up Flywheel" to AutoBuilder.buildAuto("SpinUpFlywheel"),
             "Drive Forward" to AutoBuilder.buildAuto("DriveForward"),
             "Left Trench - Collect Fuel Safe" to AutoBuilder.buildAuto("LeftTrench-CollectFuelSafe"),
+            "Left Trench - Collect Fuel Double Pass" to AutoBuilder.buildAuto("LeftTrench-CollectFuelDoublePass"),
         )
     }
 

@@ -9,6 +9,7 @@ import beaverlib.utils.Sugar.clamp
 import beaverlib.utils.Units.Angular.AngleUnit
 import beaverlib.utils.Units.Angular.AngularVelocity
 import beaverlib.utils.Units.Angular.asRPM
+import beaverlib.utils.Units.Angular.degrees
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Angular.rotations
 import com.revrobotics.spark.SparkLowLevel
@@ -140,7 +141,8 @@ object Shooter : SubsystemBase() {
 
         private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
 
-        private val controller = HoodPIDFF(Constants.pidConstants, Constants.ffConstants)
+        private val controller =
+            HoodPIDFF(Constants.pidConstants, Constants.ffConstants, (22.degrees * 133.0) / 24.0)
 
         private var absoluteEncoderOffset = 0.4060916601522915
 

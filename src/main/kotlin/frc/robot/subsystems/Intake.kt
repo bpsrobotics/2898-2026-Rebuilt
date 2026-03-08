@@ -1,7 +1,6 @@
 package frc.robot.subsystems
 
 import beaverlib.controls.ArmFeedForwardConstants
-import beaverlib.controls.ArmPidFF
 import beaverlib.controls.PIDConstants
 import beaverlib.utils.Units.Angular.AngleUnit
 import beaverlib.utils.Units.Angular.degrees
@@ -16,7 +15,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import frc.robot.engine.DashboardNumber
+import frc.robot.engine.HoodPIDFF
 import frc.robot.engine.SparkWrapper
+import kotlin.math.PI
 
 object Intake : SubsystemBase() {
     private object Constants {
@@ -57,34 +59,31 @@ object Intake : SubsystemBase() {
     /** Stops the Intake motor */
     fun stop(): Command = runOnce { motor.stopMotor() }
 
+    @Suppress("MemberVisibilityCanBePrivate", "unused")
     object Pivot : SubsystemBase() {
         private object Constants {
             const val MOTOR_ID = 14
             const val ENCODER_ID = 0
-            const val ENCODER_OFFSET = 0.48418893710472344
+            const val ENCODER_OFFSET = -0.4348677108716928
 
-            val pidConstants: PIDConstants = PIDConstants(0.67, 0.0, 0.0)
+            val pidConstants: PIDConstants = PIDConstants(0.0, 0.0, 0.0)
             val armFFConstants = ArmFeedForwardConstants(0.0, 0.98, 0.0)
-            val STOWED_POSITION = 0.degrees
+            val STOWED_POSITION = 0.radians
             val EXTENDED_POSITION = 0.803673142114475.radians
         }
 
         // Initializing brushless motor with SparkMAX motor controller
         private val motor =
-            SparkWrapper(
-                Constants.MOTOR_ID,
-                SparkLowLevel.MotorType.kBrushless,
-                {
-                    idleMode(SparkBaseConfig.IdleMode.kBrake)
-                    smartCurrentLimit(30)
-                },
-            )
+            SparkWrapper(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless) {
+                idleMode(SparkBaseConfig.IdleMode.kBrake)
+                smartCurrentLimit(30)
+            }
 
         // Use encoder values for PID tuning
         private val absEncoder = DutyCycleEncoder(Constants.ENCODER_ID)
 
         // PID controller class for pivot subsystem
-        private val controller = ArmPidFF(Constants.pidConstants, Constants.armFFConstants)
+        private val controller = HoodPIDFF(Constants.pidConstants, Constants.armFFConstants)
 
         val position
             get() =
@@ -98,31 +97,32 @@ object Intake : SubsystemBase() {
             // SmartDashboard.putData("Intake/Pivot/motor", Intake.motor)
 
             // Stabilize the wrist if nothing else is happening
-            defaultCommand = stop()
+            defaultCommand = stabilize()
         }
+        var pivotEncoderPosition by DashboardNumber(0.0, "Intake/Pivot/Position")
+        var rawEncoderPosition by DashboardNumber(0.0, "Intake/Pivot")
 
+
+        override fun periodic() {
+            pivotEncoderPosition = position.asRadians
+            rawEncoderPosition = absEncoder.get()
+        }
         /** Stops the wrist */
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun stop(): Command = runOnce { motor.stopMotor() }
 
         /** Holds the wrist at the last set position */
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun stabilize(): Command = run { motor.setVoltage(controller.calculate(position)) }
 
         /** Sets the wrist to target position, and ends once the PID is at the setpoint */
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun runToPosition(targetPosition: AngleUnit): Command =
             stabilize()
                 .beforeStarting(InstantCommand({ controller.setpoint = targetPosition }))
                 .until { controller.atSetpoint() }
 
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun runAtPower(power: Double): Command = run { motor.set(power) }
 
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
-        fun runAtkS(): Command = run { motor.setVoltage(controller.feedforward.ks) }
+        fun runAtkS(): Command = run { motor.setVoltage(controller.kS) }
 
-        @Suppress("MemberVisibilityCanBePrivate", "unused")
         fun getJiggyWithIt(): Command =
             extend().withTimeout(1.0).andThen(stow().withTimeout(1.0)).repeatedly()
 

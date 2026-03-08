@@ -10,14 +10,15 @@ import edu.wpi.first.math.geometry.Transform3d
 import frc.robot.beaverlib.odometry.BeaverVisionCamera
 import org.photonvision.PhotonPoseEstimator
 
+@Suppress("Typo")
 val Vision =
     BeaverPhotonVision(
         BeaverVisionCamera(
             "Iris_Arducam",
             Transform3d(
-                -0.822.inches.asMeters, // -13
-                4.894.inches.asMeters,
-                19.123.inches.asMeters,
+                -1.021.inches.asMeters, // -13
+                5.276.inches.asMeters,
+                19.010.inches.asMeters,
                 Rotation3d(0.0, -30.0.degrees.asRadians, 15.degrees.asRadians),
             ),
             layout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded),
@@ -27,10 +28,10 @@ val Vision =
         BeaverVisionCamera(
             "Retina_Arducam",
             Transform3d(
-                -0.822.inches.asMeters, // -13
-                -4.894.inches.asMeters,
-                19.123.inches.asMeters,
-                Rotation3d(0.0, -30.0.degrees.asRadians, -15.degrees.asRadians),
+                -1.021.inches.asMeters, // -13
+                -5.276.inches.asMeters,
+                19.010.inches.asMeters,
+                Rotation3d(0.0, -30.0.degrees.asRadians, -30.degrees.asRadians),
             ),
             layout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded),
             strategy = PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,

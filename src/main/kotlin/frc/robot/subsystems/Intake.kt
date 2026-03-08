@@ -15,8 +15,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
+import frc.robot.engine.DashboardNumber
 import frc.robot.engine.HoodPIDFF
 import frc.robot.engine.SparkWrapper
+import kotlin.math.PI
 
 object Intake : SubsystemBase() {
     private object Constants {
@@ -62,11 +64,11 @@ object Intake : SubsystemBase() {
         private object Constants {
             const val MOTOR_ID = 14
             const val ENCODER_ID = 0
-            const val ENCODER_OFFSET = 0.48418893710472344
+            const val ENCODER_OFFSET = -0.4348677108716928
 
-            val pidConstants: PIDConstants = PIDConstants(0.67, 0.0, 0.0)
+            val pidConstants: PIDConstants = PIDConstants(0.0, 0.0, 0.0)
             val armFFConstants = ArmFeedForwardConstants(0.0, 0.98, 0.0)
-            val STOWED_POSITION = 0.degrees
+            val STOWED_POSITION = 0.radians
             val EXTENDED_POSITION = 0.803673142114475.radians
         }
 
@@ -95,9 +97,16 @@ object Intake : SubsystemBase() {
             // SmartDashboard.putData("Intake/Pivot/motor", Intake.motor)
 
             // Stabilize the wrist if nothing else is happening
-            defaultCommand = stop()
+            defaultCommand = stabilize()
         }
+        var pivotEncoderPosition by DashboardNumber(0.0, "Intake/Pivot/Position")
+        var rawEncoderPosition by DashboardNumber(0.0, "Intake/Pivot")
 
+
+        override fun periodic() {
+            pivotEncoderPosition = position.asRadians
+            rawEncoderPosition = absEncoder.get()
+        }
         /** Stops the wrist */
         fun stop(): Command = runOnce { motor.stopMotor() }
 

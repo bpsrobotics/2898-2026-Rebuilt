@@ -24,7 +24,6 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController
 import com.pathplanner.lib.path.GoalEndState
 import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.path.PathPlannerPath
-import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
@@ -34,10 +33,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
+import frc.robot.commands.swerve.HubAlign
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
-import frc.robot.subsystems.VisionTurningHandler
 import kotlin.math.PI
 
 object Autos {
@@ -171,14 +170,11 @@ object Autos {
      * 3. Run feeder to shoot
      */
     private fun buildAlignAndShoot(): Command {
-        val rotationPID = PIDController(2.0, 0.01, 0.2).apply {
-            enableContinuousInput(-PI, PI)
-        }
+        val rotationPID = HubAlign.createRotationPID()
 
         // Part 1
         val alignAndPositionHood = Drivetrain.run {
-            val target = VisionTurningHandler.desiredRotation()
-            rotationPID.setpoint = target.asRadians
+            rotationPID.setpoint = HubAlign.hubSetpointRadians
             val omega = rotationPID.calculate(Drivetrain.pose.rotation.radians)
             Drivetrain.driveFieldOriented(ChassisSpeeds(0.0, 0.0, omega))
         }.beforeStarting({ rotationPID.reset() })
@@ -199,7 +195,7 @@ object Autos {
             .withTimeout(Constants.WAIT_FOR_SPEED_TIMEOUT_SECONDS)
 
         // Part 3
-        val shootPhase = Shooter.Feeder.getJiggyWithIt()
+        val shootPhase = Shooter.Feeder.getJiggyWithIt(1.0)
             .alongWith(
                 Shooter.Hood.holdPosition {
                     Shooter.Hood.Constants.kinematics

@@ -1,6 +1,5 @@
 package frc.robot.commands.swerve
 
-import beaverlib.utils.Units.Angular.radians
 import edu.wpi.first.math.controller.PIDController
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.VisionTurningHandler
@@ -13,11 +12,20 @@ import kotlin.math.PI
 class HubAlign : DriveManager.DriveRequestBase() {
     override val priority: Int = DriverPriority.HUB_ALIGN.ordinal
 
-    private val rotationPID = PIDController(1.0, 0.01, 0.2)
+    companion object {
+        const val KP = 1.0
+        const val KI = 0.01
+        const val KD = 0.2
 
-    init {
-        rotationPID.enableContinuousInput(-PI, PI)
+        fun createRotationPID(): PIDController = PIDController(KP, KI, KD).apply {
+            enableContinuousInput(-PI, PI)
+        }
+
+        val hubSetpointRadians: Double
+            get() = VisionTurningHandler.goalShooterAngle.asRadians + PI
     }
+
+    private val rotationPID = createRotationPID()
 
     override fun initialize() {
         super.initialize()
@@ -25,7 +33,7 @@ class HubAlign : DriveManager.DriveRequestBase() {
     }
 
     override fun execute() {
-        rotationPID.setpoint = VisionTurningHandler.goalShooterAngle.asRadians + (PI)
+        rotationPID.setpoint = hubSetpointRadians
         omega = rotationPID.calculate(Drivetrain.pose.rotation.radians)
     }
 }

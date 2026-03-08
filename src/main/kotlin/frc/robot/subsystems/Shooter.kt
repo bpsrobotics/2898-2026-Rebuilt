@@ -26,9 +26,9 @@ import frc.engine.utils.Polynomial
 import frc.robot.engine.DashboardNumber
 import frc.robot.engine.HoodPIDFF
 import frc.robot.engine.SparkWrapper
-import frc.robot.subsystems.Shooter.Hood.absoluteEncoderOffset
 import kotlin.math.PI
 
+@Suppress("MemberVisibilityCanBePrivate", "unused")
 object Shooter : SubsystemBase() {
     private object Constants {
         const val MOTOR_1_ID = 16
@@ -77,26 +77,21 @@ object Shooter : SubsystemBase() {
     BeaverSysIDRoutine(this, BeaverSysIDMotor("ShooterMotor", motor))*/
     var motorVoltage: Double by DashboardNumber(0.0, "Shooter")
 
-    @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun stop(): Command = runOnce {
         motor.stopMotor()
         motorFollower.stopMotor()
     }
 
-    @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun stabilize(): Command = run {
         motorVoltage = motor1Controller.calculate(motor.velocity.asRPM)
         motor.set(motor1Controller.calculate(motor.velocity.asRPM).clamp(0.0, 12.0))
     }
 
-    @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun waitSpeed(): Command = waitUntil { motor1Controller.atSetpoint() }
 
-    @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun runAtSpeed(): Command =
         stabilize().beforeStarting({ motor1Controller.setpoint = Constants.runningSpeed })
 
-    @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun runAtSpeed(speedLambda: () -> AngularVelocity): Command = run {
         motor1Controller.setpoint = speedLambda().asRPM
         motorVoltage = motor1Controller.calculate(motor.velocity.asRPM)
@@ -161,8 +156,8 @@ object Shooter : SubsystemBase() {
 
         var setpoint
             get() = controller.setpoint
-            set(new: AngleUnit) {
-                controller.setpoint = new
+            set(v) {
+                controller.setpoint = v
             }
 
         val atSetpoint
@@ -224,7 +219,8 @@ object Shooter : SubsystemBase() {
     @Suppress("MemberVisibilityCanBePrivate", "unused")
     object Feeder : SubsystemBase() {
         private object Constants {
-            const val MOTOR_ID = 15
+            const val TOP_MOTOR_ID = 15
+            const val BOTTOM_MOTOR_ID = 19
 
             val pidConstants = PIDConstants(0.0, 0.0, 0.0)
             val ffConstants = SimpleMotorFeedForwardConstants(0.0, 0.0, 0.0)
@@ -232,10 +228,16 @@ object Shooter : SubsystemBase() {
             val runningSpeed by DashboardNumber(100.0, "Shooter/Feeder/Constants")
         }
 
-        private val motor =
-            SparkWrapper(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless) {
+        private val topMotor =
+            SparkWrapper(Constants.TOP_MOTOR_ID, SparkLowLevel.MotorType.kBrushless) {
                 idleMode(SparkBaseConfig.IdleMode.kCoast)
-                smartCurrentLimit(30)
+                smartCurrentLimit(20)
+            }
+        private val bottomMotor =
+            SparkWrapper(Constants.BOTTOM_MOTOR_ID, SparkLowLevel.MotorType.kBrushless) {
+                idleMode(SparkBaseConfig.IdleMode.kCoast)
+                smartCurrentLimit(20)
+                inverted(true)
             }
         private val controller = PidFF(Constants.pidConstants, Constants.ffConstants)
 
@@ -245,19 +247,34 @@ object Shooter : SubsystemBase() {
             SmartDashboard.putData("Shooter/Feeder/PidFF", controller)
         }
 
-        fun stop(): Command = runOnce { motor.stopMotor() }
+        fun stop(): Command = runOnce {
+            topMotor.stopMotor()
+            bottomMotor.stopMotor()
+        }
 
-        fun runAtPower(power: Double): Command = run { motor.set(power) }
+        fun runAtPower(power: Double): Command = run {
+            topMotor.set(power)
+            bottomMotor.set(power)
+        }
 
         fun runAtSpeed(): Command =
             startRun({ controller.setpoint = Constants.runningSpeed }) {
-                motor.set(controller.calculate(motor.velocity.asRPM))
+                topMotor.set(controller.calculate(topMotor.velocity.asRPM))
+                bottomMotor.set(controller.calculate(bottomMotor.velocity.asRPM))
             }
 
-        fun getJiggyWithIt(): Command =
+        fun getJiggyWithIt(power: Double): Command =
             SequentialCommandGroup(
-                    runAtPower(1.0).withTimeout(1.0),
-                    runAtPower(-1.0).withTimeout(0.5),
+                    run {
+                            topMotor.set(power)
+                            bottomMotor.set(power)
+                        }
+                        .withTimeout(0.66),
+                    run {
+                            topMotor.set(power)
+                            bottomMotor.set(-power)
+                        }
+                        .withTimeout(0.33),
                 )
                 .repeatedly()
     }

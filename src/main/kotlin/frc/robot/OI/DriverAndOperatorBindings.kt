@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.RunCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.commands.swerve.CardinalAlign
 import frc.robot.commands.swerve.HubAlign
@@ -24,7 +25,8 @@ import frc.robot.subsystems.HedgieHelmet
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
 
-fun OI.DriverAndOperatorBindings() {
+@Suppress("Unused")
+fun OI.driverAndOperatorBindings() {
     /** Drivetrain */
     // Reset Gyro
     resetGyro
@@ -83,30 +85,6 @@ fun OI.DriverAndOperatorBindings() {
         .whileTrue(
             driveManager.defineDriver(CardinalAlign { forward - driverController.hid.pov.degrees })
         )
-    //        driverController
-    //            .po()
-    //            .whileTrue(driveManager.defineDriver(CardinalAlign { forward }))
-    //        driverController
-    //            .povUpRight()
-    //            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step }))
-    //        driverController
-    //            .povRight()
-    //            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step * 2.0 }))
-    //        driverController
-    //            .povDownRight()
-    //            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step * 3.0 }))
-    //        driverController
-    //            .povDown()
-    //            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step * 4.0 }))
-    //        driverController
-    //            .povDownLeft()
-    //            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step * 5.0 }))
-    //        driverController
-    //            .povLeft()
-    //            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step * 6.0 }))
-    //        driverController
-    //            .povUpLeft()
-    //            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step * 7.0 }))
 
     HedgieHelmet.trenchDriveTrigger.onTrue(
         rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.seconds)
@@ -148,14 +126,16 @@ fun OI.DriverAndOperatorBindings() {
         .and(driverController.a().negate())
         .whileTrue(
             SequentialCommandGroup(
-                Shooter.Hood.moveToPosition { desiredHoodAngle.radians },
-                Shooter.Feeder.getJiggyWithIt()
-                    .alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians }),
+                // Shooter.Hood.moveToPosition { desiredHoodAngle.radians },
+                Shooter.Feeder.runAtPower(1.0)
+                // .alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians }),
             )
         )
     operatorTrigger
         .and(driverController.a())
-        .whileTrue(SequentialCommandGroup(Shooter.Feeder.getJiggyWithIt()))
+        .whileTrue(
+            WaitUntilCommand { Shooter.Hood.atSetpoint }.andThen(Shooter.Feeder.getJiggyWithIt(1.0))
+        )
     operatorController
         .button(2)
         .or(operatorController.button(8))
@@ -167,10 +147,10 @@ fun OI.DriverAndOperatorBindings() {
 
     /** Intake */
     highHatBack.whileTrue(Intake.runAtPower(1.0))
-    highHatForward.whileTrue(Intake.runAtPower(-1.0))
+    highHatForward.whileTrue(Intake.runAtPower(-1.0).alongWith(Shooter.Feeder.runAtPower(-0.1)))
 
-    operatorController.button(5).whileTrue(Intake.Pivot.runAtPower(1.0))
-    operatorController.button(3).whileTrue(Intake.Pivot.runAtPower(-1.0))
+    operatorController.axisLessThan(2, -0.5).whileTrue(Intake.Pivot.runAtPower(0.4))
+    operatorController.axisLessThan(2, 0.5).whileTrue(Intake.Pivot.runAtPower(-0.4))
 
     operatorController.button(12).whileTrue(Shooter.runAtPower { desiredShooterPower })
 }

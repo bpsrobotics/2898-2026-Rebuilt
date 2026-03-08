@@ -18,11 +18,13 @@ import kotlin.math.sign
  * @param ffConstants The arm feedforward constants to use for this controller
  * @param zeroPosition the angle at which the endEffector is level with the ground (Where gravity
  *   will affect it the most)
+ *     @param kC constant voltage to be applied to the motor, regardless of any other factor
  */
 open class HoodPIDFF(
     pidConstants: PIDConstants,
     ffConstants: ArmFeedForwardConstants,
     var zeroPosition: AngleUnit = 0.0.radians,
+    var kC: Double = 0.0,
 ) : Sendable {
     /** The Proportional Integral Derivative controller part of the PidFF */
     val pid = PIDController(pidConstants.p, pidConstants.i, pidConstants.d)
@@ -58,6 +60,18 @@ open class HoodPIDFF(
             (kA * desiredVelocity.asRadiansPerSecond)
     }
 
+    /**
+     * Returns the calculated PID value given [measurement], plus the calculated FeedForwardValue
+     * given the [setpoint]
+     *
+     * @param measurement The measured value of what the PidFF controls
+     */
+    open fun test(measurement: AngleUnit): Double {
+        val voltage =
+            pid.calculate(measurement.asRadians) + kS + (setpoint - zeroPosition).cos() * kG
+        return voltage
+    }
+
     /** Returns this PID [PIDController.atSetpoint] */
     fun atSetpoint(): Boolean {
         return pid.atSetpoint()
@@ -68,6 +82,7 @@ open class HoodPIDFF(
         builder.addDoubleProperty("kG", { kG }, { kG = it })
         builder.addDoubleProperty("kV", { kV }, { kV = it })
         builder.addDoubleProperty("kA", { kA }, { kA = it })
+        builder.addDoubleProperty("kC", { kC }, { kC = it })
         builder.addDoubleProperty("kP", pid::getP, pid::setP)
         builder.addDoubleProperty("kI", pid::getI, pid::setI)
         builder.addDoubleProperty("kD", pid::getD, pid::setD)

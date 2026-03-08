@@ -60,7 +60,7 @@ fun collectShooterAngles(): Command =
                             .andThen(
                                 Shooter.Hood.moveToPosition { angle },
                                 Shooter.Hood.stabilize()
-                                    .alongWith(Shooter.Feeder.getJiggyWithIt())
+                                    .alongWith(Shooter.Feeder.getJiggyWithIt(1.0))
                                     .withDeadline(
                                         waitUntil {
                                             SmartDashboard.getBoolean(

@@ -32,6 +32,10 @@ open class HoodPIDFF(
     var kG = ffConstants.kG
     var kV = ffConstants.kV
     var kA = ffConstants.kA
+    var kGVoltage = 0.0
+    var kSVoltage = 0.0
+
+
 
     /** The goal state for the PidFF */
     var setpoint: AngleUnit
@@ -51,10 +55,12 @@ open class HoodPIDFF(
         desiredVelocity: AngularVelocity = 0.radiansPerSecond,
     ): Double {
         var voltage = pid.calculate(measurement.asRadians)
-        if (desiredVelocity != 0.radiansPerSecond) {
-            voltage += sign(desiredVelocity.asRadiansPerSecond) * kS
-        } else if (!pid.atSetpoint()) voltage += sign(voltage) * kS
+        if (!pid.atSetpoint()) {
+            kSVoltage =sign(voltage) * kS
+            voltage += sign(voltage) * kS
+        }
         voltage += (setpoint - zeroPosition).cos() * kG
+        kGVoltage = (setpoint - zeroPosition).cos() * kG
         return voltage +
             (kV * desiredVelocity.asRadiansPerSecond) +
             (kA * desiredVelocity.asRadiansPerSecond)
@@ -79,6 +85,9 @@ open class HoodPIDFF(
 
     override fun initSendable(builder: SendableBuilder) {
         builder.addDoubleProperty("kS", { kS }, { kS = it })
+        builder.addDoubleProperty("kGVoltage", { kGVoltage }, { kS = it })
+        builder.addDoubleProperty("kSVoltage", { kSVoltage }, { kS = it })
+
         builder.addDoubleProperty("kG", { kG }, { kG = it })
         builder.addDoubleProperty("kV", { kV }, { kV = it })
         builder.addDoubleProperty("kA", { kA }, { kA = it })

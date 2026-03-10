@@ -33,6 +33,7 @@ class RobotContainer {
         Autos.addAutos()
 
         OI.driverAndOperatorBindings()
+        OI.configureBindings()
     }
 
     /**

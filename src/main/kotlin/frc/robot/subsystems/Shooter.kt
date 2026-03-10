@@ -119,8 +119,8 @@ object Shooter : SubsystemBase() {
             const val MOTOR_ID = 18
             const val ENCODER_ID = 1
 
-            val pidConstants = PIDConstants(2.0, 0.05, 1.0)
-            val ffConstants = ArmFeedForwardConstants(0.0, 0.20, 0.0)
+            val pidConstants = PIDConstants(1.0, 0.0, 0.0)
+            val ffConstants = ArmFeedForwardConstants(0.2, 0.20, 0.0)
 
             val DOWN_POSITION = 0.0.radians
             val TOP_POSITION = 2.7.radians
@@ -166,10 +166,13 @@ object Shooter : SubsystemBase() {
         var hoodEncoderPosition by DashboardNumber(0.0, "Shooter/Hood")
         var rawEncoderPosition by DashboardNumber(0.0, "Shooter/Hood")
         var motorVoltage by DashboardNumber(0.0, "Shooter/Hood")
+        var yellowBabber by DashboardNumber(0.0, "Shooter/Hood")
+
 
         override fun periodic() {
             hoodEncoderPosition = position.asRadians
             rawEncoderPosition = absEncoder.get()
+            yellowBabber = currentAverage.average
         }
 
         fun applyController(setpoint: AngleUnit? = null) {
@@ -204,15 +207,15 @@ object Shooter : SubsystemBase() {
 
         fun moveDown() = holdPosition(Constants.DOWN_POSITION)
 
-        val currentAverage: MovingAverage = MovingAverage(3)
+        val currentAverage: MovingAverage = MovingAverage(5)
 
         fun setDownAndReZero(): Command =
-            startRun({ currentAverage.clear() }) { motor.setVoltage(-2.0) }
-                .until { currentAverage.add(motor.outputCurrent) > 15 }
+            startRun({ currentAverage.clear() }) { motor.setVoltage(-2.0); currentAverage.add(motor.outputCurrent) }
+                .until { currentAverage.average > 20 }
                 .andThen(
                     WaitCommand(0.5),
                     runOnce { absoluteEncoderOffset = absEncoder.get() },
-                    WaitCommand(1.0).repeatedly(),
+                    stop().repeatedly(),
                 )
     }
 

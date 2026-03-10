@@ -19,7 +19,7 @@ val Vision =
                 -1.021.inches.asMeters, // -13
                 5.276.inches.asMeters,
                 19.010.inches.asMeters,
-                Rotation3d(0.0, -30.0.degrees.asRadians, 15.degrees.asRadians),
+                Rotation3d(0.0, -30.0.degrees.asRadians, 30.degrees.asRadians),
             ),
             layout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded),
             strategy = PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,

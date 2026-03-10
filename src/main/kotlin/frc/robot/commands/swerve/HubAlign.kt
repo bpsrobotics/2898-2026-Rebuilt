@@ -13,7 +13,7 @@ import kotlin.math.PI
 class HubAlign : DriveManager.DriveRequestBase() {
     override val priority: Int = DriverPriority.HUB_ALIGN.ordinal
 
-    private val rotationPID = PIDController(1.0, 0.01, 0.2)
+    private val rotationPID = PIDController(2.0, 0.01, 0.2)
 
     init {
         rotationPID.enableContinuousInput(-PI, PI)

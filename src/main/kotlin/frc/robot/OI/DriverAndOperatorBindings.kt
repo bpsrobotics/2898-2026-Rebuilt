@@ -24,6 +24,7 @@ import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
+import frc.robot.subsystems.Shooter.Hood.moveToPosition
 
 @Suppress("Unused")
 fun OI.driverAndOperatorBindings() {
@@ -126,11 +127,12 @@ fun OI.driverAndOperatorBindings() {
         .and(driverController.a().negate())
         .whileTrue(
             SequentialCommandGroup(
-                // Shooter.Hood.moveToPosition { desiredHoodAngle.radians },
+                (Shooter.Hood.moveToPosition { 2.7.radians }),
                 Shooter.Feeder.runAtPower(1.0)
-                // .alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians }),
+                    .alongWith(Shooter.Hood.holdPosition { 2.7.radians }),
             )
         )
+    operatorController.button(7).whileTrue(Shooter.Hood.stabilize())
     operatorTrigger
         .and(driverController.a())
         .whileTrue(
@@ -146,11 +148,12 @@ fun OI.driverAndOperatorBindings() {
     //        operatorController.button(6).whileTrue(Shooter.Hood.setDownAndReZero())
 
     /** Intake */
-    highHatBack.whileTrue(Intake.runAtPower(1.0))
-    highHatForward.whileTrue(Intake.runAtPower(-1.0).alongWith(Shooter.Feeder.runAtPower(-0.1)))
+    highHatBack.whileTrue(Intake.runAtPower(0.75))
+    highHatForward.whileTrue(Intake.runAtPower(-0.75).alongWith(Shooter.Feeder.runAtPower(-0.1)))
 
-    operatorController.axisLessThan(2, -0.5).whileTrue(Intake.Pivot.runAtPower(0.4))
-    operatorController.axisLessThan(2, 0.5).whileTrue(Intake.Pivot.runAtPower(-0.4))
+    operatorController.axisLessThan(1, -0.5).onTrue( Intake.Pivot.setSetpoint(Intake.Pivot.Constants.EXTENDED_POSITION))
+    operatorController.axisGreaterThan(1, 0.5).onTrue(Intake.Pivot.setSetpoint(Intake.Pivot.Constants.STOWED_POSITION))
+    operatorController.button(11).whileTrue(Shooter.Feeder.getJiggyWithIt(1.0))
 
-    operatorController.button(12).whileTrue(Shooter.runAtPower { desiredShooterPower })
+    //operatorController.button(12).whileTrue(Shooter.runAtPower { desiredShooterPower })
 }

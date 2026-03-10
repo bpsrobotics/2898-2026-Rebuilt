@@ -28,7 +28,7 @@ object Intake : SubsystemBase() {
     private val motor =
         SparkWrapper(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless) {
             idleMode(SparkBaseConfig.IdleMode.kCoast)
-            smartCurrentLimit(20)
+            smartCurrentLimit(25)
             inverted(true)
         }
 
@@ -61,22 +61,22 @@ object Intake : SubsystemBase() {
 
     @Suppress("MemberVisibilityCanBePrivate", "unused")
     object Pivot : SubsystemBase() {
-        private object Constants {
+        object Constants {
             const val MOTOR_ID = 14
             const val ENCODER_ID = 0
-            const val ENCODER_OFFSET = -0.4348677108716928
+            const val ENCODER_OFFSET = -0.6814948670373717
 
-            val pidConstants: PIDConstants = PIDConstants(0.0, 0.0, 0.0)
-            val armFFConstants = ArmFeedForwardConstants(0.0, 0.98, 0.0)
-            val STOWED_POSITION = 0.radians
-            val EXTENDED_POSITION = 0.803673142114475.radians
+            val pidConstants: PIDConstants = PIDConstants(2.0, 0.0, 0.0)
+            val armFFConstants = ArmFeedForwardConstants(0.2, 0.2, 0.0)
+            val STOWED_POSITION = 2.2525048672565413.radians
+            val EXTENDED_POSITION = 0.5970501168833996.radians
         }
 
         // Initializing brushless motor with SparkMAX motor controller
         private val motor =
             SparkWrapper(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless) {
                 idleMode(SparkBaseConfig.IdleMode.kBrake)
-                smartCurrentLimit(30)
+                smartCurrentLimit(35)
             }
 
         // Use encoder values for PID tuning
@@ -95,7 +95,7 @@ object Intake : SubsystemBase() {
 
             SmartDashboard.putData("Intake/Pivot/ArmPidFF", controller)
             // SmartDashboard.putData("Intake/Pivot/motor", Intake.motor)
-
+            controller.setpoint = position
             // Stabilize the wrist if nothing else is happening
             defaultCommand = stabilize()
         }
@@ -113,10 +113,15 @@ object Intake : SubsystemBase() {
         /** Holds the wrist at the last set position */
         fun stabilize(): Command = run { motor.setVoltage(controller.calculate(position)) }
 
+        fun setSetpoint(newSetpoint : AngleUnit): Command = InstantCommand( {controller.setpoint = newSetpoint}, this)
+
+
         /** Sets the wrist to target position, and ends once the PID is at the setpoint */
         fun runToPosition(targetPosition: AngleUnit): Command =
-            stabilize()
-                .beforeStarting(InstantCommand({ controller.setpoint = targetPosition }))
+            run {
+                controller.setpoint = targetPosition
+                motor.setVoltage(controller.calculate(position))
+            }
                 .until { controller.atSetpoint() }
 
         fun runAtPower(power: Double): Command = run { motor.set(power) }

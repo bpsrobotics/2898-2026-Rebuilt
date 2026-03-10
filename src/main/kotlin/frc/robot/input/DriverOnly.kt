@@ -1,4 +1,4 @@
-package frc.robot.OI
+package frc.robot.input
 
 import beaverlib.utils.Units.Angular.RPM
 import beaverlib.utils.Units.Angular.degrees

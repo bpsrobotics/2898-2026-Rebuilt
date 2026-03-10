@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Transform3d
 import frc.robot.beaverlib.odometry.BeaverVisionCamera
 import org.photonvision.PhotonPoseEstimator
 
-@Suppress("Typo")
 val Vision =
     BeaverPhotonVision(
         BeaverVisionCamera(

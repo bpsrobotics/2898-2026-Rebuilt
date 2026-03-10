@@ -18,7 +18,7 @@ import kotlin.math.sign
  * @param ffConstants The arm feedforward constants to use for this controller
  * @param zeroPosition the angle at which the endEffector is level with the ground (Where gravity
  *   will affect it the most)
- *     @param kC constant voltage to be applied to the motor, regardless of any other factor
+ * @param kC constant voltage to be applied to the motor, regardless of any other factor
  */
 open class HoodPIDFF(
     pidConstants: PIDConstants,
@@ -34,8 +34,6 @@ open class HoodPIDFF(
     var kA = ffConstants.kA
     var kGVoltage = 0.0
     var kSVoltage = 0.0
-
-
 
     /** The goal state for the PidFF */
     var setpoint: AngleUnit
@@ -56,7 +54,7 @@ open class HoodPIDFF(
     ): Double {
         var voltage = pid.calculate(measurement.asRadians)
         if (!pid.atSetpoint()) {
-            kSVoltage =sign(voltage) * kS
+            kSVoltage = sign(voltage) * kS
             voltage += sign(voltage) * kS
         }
         voltage += (setpoint - zeroPosition).cos() * kG

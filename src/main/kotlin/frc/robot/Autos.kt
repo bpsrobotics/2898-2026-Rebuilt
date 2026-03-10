@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
+import frc.robot.commands.autos.simpleMoveAndShoot
 import frc.robot.subsystems.Drivetrain
 import kotlin.math.PI
 
@@ -66,7 +67,7 @@ object Autos {
     val autonomousCommand: Command
         get() = autoCommandChooser.selected
 
-    private val autos = mapOf<String, Command>()
+    private val autos = mapOf("Simple Move/Shoot" to simpleMoveAndShoot())
 
     fun addAutos() {
         autoCommandChooser.setDefaultOption("No Auto", InstantCommand())

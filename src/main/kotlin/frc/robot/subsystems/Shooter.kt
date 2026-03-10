@@ -168,7 +168,6 @@ object Shooter : SubsystemBase() {
         var motorVoltage by DashboardNumber(0.0, "Shooter/Hood")
         var yellowBabber by DashboardNumber(0.0, "Shooter/Hood")
 
-
         override fun periodic() {
             hoodEncoderPosition = position.asRadians
             rawEncoderPosition = absEncoder.get()
@@ -210,7 +209,10 @@ object Shooter : SubsystemBase() {
         val currentAverage: MovingAverage = MovingAverage(5)
 
         fun setDownAndReZero(): Command =
-            startRun({ currentAverage.clear() }) { motor.setVoltage(-2.0); currentAverage.add(motor.outputCurrent) }
+            startRun({ currentAverage.clear() }) {
+                    motor.setVoltage(-2.0)
+                    currentAverage.add(motor.outputCurrent)
+                }
                 .until { currentAverage.average > 20 }
                 .andThen(
                     WaitCommand(0.5),

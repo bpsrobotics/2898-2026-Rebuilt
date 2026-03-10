@@ -3,7 +3,6 @@ package frc.robot.subsystems
 import beaverlib.controls.ArmFeedForwardConstants
 import beaverlib.controls.PIDConstants
 import beaverlib.utils.Units.Angular.AngleUnit
-import beaverlib.utils.Units.Angular.degrees
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Angular.rotations
 import com.revrobotics.spark.SparkLowLevel
@@ -18,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.engine.DashboardNumber
 import frc.robot.engine.HoodPIDFF
 import frc.robot.engine.SparkWrapper
-import kotlin.math.PI
 
 object Intake : SubsystemBase() {
     private object Constants {
@@ -99,29 +97,30 @@ object Intake : SubsystemBase() {
             // Stabilize the wrist if nothing else is happening
             defaultCommand = stabilize()
         }
+
         var pivotEncoderPosition by DashboardNumber(0.0, "Intake/Pivot/Position")
         var rawEncoderPosition by DashboardNumber(0.0, "Intake/Pivot")
-
 
         override fun periodic() {
             pivotEncoderPosition = position.asRadians
             rawEncoderPosition = absEncoder.get()
         }
+
         /** Stops the wrist */
         fun stop(): Command = runOnce { motor.stopMotor() }
 
         /** Holds the wrist at the last set position */
         fun stabilize(): Command = run { motor.setVoltage(controller.calculate(position)) }
 
-        fun setSetpoint(newSetpoint : AngleUnit): Command = InstantCommand( {controller.setpoint = newSetpoint}, this)
-
+        fun setSetpoint(newSetpoint: AngleUnit): Command =
+            InstantCommand({ controller.setpoint = newSetpoint }, this)
 
         /** Sets the wrist to target position, and ends once the PID is at the setpoint */
         fun runToPosition(targetPosition: AngleUnit): Command =
             run {
-                controller.setpoint = targetPosition
-                motor.setVoltage(controller.calculate(position))
-            }
+                    controller.setpoint = targetPosition
+                    motor.setVoltage(controller.calculate(position))
+                }
                 .until { controller.atSetpoint() }
 
         fun runAtPower(power: Double): Command = run { motor.set(power) }

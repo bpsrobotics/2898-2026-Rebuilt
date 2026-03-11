@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.commands.swerve.MoveTo
 import frc.robot.engine.DashboardNumber
+import frc.robot.input.OI
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Shooter
 
@@ -30,12 +31,7 @@ fun simpleMoveAndShoot(): Command {
             pos =
                 FieldMapREBUILTWelded.teamHub.center +
                     (shootVectors[DriverStation.getLocation().orElse(2)] ?: shootVectors[2]!!) *
-                        (if (
-                            DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
-                                DriverStation.Alliance.Red
-                        )
-                            1.0
-                        else -1.0)
+                        OI.reverseDrive
         })
         .andThen(Shooter.Feeder.getJiggyWithIt(1.0))
         .alongWith(

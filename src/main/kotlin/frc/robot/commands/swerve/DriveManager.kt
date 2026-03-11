@@ -5,7 +5,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.engine.DashboardString
 import frc.robot.subsystems.Drivetrain
 
-class DriveManager : Command() {
+class DriveManager() : Command() {
     interface DriveRequest {
         val vx: Double?
         val vy: Double?
@@ -29,6 +29,13 @@ class DriveManager : Command() {
         override fun end(interrupted: Boolean) {
             isEnabled = false
         }
+
+        /** Runs this driver in its own DriveManager. */
+        fun solitarily(): Command = alongWith(DriveManager(listOf(this)))
+    }
+
+    constructor(initRequests: List<DriveRequest>) : this() {
+        requests.addAll(initRequests)
     }
 
     init {

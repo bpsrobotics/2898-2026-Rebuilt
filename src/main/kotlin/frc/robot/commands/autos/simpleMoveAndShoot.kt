@@ -5,31 +5,37 @@ import beaverlib.utils.Sugar.clamp
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.geometry.Vector2
 import beaverlib.utils.geometry.vector2
-import edu.wpi.first.hal.AllianceStationID
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.commands.swerve.MoveTo
+import frc.robot.engine.DashboardNumber
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Shooter
 
-val shootPositions =
+val shootVectors =
     mapOf(
-        AllianceStationID.Red1 to Vector2(2.33, 6.14),
-        AllianceStationID.Red2 to Vector2(2.0, 4.55),
-        AllianceStationID.Red3 to Vector2(2.47, 2.33),
-        AllianceStationID.Blue1 to Vector2(14.22, 2.22),
-        AllianceStationID.Blue2 to Vector2(14.31, 3.3),
-        AllianceStationID.Blue3 to Vector2(14.09, 5.19),
+        1 to Vector2(-0.7071067811865476, 0.7071067811865476),
+        2 to Vector2(-0.9615239476408232, 0.27472112789737807),
+        3 to Vector2(-0.9363291775690445, -0.3511234415883917),
     )
+
+val distance by DashboardNumber(2.0, "simpleMoveAndShoot")
 
 fun simpleMoveAndShoot(): Command {
     var pos = Vector2(0.0, 0.0)
 
     return MoveTo { pos.toPose2d(pos.angleTo(FieldMapREBUILTWelded.teamHub.center)) }
+        .solitarily()
         .beforeStarting({
             pos =
-                shootPositions[DriverStation.getRawAllianceStation()]
-                    ?: shootPositions[AllianceStationID.Red2]!!
+                FieldMapREBUILTWelded.teamHub.center +
+                    (shootVectors[DriverStation.getLocation().orElse(2)] ?: shootVectors[2]!!) *
+                        (if (
+                            DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
+                                DriverStation.Alliance.Red
+                        )
+                            1.0
+                        else -1.0)
         })
         .andThen(Shooter.Feeder.getJiggyWithIt(1.0))
         .alongWith(

@@ -3,7 +3,6 @@ package frc.robot.subsystems
 import beaverlib.fieldmap.FieldMapREBUILTWelded
 import beaverlib.utils.Units.Angular.AngleUnit
 import beaverlib.utils.Units.Angular.asAngleUnit
-import beaverlib.utils.Units.Angular.asRotations
 import beaverlib.utils.Units.Angular.radians
 import beaverlib.utils.Units.Angular.radiansPerSecond
 import beaverlib.utils.Units.seconds
@@ -90,7 +89,11 @@ object VisionTurningHandler : SubsystemBase() {
 
     override fun periodic() {
         nextFramePos = (Drivetrain.pose.vector2 + Drivetrain.fieldVelocity.vector2 * 0.02)
-        val nextFramePose = nextFramePos.toPose2d(Drivetrain.pose.rotation.asAngleUnit + (Drivetrain.fieldVelocity.omegaRadiansPerSecond.radiansPerSecond * 0.02.seconds))
+        val nextFramePose =
+            nextFramePos.toPose2d(
+                Drivetrain.pose.rotation.asAngleUnit +
+                    (Drivetrain.fieldVelocity.omegaRadiansPerSecond.radiansPerSecond * 0.02.seconds)
+            )
         targetPos = getTargetPos(nextFramePos)
 
         val directionToHub =
@@ -108,16 +111,21 @@ object VisionTurningHandler : SubsystemBase() {
 
         val allianceArea: FieldMapREBUILTWelded.AllianceArea =
             FieldMapREBUILTWelded.getPoseAllianceArea(nextFramePose)
-        if (allianceArea != FieldMapREBUILTWelded.getTeamAllianceArea() && allianceArea != FieldMapREBUILTWelded.AllianceArea.BlueTrench && allianceArea != FieldMapREBUILTWelded.AllianceArea.RedTrench) {
-            if((goalShooterAngle - nextFramePose.rotation.asAngleUnit).asRadians > PI) {
+        if (
+            allianceArea != FieldMapREBUILTWelded.getTeamAllianceArea() &&
+                allianceArea != FieldMapREBUILTWelded.AllianceArea.BlueTrench &&
+                allianceArea != FieldMapREBUILTWelded.AllianceArea.RedTrench
+        ) {
+            if ((goalShooterAngle - nextFramePose.rotation.asAngleUnit).asRadians > PI) {
                 goalHoodAngle += PI.radians
                 goalHoodAngle = 0.0.radians
             }
             goalHoodAngle = Shooter.Hood.Constants.TOP_POSITION
-
         } else {
             goalHoodAngle =
-                Shooter.Hood.Constants.kinematics.calculate(nextFramePos.distance(targetPos!!)).radians
+                Shooter.Hood.Constants.kinematics
+                    .calculate(nextFramePos.distance(targetPos!!))
+                    .radians
             if (sign((nextFramePos - Drivetrain.pose.vector2).x) == directionToHub) {
                 return
             }

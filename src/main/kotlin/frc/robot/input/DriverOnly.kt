@@ -20,7 +20,7 @@ import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
 import frc.robot.subsystems.VisionTurningHandler
 
-fun OI.DriverOnly() {
+fun OI.driverOnly() {
     /** Drivetrain */
     // Reset Gyro
     resetGyro

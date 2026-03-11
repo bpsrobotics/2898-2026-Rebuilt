@@ -62,18 +62,18 @@ object Intake : SubsystemBase() {
         object Constants {
             const val MOTOR_ID = 14
             const val ENCODER_ID = 0
-            const val ENCODER_OFFSET = -0.6814948670373717
+            const val ENCODER_OFFSET = -0.21449985536249638
 
             val pidConstants: PIDConstants = PIDConstants(2.0, 0.0, 0.0)
             val armFFConstants = ArmFeedForwardConstants(0.2, 0.2, 0.0)
-            val STOWED_POSITION = 2.2525048672565413.radians
+            val STOWED_POSITION = 1.8721234896041101.radians
             val EXTENDED_POSITION = 0.5970501168833996.radians
         }
 
         // Initializing brushless motor with SparkMAX motor controller
         private val motor =
             SparkWrapper(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless) {
-                idleMode(SparkBaseConfig.IdleMode.kBrake)
+                idleMode(SparkBaseConfig.IdleMode.kCoast)
                 smartCurrentLimit(35)
             }
 

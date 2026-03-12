@@ -62,12 +62,14 @@ object Intake : SubsystemBase() {
         object Constants {
             const val MOTOR_ID = 14
             const val ENCODER_ID = 0
-            const val ENCODER_OFFSET = -0.21449985536249638
+            const val ENCODER_OFFSET = -0.5728129143203229
 
-            val pidConstants: PIDConstants = PIDConstants(2.0, 0.0, 0.0)
-            val armFFConstants = ArmFeedForwardConstants(0.2, 0.2, 0.0)
-            val STOWED_POSITION = 1.8721234896041101.radians
-            val EXTENDED_POSITION = 0.5970501168833996.radians
+            val pidConstants: PIDConstants = PIDConstants(3.5, 0.05, 0.0)
+            val armFFConstants = ArmFeedForwardConstants(0.75, 0.3, 0.0)
+            val STOWED_POSITION = 1.7132242424871797.radians
+            val EXTENDED_POSITION = 0.18499849997800635.radians
+            val FEEDER_POSITION = 0.3284585466925222.radians
+
         }
 
         // Initializing brushless motor with SparkMAX motor controller

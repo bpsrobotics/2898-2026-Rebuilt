@@ -121,7 +121,7 @@ fun OI.driverAndOperatorBindings() {
         .and(driverController.a().negate())
         .whileTrue(
             SequentialCommandGroup(
-                (Shooter.Hood.moveToPosition { 2.7.radians }),
+                (Shooter.Hood.moveToPosition { desiredHoodPosition }),
                 Shooter.Feeder.runAtPower(1.0).alongWith(Shooter.Hood.holdPosition { 2.7.radians }),
             )
         )

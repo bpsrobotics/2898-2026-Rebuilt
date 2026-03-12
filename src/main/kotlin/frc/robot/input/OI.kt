@@ -49,7 +49,7 @@ object OI : SubsystemBase() {
     val driveManager = DriveManager()
 
     // private val hubDistance by DashboardNumber(2.0, "OI")
-    val desiredHoodAngle by DashboardNumber(1.3, "OI", true)
+    var desiredHoodAngle by DashboardNumber(1.3, "OI", true)
     val desiredRPM by DashboardNumber(4500.0, "OI", true)
     val desiredShooterPower by DashboardNumber(1.0, "OI", true)
 

@@ -92,16 +92,15 @@ fun OI.driverAndOperatorBindings() {
             Shooter.runAtSpeed { (desiredRPM * ((1.0 - operatorController.throttle * 2) / 3)).RPM }
         )
 
-    var desiredHoodPosition = 0.5.radians
+    desiredHoodAngle = 1.3
     operatorController
         .button(4)
         .whileTrue(
             RunCommand({
-                desiredHoodPosition =
-                    (desiredHoodPosition.asRadians - 0.025)
+                desiredHoodAngle =
+                    (desiredHoodAngle - 0.025)
                         .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
-                        .radians
-                println(desiredHoodPosition)
+                println(desiredHoodAngle)
             })
         )
 
@@ -109,11 +108,10 @@ fun OI.driverAndOperatorBindings() {
         .button(6)
         .whileTrue(
             RunCommand({
-                desiredHoodPosition =
-                    (desiredHoodPosition.asRadians + 0.025)
+                desiredHoodAngle =
+                    (desiredHoodAngle + 0.025)
                         .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
-                        .radians
-                println(desiredHoodPosition)
+                println(desiredHoodAngle)
             })
         )
 
@@ -121,21 +119,27 @@ fun OI.driverAndOperatorBindings() {
         .and(driverController.a().negate())
         .whileTrue(
             SequentialCommandGroup(
-                (Shooter.Hood.moveToPosition { desiredHoodPosition }),
-                Shooter.Feeder.runAtPower(1.0).alongWith(Shooter.Hood.holdPosition { 2.7.radians }),
+                (Shooter.Hood.moveToPosition { desiredHoodAngle.radians }.deadlineFor(Intake.Pivot.runToPosition(Intake.Pivot.Constants.FEEDER_POSITION))),
+                Shooter.Feeder.runAtPower(1.0).alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians }).alongWith(Intake.Pivot.getJiggyWithIt()),
             )
         )
-    operatorController.button(7).whileTrue(Shooter.Hood.stabilize())
     operatorTrigger
         .and(driverController.a())
         .whileTrue(
-            WaitUntilCommand { Shooter.Hood.atSetpoint }.andThen(Shooter.Feeder.getJiggyWithIt(1.0))
+            WaitUntilCommand { Shooter.Hood.atSetpoint }
+                .deadlineFor(Intake.Pivot.runToPosition(Intake.Pivot.Constants.FEEDER_POSITION))
+                .andThen(
+                    Shooter.Feeder.getJiggyWithIt(1.0).alongWith(Intake.Pivot.getJiggyWithIt())
+                )
         )
+
+    operatorController.button(7).whileTrue(Shooter.Hood.stabilize())
+
     operatorController
         .button(2)
         .or(operatorController.button(8))
         .and(operatorTrigger.negate())
-        .whileTrue(Shooter.Hood.holdPosition { desiredHoodPosition })
+        .whileTrue(Shooter.Hood.holdPosition { desiredHoodAngle.radians })
     //        operatorController.button(4).whileTrue(Shooter.Hood.doRunAtkS())
     //        operatorController.button(3).whileTrue(Shooter.Hood.stabilize())
     //        operatorController.button(6).whileTrue(Shooter.Hood.setDownAndReZero())

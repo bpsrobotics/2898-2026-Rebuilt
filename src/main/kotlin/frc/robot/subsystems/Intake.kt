@@ -69,7 +69,6 @@ object Intake : SubsystemBase() {
             val STOWED_POSITION = 1.7132242424871797.radians
             val EXTENDED_POSITION = 0.18499849997800635.radians
             val FEEDER_POSITION = 0.3284585466925222.radians
-
         }
 
         // Initializing brushless motor with SparkMAX motor controller
@@ -130,7 +129,10 @@ object Intake : SubsystemBase() {
         fun runAtkS(): Command = run { motor.setVoltage(controller.kS) }
 
         fun getJiggyWithIt(): Command =
-            extend().withTimeout(1.0).andThen(stow().withTimeout(1.0)).repeatedly()
+            runToPosition(Constants.FEEDER_POSITION)
+                .withTimeout(1.5)
+                .andThen(stow().withTimeout(1.5))
+                .repeatedly()
 
         fun extend() = runToPosition(Constants.EXTENDED_POSITION)
 

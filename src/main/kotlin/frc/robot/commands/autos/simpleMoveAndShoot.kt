@@ -31,6 +31,7 @@ fun simpleMoveAndShoot(): Command {
             pos =
                 FieldMapREBUILTWelded.teamHub.center +
                     (shootVectors[DriverStation.getLocation().orElse(2)] ?: shootVectors[2]!!) *
+                        distance *
                         OI.reverseDrive
         })
         .andThen(Shooter.Feeder.getJiggyWithIt(1.0))

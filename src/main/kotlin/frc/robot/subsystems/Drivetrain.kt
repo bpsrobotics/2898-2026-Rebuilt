@@ -112,7 +112,7 @@ object Drivetrain : SubsystemBase() {
                 )
                     return
                 val newPose = camera.getMultiTagPoseWithFallback(result)?.toPose2d() ?: return
-                addVisionMeasurement(newPose, result.timestampSeconds, true)
+                addVisionMeasurement(newPose, result.timestampSeconds, !DriverStation.isTeleopEnabled())
             },
         )
         setVisionMeasurementStdDevs(3.0, 4.0, 5.0)

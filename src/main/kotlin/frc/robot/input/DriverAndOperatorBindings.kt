@@ -100,7 +100,6 @@ fun OI.driverAndOperatorBindings() {
                 desiredHoodAngle =
                     (desiredHoodAngle - 0.025)
                         .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
-                println(desiredHoodAngle)
             })
         )
 
@@ -111,7 +110,6 @@ fun OI.driverAndOperatorBindings() {
                 desiredHoodAngle =
                     (desiredHoodAngle + 0.025)
                         .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
-                println(desiredHoodAngle)
             })
         )
 
@@ -150,9 +148,11 @@ fun OI.driverAndOperatorBindings() {
 
     operatorController
         .axisLessThan(1, -0.5)
+        .and(operatorTrigger.negate())
         .onTrue(Intake.Pivot.setSetpoint(Intake.Pivot.Constants.EXTENDED_POSITION))
     operatorController
         .axisGreaterThan(1, 0.5)
+        .and(operatorTrigger.negate())
         .onTrue(Intake.Pivot.setSetpoint(Intake.Pivot.Constants.STOWED_POSITION))
     operatorController.button(11).whileTrue(Shooter.Feeder.getJiggyWithIt(1.0))
 

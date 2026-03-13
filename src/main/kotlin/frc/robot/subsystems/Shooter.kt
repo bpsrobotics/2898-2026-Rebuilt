@@ -120,7 +120,7 @@ object Shooter : SubsystemBase() {
             const val ENCODER_ID = 1
 
             val pidConstants = PIDConstants(1.0, 0.0, 0.0)
-            val ffConstants = ArmFeedForwardConstants(0.2, 0.20, 0.0)
+            val ffConstants = ArmFeedForwardConstants(0.2   , 0.20, 0.0)
 
             val DOWN_POSITION = 0.0.radians
             val TOP_POSITION = 2.7.radians

@@ -1,4 +1,4 @@
-package frc.robot.OI
+package frc.robot.input
 
 import beaverlib.utils.Units.Time
 import edu.wpi.first.math.MathUtil
@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.commands.swerve.DriveManager
 import frc.robot.engine.DashboardNumber
+import frc.robot.input.OI.process
 import frc.robot.subsystems.Drivetrain
 import kotlin.math.absoluteValue
 import kotlin.math.pow
@@ -48,7 +49,7 @@ object OI : SubsystemBase() {
     val driveManager = DriveManager()
 
     // private val hubDistance by DashboardNumber(2.0, "OI")
-    val desiredHoodAngle by DashboardNumber(1.3, "OI", true)
+    var desiredHoodAngle by DashboardNumber(1.3, "OI", true)
     val desiredRPM by DashboardNumber(4500.0, "OI", true)
     val desiredShooterPower by DashboardNumber(1.0, "OI", true)
 

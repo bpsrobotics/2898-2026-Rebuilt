@@ -34,6 +34,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import frc.robot.commands.swerve.HubAlign
+import frc.robot.commands.autos.simpleMoveAndShoot
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
@@ -155,6 +156,7 @@ object Autos {
         )
 
         autos = mapOf<String, Command>(
+            "Simple Move/Shoot" to simpleMoveAndShoot(),
             "Spin Up Flywheel" to AutoBuilder.buildAuto("SpinUpFlywheel"),
             "Drive Forward" to AutoBuilder.buildAuto("DriveForward"),
             "Center - Drive Back and Shoot" to AutoBuilder.buildAuto("Center-DriveBackShoot"),

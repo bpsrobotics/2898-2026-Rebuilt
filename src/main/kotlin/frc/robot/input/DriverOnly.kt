@@ -1,4 +1,4 @@
-package frc.robot.OI
+package frc.robot.input
 
 import beaverlib.utils.Units.Angular.RPM
 import beaverlib.utils.Units.Angular.degrees
@@ -20,7 +20,7 @@ import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
 import frc.robot.subsystems.VisionTurningHandler
 
-fun OI.DriverOnly() {
+fun OI.driverOnly() {
     /** Drivetrain */
     // Reset Gyro
     resetGyro

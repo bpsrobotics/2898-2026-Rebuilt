@@ -13,7 +13,7 @@ class HubAlign : DriveManager.DriveRequestBase() {
     override val priority: Int = DriverPriority.HUB_ALIGN.ordinal
 
     companion object {
-        const val KP = 1.0
+        const val KP = 2.0
         const val KI = 0.01
         const val KD = 0.2
 

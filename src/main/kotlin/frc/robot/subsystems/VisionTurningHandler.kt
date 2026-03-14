@@ -4,6 +4,8 @@ import beaverlib.fieldmap.FieldMapREBUILTWelded
 import beaverlib.utils.Units.Angular.AngleUnit
 import beaverlib.utils.Units.Angular.asAngleUnit
 import beaverlib.utils.Units.Angular.radians
+import beaverlib.utils.Units.Angular.radiansPerSecond
+import beaverlib.utils.Units.seconds
 import beaverlib.utils.geometry.Vector2
 import beaverlib.utils.geometry.vector2
 import edu.wpi.first.math.geometry.Pose2d
@@ -12,6 +14,7 @@ import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.engine.utils.Polynomial
 import frc.robot.engine.DashboardNumber
+import kotlin.math.PI
 import kotlin.math.sign
 
 object VisionTurningHandler : SubsystemBase() {
@@ -86,6 +89,11 @@ object VisionTurningHandler : SubsystemBase() {
 
     override fun periodic() {
         nextFramePos = (Drivetrain.pose.vector2 + Drivetrain.fieldVelocity.vector2 * 0.02)
+        val nextFramePose =
+            nextFramePos.toPose2d(
+                Drivetrain.pose.rotation.asAngleUnit +
+                    (Drivetrain.fieldVelocity.omegaRadiansPerSecond.radiansPerSecond * 0.02.seconds)
+            )
         targetPos = getTargetPos(nextFramePos)
 
         val directionToHub =
@@ -99,22 +107,30 @@ object VisionTurningHandler : SubsystemBase() {
             return
         }
         posePublisher.set(targetPos!!.toPose2d(0.radians))
-
-        if (sign((nextFramePos - Drivetrain.pose.vector2).x) == directionToHub) {
-            //            goalHoodAngle =
-            //                Shooter.Hood.Constants.kinematics
-            //                    .calculate(-(nextFramePos.distance(targetPos!!)))
-            //                    .radians
-            //            goalShooterAngle =
-            //                nextFramePos.angleTo(
-            //                    Vector2((-(targetPos!!.x - nextFramePos.x)) + nextFramePos.x,
-            // nextFramePos.y)
-            //                )
-            return
-        }
-        goalHoodAngle =
-            Shooter.Hood.Constants.kinematics.calculate(nextFramePos.distance(targetPos!!)).radians
         goalShooterAngle = nextFramePos.angleTo(targetPos!!) // + (PI / 2).radians
+
+        val allianceArea: FieldMapREBUILTWelded.AllianceArea =
+            FieldMapREBUILTWelded.getPoseAllianceArea(nextFramePose)
+        if (
+            allianceArea != FieldMapREBUILTWelded.getTeamAllianceArea() &&
+                allianceArea != FieldMapREBUILTWelded.AllianceArea.BlueTrench &&
+                allianceArea != FieldMapREBUILTWelded.AllianceArea.RedTrench
+        ) {
+            if ((goalShooterAngle - nextFramePose.rotation.asAngleUnit).asRadians > PI) {
+                goalHoodAngle += PI.radians
+                goalHoodAngle = 0.0.radians
+            }
+            goalHoodAngle = Shooter.Hood.Constants.TOP_POSITION
+        } else {
+            goalHoodAngle =
+                Shooter.Hood.Constants.kinematics
+                    .calculate(nextFramePos.distance(targetPos!!))
+                    .radians
+            if (sign((nextFramePos - Drivetrain.pose.vector2).x) == directionToHub) {
+                return
+            }
+        }
+
         dashboardGoalShooter = goalShooterAngle.asRadians
     }
 }

@@ -115,44 +115,74 @@ fun OI.driverAndOperatorBindings() {
 
     operatorTrigger
         .and(driverController.a().negate())
+        .and(operatorController.axisLessThan(1, -0.5).negate()
+            .or(operatorController.axisGreaterThan(1, 0.5).negate()))
         .whileTrue(
             SequentialCommandGroup(
-                (Shooter.Hood.moveToPosition { desiredHoodAngle.radians }.deadlineFor(Intake.Pivot.runToPosition(Intake.Pivot.Constants.FEEDER_POSITION))),
+                (Shooter.Hood.moveToPosition { desiredHoodAngle.radians }.withTimeout(1.0).deadlineFor(Intake.Pivot.runToPosition(Intake.Pivot.Constants.FEEDER_POSITION))),
                 Shooter.Feeder.runAtPower(1.0).alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians }).alongWith(Intake.Pivot.getJiggyWithIt()),
             )
         )
     operatorTrigger
         .and(driverController.a())
+        .and(operatorController.axisLessThan(1, -0.5).negate()
+            .or(operatorController.axisGreaterThan(1, 0.5).negate()))
         .whileTrue(
-            WaitUntilCommand { Shooter.Hood.atSetpoint }
+            WaitUntilCommand { Shooter.Hood.atSetpoint }.withTimeout(1.0)
                 .deadlineFor(Intake.Pivot.runToPosition(Intake.Pivot.Constants.FEEDER_POSITION))
                 .andThen(
                     Shooter.Feeder.getJiggyWithIt(1.0).alongWith(Intake.Pivot.getJiggyWithIt())
                 )
         )
+    operatorTrigger
+        .and(driverController.a().negate())
+        .and(operatorController.axisLessThan(1, -0.5)
+            .or(operatorController.axisGreaterThan(1, 0.5)))
+        .whileTrue(
+            SequentialCommandGroup(
+                (Shooter.Hood.moveToPosition { desiredHoodAngle.radians }.withTimeout(1.0)),
+                Shooter.Feeder.runAtPower(1.0).alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians }),
+            )
+        )
+    operatorTrigger
+        .and(driverController.a())
+        .and(operatorController.axisLessThan(1, -0.5)
+            .or(operatorController.axisGreaterThan(1, 0.5)))
+        .whileTrue(
+            WaitUntilCommand { Shooter.Hood.atSetpoint }.withTimeout(1.0)
+                .andThen(
+                    Shooter.Feeder.getJiggyWithIt(1.0))
+                )
 
-    operatorController.button(7).whileTrue(Shooter.Hood.stabilize())
 
     operatorController
         .button(2)
         .or(operatorController.button(8))
         .and(operatorTrigger.negate())
         .whileTrue(Shooter.Hood.holdPosition { desiredHoodAngle.radians })
-    //        operatorController.button(4).whileTrue(Shooter.Hood.doRunAtkS())
-    //        operatorController.button(3).whileTrue(Shooter.Hood.stabilize())
-    //        operatorController.button(6).whileTrue(Shooter.Hood.setDownAndReZero())
+    /*
+    operatorController.(4)
+    .whileTrue(Shooter.Hood.doRunAtkS())
+    operatorController.button(3).whileTrue(Shooter.Hood.stabilize())
+    operatorController.button(6).whileTrue(Shooter.Hood.setDownAndReZero())
+    */
 
     /** Intake */
     highHatBack.whileTrue(Intake.runAtPower(0.75))
     highHatForward.whileTrue(Intake.runAtPower(-0.75).alongWith(Shooter.Feeder.runAtPower(-0.1)))
+    operatorController.button(11)
+        .and(operatorTrigger.negate())
+        .whileTrue(Shooter.Feeder.runAtPower(1.0))
+    operatorController.button(12)
+        .and(operatorTrigger.negate())
+        .whileTrue(Shooter.Feeder.runAtPower(-1.0))
+
 
     operatorController
         .axisLessThan(1, -0.5)
-        .and(operatorTrigger.negate())
         .onTrue(Intake.Pivot.setSetpoint(Intake.Pivot.Constants.EXTENDED_POSITION))
     operatorController
         .axisGreaterThan(1, 0.5)
-        .and(operatorTrigger.negate())
         .onTrue(Intake.Pivot.setSetpoint(Intake.Pivot.Constants.STOWED_POSITION))
     operatorController.button(11).whileTrue(Shooter.Feeder.getJiggyWithIt(1.0))
 

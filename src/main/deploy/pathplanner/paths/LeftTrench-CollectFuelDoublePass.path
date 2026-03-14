@@ -216,10 +216,10 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -23.459024081461617
+    "rotation": -23.45902408146162
   },
   "reversed": false,
-  "folder": null,
+  "folder": "LeftTrench",
   "idealStartingState": {
     "velocity": 0,
     "rotation": 0.0

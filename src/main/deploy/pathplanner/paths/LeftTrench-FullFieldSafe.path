@@ -126,7 +126,7 @@
     "rotation": 9.019322431381678
   },
   "reversed": false,
-  "folder": null,
+  "folder": "LeftTrench",
   "idealStartingState": {
     "velocity": 0,
     "rotation": 0.0

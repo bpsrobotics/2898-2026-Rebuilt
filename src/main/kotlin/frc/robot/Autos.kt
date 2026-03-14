@@ -206,7 +206,8 @@ object Autos {
                         )
                         .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
                         .radians
-                }
+                },
+                Shooter.stabilize(),
             )
             .withTimeout(Constants.SHOOT_TIMEOUT_SECONDS)
 

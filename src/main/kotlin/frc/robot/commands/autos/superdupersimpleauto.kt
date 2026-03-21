@@ -2,6 +2,8 @@ package frc.robot.commands.autos
 
 import beaverlib.fieldmap.FieldMapREBUILTWelded
 import beaverlib.utils.Units.Angular.RPM
+import beaverlib.utils.Units.Angular.radians
+import beaverlib.utils.Units.Angular.standardPosition
 import beaverlib.utils.Units.Linear.DistanceUnit
 import beaverlib.utils.Units.Linear.meters
 import beaverlib.utils.geometry.vector2
@@ -13,7 +15,7 @@ import frc.robot.subsystems.Shooter
 import frc.robot.subsystems.VisionTurningHandler
 import kotlin.math.PI
 
-class MoveDistanceAndRotate(private val desiredDistance: DistanceUnit = 1.meters) : Command() {
+class MoveDistanceAndRotate(private val desiredDistance: DistanceUnit = 2.meters) : Command() {
     private val distancePID = PIDController(2.0, 0.3, 0.1)
 
     private val rotationPID = PIDController(2.0, 0.01, 0.2)
@@ -25,13 +27,13 @@ class MoveDistanceAndRotate(private val desiredDistance: DistanceUnit = 1.meters
 
     override fun execute() {
         val target = FieldMapREBUILTWelded.teamHub.center
-        val currentAngleToCenter = Drivetrain.pose.vector2.angleTo(target)
+        val currentAngleToCenter = (Drivetrain.pose.vector2.angleTo(target) + PI.radians).standardPosition
         val distanceSpeed =
             distancePID.calculate(
                 Drivetrain.pose.vector2.distance(target) - desiredDistance.asMeters
             )
         rotationPID.setpoint =
-            Drivetrain.pose.vector2.angleTo(FieldMapREBUILTWelded.teamHub.center).asRadians
+            currentAngleToCenter.asRadians
 
         val speeds =
             ChassisSpeeds(
@@ -48,7 +50,7 @@ class MoveDistanceAndRotate(private val desiredDistance: DistanceUnit = 1.meters
 }
 
 fun superdupersimpleauto(): Command {
-    return MoveDistanceAndRotate()
+    return MoveDistanceAndRotate().alongWith(Shooter.Hood.resetCommand())
         .deadlineFor(Shooter.runAtSpeed({ 4500.RPM }))
         .andThen(
             Shooter.Hood.moveToPosition { VisionTurningHandler.goalHoodAngle }

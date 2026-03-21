@@ -200,6 +200,11 @@ object Shooter : SubsystemBase() {
         fun moveDown() = holdPosition(Constants.DOWN_POSITION)
 
         val currentAverage: MovingAverage = MovingAverage(5)
+        fun resetCommand(): Command = startRun({ currentAverage.clear() }) {
+            motor.setVoltage(-2.0)
+            currentAverage.add(motor.outputCurrent)
+        }
+            .until { currentAverage.average > 20 }
 
         fun setDownAndReZero(): Command =
             startRun({ currentAverage.clear() }) {

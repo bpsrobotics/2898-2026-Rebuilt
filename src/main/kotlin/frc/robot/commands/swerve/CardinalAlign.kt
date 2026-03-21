@@ -8,7 +8,7 @@ import kotlin.math.PI
 class CardinalAlign(val getTargetAngle: () -> AngleUnit) : DriveManager.DriveRequestBase() {
     override val priority: Int = DriverPriority.CARDINAL_ALIGN.ordinal
 
-    private val rotationPID = PIDController(3.0, 0.1, 0.1)
+    private val rotationPID = PIDController(2.0, 0.01, 0.2)
 
     init {
         rotationPID.enableContinuousInput(-PI, PI)

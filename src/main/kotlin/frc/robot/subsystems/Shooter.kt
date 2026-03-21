@@ -38,7 +38,7 @@ object Shooter : SubsystemBase() {
 
         val motor1FFConstants = SimpleMotorFeedForwardConstants(0.3, 0.00110075996, 0.0)
 
-        val runningSpeed by DashboardNumber(0.0, "Shooter/Constants")
+        val runningSpeed by DashboardNumber(4500.0, "Shooter/Constants")
     }
 
     val atSpeed
@@ -89,8 +89,12 @@ object Shooter : SubsystemBase() {
 
     fun waitSpeed(): Command = waitUntil { motor1Controller.atSetpoint() }
 
+    fun setRunningSetpoint() {
+        motor1Controller.setpoint = Constants.runningSpeed
+    }
+
     fun runAtSpeed(): Command =
-        stabilize().beforeStarting({ motor1Controller.setpoint = Constants.runningSpeed })
+        stabilize().beforeStarting({ setRunningSetpoint() })
 
     fun runAtSpeed(speedLambda: () -> AngularVelocity): Command = run {
         motor1Controller.setpoint = speedLambda().asRPM

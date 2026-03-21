@@ -5,22 +5,15 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "path",
-                "data": {
-                  "pathName": "LeftTrench-CollectFuelDoublePass"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "SpinUpShooter"
-                }
-              }
-            ]
+            "pathName": "LeftTrench-CollectFuelDoublePass"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AlignAndShoot"
           }
         }
       ]

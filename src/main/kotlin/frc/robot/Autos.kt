@@ -211,9 +211,11 @@ object Autos {
             )
             .withTimeout(Constants.SHOOT_TIMEOUT_SECONDS)
 
-        return alignAndPositionHood
+        val spinUpPhase = alignAndPositionHood
             .andThen(waitForSpeed)
-            .andThen(shootPhase)
+            .deadlineFor(Shooter.runAtSpeed())
+
+        return spinUpPhase.andThen(shootPhase)
     }
 
     @Suppress("unused")

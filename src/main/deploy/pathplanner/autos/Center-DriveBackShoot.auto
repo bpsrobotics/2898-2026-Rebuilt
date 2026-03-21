@@ -5,35 +5,15 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "path",
           "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "SpinUpShooter"
-                }
-              },
-              {
-                "type": "sequential",
-                "data": {
-                  "commands": [
-                    {
-                      "type": "path",
-                      "data": {
-                        "pathName": "Center-DriveBack"
-                      }
-                    },
-                    {
-                      "type": "named",
-                      "data": {
-                        "name": "AlignAndShoot"
-                      }
-                    }
-                  ]
-                }
-              }
-            ]
+            "pathName": "Center-DriveBack"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "AlignAndShoot"
           }
         }
       ]

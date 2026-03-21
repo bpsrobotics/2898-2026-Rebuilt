@@ -34,9 +34,9 @@ object Shooter : SubsystemBase() {
         const val MOTOR_1_ID = 16
         const val MOTOR_2_ID = 17
 
-        val motor1PIDConstants = PIDConstants(0.005, 0.0, 0.0)
+        val motor1PIDConstants = PIDConstants(0.005, 0.0, 0.001)
 
-        val motor1FFConstants = SimpleMotorFeedForwardConstants(0.3, 0.00110075996, 0.0)
+        val motor1FFConstants = SimpleMotorFeedForwardConstants(0.25, 0.00105, 0.0)
 
         val runningSpeed by DashboardNumber(4500.0, "Shooter/Constants")
     }
@@ -47,7 +47,7 @@ object Shooter : SubsystemBase() {
     private val motor =
         SparkWrapper(Constants.MOTOR_1_ID, SparkLowLevel.MotorType.kBrushless) {
             idleMode(SparkBaseConfig.IdleMode.kCoast)
-            smartCurrentLimit(20)
+            smartCurrentLimit(40)
             inverted(true)
             encoder.velocityConversionFactor(2.0)
         }
@@ -65,11 +65,6 @@ object Shooter : SubsystemBase() {
         SmartDashboard.putData("Shooter/motor/PID", motor1Controller)
     }
 
-    var motor1Velocity by DashboardNumber(0.0, "Shooter")
-    var motor1DesiredPower by DashboardNumber(0.0, "Shooter")
-
-    var motor1Current by DashboardNumber(0.0, "Shooter")
-    var motor2Current by DashboardNumber(0.0, "Shooter")
 
     override fun periodic() {}
 
@@ -103,8 +98,6 @@ object Shooter : SubsystemBase() {
     }
 
     val desiredSpeed: Double by DashboardNumber(0.0, "Shooter")
-
-    fun runAtDashboardPower(): Command = run { motor.set(motor1DesiredPower) }
 
     fun runAtPower(power: Double): Command = run { motor.set(power) }
 

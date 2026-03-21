@@ -26,7 +26,7 @@ object Intake : SubsystemBase() {
     private val motor =
         SparkWrapper(Constants.MOTOR_ID, SparkLowLevel.MotorType.kBrushless) {
             idleMode(SparkBaseConfig.IdleMode.kCoast)
-            smartCurrentLimit(25)
+            smartCurrentLimit(40)
             inverted(true)
         }
 
@@ -62,7 +62,7 @@ object Intake : SubsystemBase() {
         object Constants {
             const val MOTOR_ID = 14
             const val ENCODER_ID = 0
-            const val ENCODER_OFFSET = -0.7716722942918074
+            const val ENCODER_OFFSET = -0.5539147638478691
 
             val pidConstants: PIDConstants = PIDConstants(3.5, 0.05, 0.0)
             val armFFConstants = ArmFeedForwardConstants(0.75, 0.3, 0.0)

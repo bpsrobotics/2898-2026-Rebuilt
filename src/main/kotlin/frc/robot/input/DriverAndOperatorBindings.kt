@@ -184,7 +184,7 @@ fun OI.driverAndOperatorBindings() {
     operatorController
         .axisGreaterThan(1, 0.5)
         .onTrue(Intake.Pivot.setSetpoint(Intake.Pivot.Constants.STOWED_POSITION))
-    operatorController.button(11).whileTrue(Shooter.Feeder.getJiggyWithIt(1.0))
+//    operatorController.button(11).whileTrue(Shooter.Feeder.getJiggyWithIt(1.0))
 
     // operatorController.button(12).whileTrue(Shooter.runAtPower { desiredShooterPower })
 }

@@ -168,7 +168,7 @@ fun OI.driverAndOperatorBindings() {
     */
 
     /** Intake */
-    highHatBack.whileTrue(Intake.runAtPower(0.5))
+    highHatBack.whileTrue(Intake.runAtPower(1.0))
     highHatForward.whileTrue(Intake.runAtPower(-0.75).alongWith(Shooter.Feeder.runAtPower(-0.1)))
     operatorController.button(11)
         .and(operatorTrigger.negate())

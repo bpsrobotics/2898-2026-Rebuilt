@@ -271,7 +271,7 @@ object Shooter : SubsystemBase() {
                             topMotor.set(power)
                             bottomMotor.set(power)
                         }
-                        .withTimeout(0.66),
+                        .withTimeout(1.5),
                     run {
                             topMotor.set(power)
                             bottomMotor.set(-power)

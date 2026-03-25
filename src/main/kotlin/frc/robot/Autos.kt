@@ -94,6 +94,7 @@ object Autos {
                 Drivetrain.Constants.MAX_SPEED_MPS,
                 ModuleConfig(
                     (2.0).inches.asMeters,
+//                    2.0,
                     Drivetrain.Constants.MAX_SPEED_MPS,
                     1.54,
                     DCMotor.getNEO(1).withReduction(6.75),
@@ -107,12 +108,12 @@ object Autos {
         // private const val MAX_ANGULAR_SPEED_RADIANS_PER_SECOND = Math.PI
         // private const val MAX_ANGULAR_SPEED_RADIANS_PER_SECOND_SQUARED = Math.PI
 
-        val translationPIDConstants = PIDConstants(5.0, 0.0, 0.0)
-        val rotationPIDConstants = PIDConstants(0.01, 0.0, 0.0)
+        val translationPIDConstants = PIDConstants(1.5, 0.0, 0.0)
+        val rotationPIDConstants = PIDConstants(1.0, 0.0, 0.0)
 
         // AlignAndShoot timeouts
         const val ALIGN_TIMEOUT_SECONDS = 1.0
-        const val SHOOT_TIMEOUT_SECONDS = 20.0
+        const val SHOOT_TIMEOUT_SECONDS = 50.0
         const val WAIT_FOR_SPEED_TIMEOUT_SECONDS = 2.0
 
         // Constraint for the motion profiled robot angle controller
@@ -162,6 +163,7 @@ object Autos {
             "Center - Drive Back and Shoot" to AutoBuilder.buildAuto("Center-DriveBackShoot"),
             "Left Trench - Collect Fuel Safe" to AutoBuilder.buildAuto("LeftTrench-CollectFuelSafe"),
             "Left Trench - Collect Fuel Double Pass" to AutoBuilder.buildAuto("LeftTrench-CollectFuelDoublePass"),
+            "Shoot" to buildAlignAndShoot(),
         )
     }
 
@@ -175,11 +177,13 @@ object Autos {
         val rotationPID = HubAlign.createRotationPID()
 
         // Part 1
-        val alignAndPositionHood = Drivetrain.run {
+        val alignAndPositionHood = Drivetrain.runEnd({
             rotationPID.setpoint = HubAlign.hubSetpointRadians
             val omega = rotationPID.calculate(Drivetrain.pose.rotation.radians)
             Drivetrain.driveFieldOriented(ChassisSpeeds(0.0, 0.0, omega))
-        }.beforeStarting({ rotationPID.reset() })
+        }, {
+            Drivetrain.stop()
+        }).beforeStarting({ rotationPID.reset() })
             .withTimeout(Constants.ALIGN_TIMEOUT_SECONDS)
             .alongWith(
                 Shooter.Hood.holdPosition {
@@ -198,6 +202,7 @@ object Autos {
 
         // Part 3
         val shootPhase = Shooter.Feeder.getJiggyWithIt(1.0)
+            .alongWith(Intake.Pivot.getJiggyWithIt())
             .alongWith(
                 Shooter.Hood.holdPosition {
                     Shooter.Hood.Constants.kinematics

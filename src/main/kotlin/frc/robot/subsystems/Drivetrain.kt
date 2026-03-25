@@ -243,8 +243,8 @@ object Drivetrain : SubsystemBase() {
      *
      * @param initialHolonomicPose The desired pose to reset the odometry to.
      */
-    fun resetOdometry(initialHolonomicPose: Pose2d) {
-        swerveDrive.resetOdometry(initialHolonomicPose)
+    fun resetOdometry(initialHolonomicPose: Pose2d?) {
+        swerveDrive.resetOdometry(initialHolonomicPose ?: Pose2d())
     }
 
     /** Returns the current pose of the robot. */

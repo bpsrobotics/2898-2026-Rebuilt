@@ -59,7 +59,7 @@
     "rotation": 0.0
   },
   "reversed": false,
-  "folder": "Center",
+  "folder": null,
   "idealStartingState": {
     "velocity": 0,
     "rotation": 0.0

@@ -15,10 +15,10 @@ val Vision =
         BeaverVisionCamera(
             "Iris_Arducam",
             Transform3d(
-                -1.021.inches.asMeters, // -13
-                5.276.inches.asMeters,
-                19.010.inches.asMeters,
-                Rotation3d(0.0, -30.0.degrees.asRadians, 30.degrees.asRadians),
+                -1.208.inches.asMeters, // -13
+                5.191.inches.asMeters,
+                19.015.inches.asMeters,
+                Rotation3d(0.0, -45.0.degrees.asRadians, 30.degrees.asRadians),
             ),
             layout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded),
             strategy = PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
@@ -27,10 +27,10 @@ val Vision =
         BeaverVisionCamera(
             "Retina_Arducam",
             Transform3d(
-                -1.021.inches.asMeters, // -13
-                -5.276.inches.asMeters,
-                19.010.inches.asMeters,
-                Rotation3d(0.0, -30.0.degrees.asRadians, -30.degrees.asRadians),
+                -1.208.inches.asMeters, // -13
+                -5.191.inches.asMeters,
+                19.015.inches.asMeters,
+                Rotation3d(0.0, -45.0.degrees.asRadians, -30.degrees.asRadians),
             ),
             layout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded),
             strategy = PhotonPoseEstimator.PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,

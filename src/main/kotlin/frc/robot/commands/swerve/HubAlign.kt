@@ -1,5 +1,6 @@
 package frc.robot.commands.swerve
 
+import edu.wpi.first.math.MathUtil
 import edu.wpi.first.math.controller.PIDController
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.VisionTurningHandler
@@ -22,7 +23,7 @@ class HubAlign : DriveManager.DriveRequestBase() {
         }
 
         val hubSetpointRadians: Double
-            get() = VisionTurningHandler.goalShooterAngle.asRadians + PI
+            get() = MathUtil.angleModulus(VisionTurningHandler.goalShooterAngle.asRadians + PI)
     }
 
     private val rotationPID = createRotationPID()

@@ -249,6 +249,8 @@ object Shooter : SubsystemBase() {
 
             SmartDashboard.putData("Shooter/Feeder/PidFF", controller)
         }
+        
+        
 
         fun stop(): Command = runOnce {
             topMotor.stopMotor()
@@ -265,7 +267,7 @@ object Shooter : SubsystemBase() {
                 topMotor.set(controller.calculate(topMotor.velocity.asRPM))
                 bottomMotor.set(controller.calculate(bottomMotor.velocity.asRPM))
             }
-
+/* 
         fun getJiggyWithIt(power: Double): Command =
             SequentialCommandGroup(
                     run {
@@ -279,6 +281,25 @@ object Shooter : SubsystemBase() {
                         }
                         .withTimeout(0.33),
                 )
-                .repeatedly()
+                .repeatedly() */
+
+        override fun periodic {
+            var isStalled = stallDebouncer.calculate(topMotor.current >= 20 || bottomMotor.current >= 20)
+        }
+        val stallDebouncer = Debouncer(0.25, DebounceType.RISING) //True when current is above stall for > 1 second
+        fun deJam(power: Double): Command =
+            run {
+                topMotor.set(power)
+                bottomMotor.set(-power)
+            }
+            .withTimeout(0.33)
+
+        fun feedBalls(power: Double): Command =
+            run {
+                topMotor.set(power)
+                bottomMotor.set(power)
+            }
+        fun getJiggyWithIt(power: Double): Command =
+            feedBalls(power).until(isStalled).andThen(deJam(power)).repeatedly()
     }
 }

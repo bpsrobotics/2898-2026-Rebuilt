@@ -15,11 +15,11 @@ import beaverlib.utils.Units.Angular.rotations
 import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.config.SparkBaseConfig
 import edu.wpi.first.math.MathUtil
+import edu.wpi.first.math.filter.Debouncer
 import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands.waitUntil
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.WaitCommand
 import frc.engine.utils.Polynomial
@@ -64,7 +64,6 @@ object Shooter : SubsystemBase() {
 
         SmartDashboard.putData("Shooter/motor/PID", motor1Controller)
     }
-
 
     override fun periodic() {}
 
@@ -200,11 +199,13 @@ object Shooter : SubsystemBase() {
         fun moveDown() = holdPosition(Constants.DOWN_POSITION)
 
         val currentAverage: MovingAverage = MovingAverage(5)
-        fun resetCommand(): Command = startRun({ currentAverage.clear() }) {
-            motor.setVoltage(-2.0)
-            currentAverage.add(motor.outputCurrent)
-        }
-            .until { currentAverage.average > 20 }
+
+        fun resetCommand(): Command =
+            startRun({ currentAverage.clear() }) {
+                    motor.setVoltage(-2.0)
+                    currentAverage.add(motor.outputCurrent)
+                }
+                .until { currentAverage.average > 20 }
 
         fun setDownAndReZero(): Command =
             startRun({ currentAverage.clear() }) {
@@ -249,8 +250,6 @@ object Shooter : SubsystemBase() {
 
             SmartDashboard.putData("Shooter/Feeder/PidFF", controller)
         }
-        
-        
 
         fun stop(): Command = runOnce {
             topMotor.stopMotor()
@@ -267,7 +266,8 @@ object Shooter : SubsystemBase() {
                 topMotor.set(controller.calculate(topMotor.velocity.asRPM))
                 bottomMotor.set(controller.calculate(bottomMotor.velocity.asRPM))
             }
-/* 
+
+        /*
         fun getJiggyWithIt(power: Double): Command =
             SequentialCommandGroup(
                     run {
@@ -283,23 +283,31 @@ object Shooter : SubsystemBase() {
                 )
                 .repeatedly() */
 
-        override fun periodic {
-            var isStalled = stallDebouncer.calculate(topMotor.current >= 20 || bottomMotor.current >= 20)
-        }
-        val stallDebouncer = Debouncer(0.25, DebounceType.RISING) //True when current is above stall for > 1 second
+        val isStalled: Boolean
+            get() =
+                stallDebouncer.calculate(
+                    topMotor.outputCurrent >= 20 || bottomMotor.outputCurrent >= 20
+                )
+
+        val stallDebouncer =
+            Debouncer(
+                0.25,
+                Debouncer.DebounceType.kRising,
+            ) // True when current is above stall for > 1 second
+
         fun deJam(power: Double): Command =
             run {
-                topMotor.set(power)
-                bottomMotor.set(-power)
-            }
-            .withTimeout(0.33)
+                    topMotor.set(power)
+                    bottomMotor.set(-power)
+                }
+                .withTimeout(0.33)
 
-        fun feedBalls(power: Double): Command =
-            run {
-                topMotor.set(power)
-                bottomMotor.set(power)
-            }
+        fun feedBalls(power: Double): Command = run {
+            topMotor.set(power)
+            bottomMotor.set(power)
+        }
+
         fun getJiggyWithIt(power: Double): Command =
-            feedBalls(power).until(isStalled).andThen(deJam(power)).repeatedly()
+            feedBalls(power).until { isStalled }.andThen(deJam(power)).repeatedly()
     }
 }

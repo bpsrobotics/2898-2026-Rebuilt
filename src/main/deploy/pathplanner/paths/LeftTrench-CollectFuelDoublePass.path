@@ -191,19 +191,34 @@
       "name": "ExtendIntake",
       "waypointRelativePos": 1.0646871686108124,
       "endWaypointRelativePos": null,
-      "command": null
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "ExtendIntake"
+        }
+      }
     },
     {
       "name": "RunIntake",
       "waypointRelativePos": 1.6500530222693508,
       "endWaypointRelativePos": null,
-      "command": null
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "RunIntake"
+        }
+      }
     },
     {
       "name": "StopIntake",
-      "waypointRelativePos": 5.637327677624592,
+      "waypointRelativePos": 5.86451612903225,
       "endWaypointRelativePos": null,
-      "command": null
+      "command": {
+        "type": "named",
+        "data": {
+          "name": "StopIntake"
+        }
+      }
     }
   ],
   "globalConstraints": {

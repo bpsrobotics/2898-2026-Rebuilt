@@ -159,10 +159,12 @@ object Autos {
         autos = mapOf<String, Command>(
             "Simple Move/Shoot" to simpleMoveAndShoot(),
             "Spin Up Flywheel" to AutoBuilder.buildAuto("SpinUpFlywheel"),
-            "Drive Forward" to AutoBuilder.buildAuto("DriveForward"),
             "Center - Drive Back and Shoot" to AutoBuilder.buildAuto("Center-DriveBackShoot"),
+            "Center - Depot" to AutoBuilder.buildAuto("Center-Depot"),
             "Left Trench - Collect Fuel Safe" to AutoBuilder.buildAuto("LeftTrench-CollectFuelSafe"),
             "Left Trench - Collect Fuel Double Pass" to AutoBuilder.buildAuto("LeftTrench-CollectFuelDoublePass"),
+            "Right Trench - Collect Fuel Safe" to AutoBuilder.buildAuto("RightTrench-CollectFuelSafe"),
+            "Right Trench - Collect Fuel Double Pass" to AutoBuilder.buildAuto("RightTrench-CollectFuelDoublePass"),
             "Shoot" to buildAlignAndShoot(),
         )
     }

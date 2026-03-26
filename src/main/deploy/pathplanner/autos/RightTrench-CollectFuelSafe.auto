@@ -5,19 +5,19 @@
     "data": {
       "commands": [
         {
-          "type": "parallel",
+          "type": "sequential",
           "data": {
             "commands": [
               {
                 "type": "path",
                 "data": {
-                  "pathName": "DriveForward"
+                  "pathName": "RightTrench-CollectFuelSafe"
                 }
               },
               {
                 "type": "named",
                 "data": {
-                  "name": "SpinUpShooter"
+                  "name": "AlignAndShoot"
                 }
               }
             ]

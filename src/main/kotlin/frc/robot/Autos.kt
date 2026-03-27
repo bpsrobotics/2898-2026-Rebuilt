@@ -26,14 +26,12 @@ import com.pathplanner.lib.path.PathConstraints
 import com.pathplanner.lib.path.PathPlannerPath
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
-import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.system.plant.DCMotor
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
-import frc.robot.commands.swerve.HubAlign
 import frc.robot.commands.autos.simpleMoveAndShoot
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Intake
@@ -112,7 +110,6 @@ object Autos {
         val rotationPIDConstants = PIDConstants(1.0, 0.0, 0.0)
 
         // AlignAndShoot timeouts
-        const val ALIGN_TIMEOUT_SECONDS = 1.0
         const val SHOOT_TIMEOUT_SECONDS = 50.0
         const val WAIT_FOR_SPEED_TIMEOUT_SECONDS = 2.0
 
@@ -171,23 +168,17 @@ object Autos {
 
     /**
      * Builds the AlignAndShoot command
-     * 1. Rotate to face hub + move hood to position
-     * 2. Wait until the flywheel is at speed
-     * 3. Run feeder to shoot
+     * 1. Wait until the flywheel is at speed while holding hood position
+     * 2. Run feeder to shoot
      */
     private fun buildAlignAndShoot(): Command {
-        val rotationPID = HubAlign.createRotationPID()
-
         // Part 1
-        val alignAndPositionHood = Drivetrain.runEnd({
-            rotationPID.setpoint = HubAlign.hubSetpointRadians
-            val omega = rotationPID.calculate(Drivetrain.pose.rotation.radians)
-            Drivetrain.driveFieldOriented(ChassisSpeeds(0.0, 0.0, omega))
-        }, {
-            Drivetrain.stop()
-        }).beforeStarting({ rotationPID.reset() })
-            .withTimeout(Constants.ALIGN_TIMEOUT_SECONDS)
-            .alongWith(
+        val waitForSpeed = Shooter.waitSpeed()
+            .withTimeout(Constants.WAIT_FOR_SPEED_TIMEOUT_SECONDS)
+
+        val spinUpPhase = waitForSpeed
+            .deadlineFor(
+                Shooter.runAtSpeed(),
                 Shooter.Hood.holdPosition {
                     Shooter.Hood.Constants.kinematics
                         .calculate(
@@ -195,14 +186,10 @@ object Autos {
                         )
                         .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
                         .radians
-                }.withTimeout(Constants.ALIGN_TIMEOUT_SECONDS)
+                }
             )
 
         // Part 2
-        val waitForSpeed = Shooter.waitSpeed()
-            .withTimeout(Constants.WAIT_FOR_SPEED_TIMEOUT_SECONDS)
-
-        // Part 3
         val shootPhase = Shooter.Feeder.getJiggyWithIt(1.0)
             .alongWith(Intake.Pivot.getJiggyWithIt())
             .alongWith(
@@ -217,10 +204,6 @@ object Autos {
                 Shooter.stabilize(),
             )
             .withTimeout(Constants.SHOOT_TIMEOUT_SECONDS)
-
-        val spinUpPhase = alignAndPositionHood
-            .andThen(waitForSpeed)
-            .deadlineFor(Shooter.runAtSpeed())
 
         return spinUpPhase.andThen(shootPhase)
     }

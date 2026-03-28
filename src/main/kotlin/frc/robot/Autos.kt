@@ -32,6 +32,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup
 import frc.robot.commands.autos.simpleMoveAndShoot
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Intake
@@ -76,6 +77,15 @@ object Autos {
         NamedCommands.registerCommand(
             "StopIntake",
             Intake.stop()
+        )
+
+        // Outtake fuel
+        NamedCommands.registerCommand(
+            "Outtake",
+            ParallelCommandGroup(
+                Intake.runAtPower(-1.0),
+                Shooter.Feeder.runAtPower(-1.0)
+            )
         )
 
         // Aligns to hub rotation, positions hood, waits for flywheel, then feeds + jiggles
@@ -162,6 +172,7 @@ object Autos {
             "Left Trench - Collect Fuel Double Pass" to AutoBuilder.buildAuto("LeftTrench-CollectFuelDoublePass"),
             "Right Trench - Collect Fuel Safe" to AutoBuilder.buildAuto("RightTrench-CollectFuelSafe"),
             "Right Trench - Collect Fuel Double Pass" to AutoBuilder.buildAuto("RightTrench-CollectFuelDoublePass"),
+            "Right Trench - Human Player" to AutoBuilder.buildAuto("RightTrench-HumanPlayer"),
             "Shoot" to buildAlignAndShoot(),
         )
     }

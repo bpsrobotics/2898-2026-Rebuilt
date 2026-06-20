@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands.waitUntil
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.WaitCommand
+import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.engine.utils.Polynomial
 import frc.robot.engine.DashboardNumber
 import frc.robot.engine.HoodPIDFF
@@ -283,31 +284,54 @@ object Shooter : SubsystemBase() {
                 )
                 .repeatedly() */
 
-        val isStalled: Boolean
-            get() =
-                stallDebouncer.calculate(
-                    topMotor.outputCurrent >= 20 || bottomMotor.outputCurrent >= 20
-                )
+        val isStalled = Trigger {
+            topMotor.velocity.asRPM <= 100 || bottomMotor.velocity.asRPM <= 170
+        }
+        val isStalledDebounced: Trigger = isStalled.debounce(0.25, Debouncer.DebounceType.kRising)
 
-        val stallDebouncer =
-            Debouncer(
-                0.25,
-                Debouncer.DebounceType.kRising,
-            ) // True when current is above stall for > 1 second
-
-        fun deJam(power: Double): Command =
-            run {
-                    topMotor.set(power)
-                    bottomMotor.set(-power)
-                }
-                .withTimeout(0.33)
-
-        fun feedBalls(power: Double): Command = run {
-            topMotor.set(power)
-            bottomMotor.set(power)
+        override fun periodic() {
+            SmartDashboard.putBoolean("Shooter/Feeder/isStalled", isStalled.asBoolean)
+            SmartDashboard.putBoolean(
+                "Shooter/Feeder/isStalledDebounced",
+                isStalledDebounced.asBoolean,
+            )
         }
 
+        // private var isDeJamming by DashboardBoolean(false, "Shooter/Feeder")
+        //
+        // fun deJam(power: Double): Command =
+        //     runEnd(
+        //             {
+        //                 isDeJamming = true
+        //                 topMotor.set(-power)
+        //                 bottomMotor.set(-power)
+        //             },
+        //             { isDeJamming = false },
+        //         )
+        //         .withTimeout(0.33)
+        //
+        // fun feedBalls(power: Double): Command = run {
+        //     topMotor.set(power)
+        //     bottomMotor.set(power)
+        // }
+        //
         fun getJiggyWithIt(power: Double): Command =
-            feedBalls(power).until { isStalled }.andThen(deJam(power)).repeatedly()
+            runAtPower(power)
+                .withTimeout(1.0)
+                .andThen(
+                    runAtPower(power).until(isStalledDebounced),
+                    runAtPower(-power).withTimeout(0.33),
+                )
+                .repeatedly()
+
+        // fun getJiggyWithIt(power: Double): Command =
+        //     runAtPower(power).withTimeout(1.0)
+        //         .andThen(
+        //             run {
+        //                 val sign = if (isStalledDebounced.asBoolean) -1 else 1
+        //                 topMotor.set(sign * power)
+        //                 bottomMotor.set(sign * power)
+        //             }
+        //         )
     }
 }

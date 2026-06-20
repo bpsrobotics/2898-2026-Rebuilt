@@ -26,6 +26,8 @@ class SparkWrapper(val deviceId: Int, motorType: MotorType, configurer: SparkMax
     var dashboardControl = false
     var requestPower = 0.0
 
+    var lastControl = 0.0
+
     @Suppress("MemberVisibilityCanBePrivate", "unused")
     val position
         get() = (motor?.encoder?.position ?: 0.0).rotations
@@ -53,17 +55,20 @@ class SparkWrapper(val deviceId: Int, motorType: MotorType, configurer: SparkMax
     fun stopMotor() {
         if (dashboardControl) return
         motor?.stopMotor()
+        lastControl = 0.0
     }
 
     fun set(power: Double) {
         if (dashboardControl) return
         motor?.set(power)
+        lastControl = power
     }
 
     @Suppress("MemberVisibilityCanBePrivate", "unused")
     fun setVoltage(volts: Double) {
         if (dashboardControl) return
         motor?.setVoltage(volts)
+        lastControl = volts
     }
 
     private fun updateGlobalErrorState() {
@@ -142,6 +147,7 @@ class SparkWrapper(val deviceId: Int, motorType: MotorType, configurer: SparkMax
         builder.addDoubleProperty("velocity", { motor?.encoder?.velocity ?: Double.NaN }, null)
         builder.addDoubleProperty("busVoltage", { motor?.busVoltage ?: Double.NaN }, null)
         builder.addDoubleProperty("outputCurrent", { motor?.outputCurrent ?: Double.NaN }, null)
+        builder.addDoubleProperty("lastControl", { lastControl }, null)
         builder.addIntegerProperty("id", { deviceId.toLong() }, null)
         builder.addStringProperty("initError", { initError.name }, null)
         builder.addStringProperty(

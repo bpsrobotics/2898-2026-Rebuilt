@@ -1,24 +1,12 @@
 package frc.robot.subsystems
 
-import frc.robot.utils.controls.ArmFeedForwardConstants
-import frc.robot.utils.controls.PIDConstants
-import frc.robot.utils.controls.PidFF
-import frc.robot.utils.controls.SimpleMotorFeedForwardConstants
-import frc.robot.utils.MovingAverage
-import frc.robot.utils.Sugar.clamp
-import frc.robot.utils.degrees
-import frc.robot.utils.radians
-import frc.robot.utils.rotations
-import frc.robot.utils.RPM
-import frc.robot.utils.asRadians
-import frc.robot.utils.convert
-import edu.wpi.first.units.Units
-import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.AngularVelocity
 import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.config.SparkBaseConfig
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.math.filter.Debouncer
+import edu.wpi.first.units.Units
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
@@ -26,10 +14,21 @@ import edu.wpi.first.wpilibj2.command.Commands.waitUntil
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.WaitCommand
 import edu.wpi.first.wpilibj2.command.button.Trigger
-import frc.robot.utils.Polynomial
 import frc.robot.utils.DashboardNumber
 import frc.robot.utils.HoodPIDFF
+import frc.robot.utils.MovingAverage
+import frc.robot.utils.Polynomial
 import frc.robot.utils.SparkWrapper
+import frc.robot.utils.Sugar.clamp
+import frc.robot.utils.asRadians
+import frc.robot.utils.controls.ArmFeedForwardConstants
+import frc.robot.utils.controls.PIDConstants
+import frc.robot.utils.controls.PidFF
+import frc.robot.utils.controls.SimpleMotorFeedForwardConstants
+import frc.robot.utils.convert
+import frc.robot.utils.degrees
+import frc.robot.utils.radians
+import frc.robot.utils.rotations
 import kotlin.math.PI
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
@@ -93,7 +92,9 @@ object Shooter : SubsystemBase() {
     fun runAtSpeed(speedLambda: () -> AngularVelocity): Command = run {
         motor1Controller.setpoint = speedLambda().convert(Units.RPM)
         motorVoltage = motor1Controller.calculate(motor.velocity.convert(Units.RPM))
-        motor.setVoltage(motor1Controller.calculate(motor.velocity.convert(Units.RPM)).clamp(0.0, 12.0))
+        motor.setVoltage(
+            motor1Controller.calculate(motor.velocity.convert(Units.RPM)).clamp(0.0, 12.0)
+        )
     }
 
     val desiredSpeed: Double by DashboardNumber(0.0, "Shooter")
@@ -288,7 +289,8 @@ object Shooter : SubsystemBase() {
                 .repeatedly() */
 
         val isStalled = Trigger {
-            topMotor.velocity.convert(Units.RPM) <= 100 || bottomMotor.velocity.convert(Units.RPM) <= 170
+            topMotor.velocity.convert(Units.RPM) <= 100 ||
+                bottomMotor.velocity.convert(Units.RPM) <= 170
         }
         val isStalledDebounced: Trigger = isStalled.debounce(0.25, Debouncer.DebounceType.kRising)
 

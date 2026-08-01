@@ -1,13 +1,5 @@
 package frc.robot.subsystems
 
-import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
-import frc.robot.utils.radiansPerSecond
-import frc.robot.utils.feetPerSecond
-import frc.robot.utils.inches
-import frc.robot.utils.asMeters
-import frc.robot.utils.angle
-import frc.robot.utils.convert
-import frc.robot.utils.geometry.vector2
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Pose3d
@@ -16,10 +8,10 @@ import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveModuleState
-import edu.wpi.first.units.Units
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructArrayPublisher
 import edu.wpi.first.networktables.StructPublisher
+import edu.wpi.first.units.Units
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Filesystem
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -28,14 +20,22 @@ import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.utils.DashboardNumber
+import frc.robot.utils.angle
+import frc.robot.utils.asMeters
+import frc.robot.utils.convert
+import frc.robot.utils.feetPerSecond
+import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
+import frc.robot.utils.geometry.vector2
+import frc.robot.utils.inches
+import frc.robot.utils.radiansPerSecond
+import java.io.File
+import kotlin.jvm.optionals.getOrNull
+import kotlin.math.PI
 import swervelib.SwerveDrive
 import swervelib.SwerveDriveTest
 import swervelib.parser.SwerveParser
 import swervelib.telemetry.SwerveDriveTelemetry
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity
-import java.io.File
-import kotlin.jvm.optionals.getOrNull
-import kotlin.math.PI
 
 object Drivetrain : SubsystemBase() {
     object Constants {
@@ -90,8 +90,7 @@ object Drivetrain : SubsystemBase() {
         // being created.
         SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH
 
-        swerveDrive =
-            SwerveParser(Constants.DRIVE_CONFIG).createSwerveDrive(maximumSpeed)
+        swerveDrive = SwerveParser(Constants.DRIVE_CONFIG).createSwerveDrive(maximumSpeed)
 
         // Set YAGSL preferences
         swerveDrive.setHeadingCorrection(false)
@@ -114,7 +113,11 @@ object Drivetrain : SubsystemBase() {
                 )
                     return
                 val newPose = camera.getMultiTagPoseWithFallback(result)?.toPose2d() ?: return
-                addVisionMeasurement(newPose, result.timestampSeconds, true /*!DriverStation.isTeleopEnabled()*/)
+                addVisionMeasurement(
+                    newPose,
+                    result.timestampSeconds,
+                    true, /*!DriverStation.isTeleopEnabled()*/
+                )
             },
         )
         setVisionMeasurementStdDevs(3.0, 4.0, 5.0)

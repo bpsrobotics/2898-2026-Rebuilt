@@ -1,8 +1,8 @@
 package frc.robot.subsystems
 
+import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
 import frc.robot.utils.meters
-import edu.wpi.first.wpilibj2.command.button.Trigger
 
 object HedgieHelmet {
     val trenchDriveTrigger = Trigger { willCollideWithTrench() && !Vision.cameras.isEmpty() }

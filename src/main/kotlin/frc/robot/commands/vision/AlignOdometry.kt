@@ -1,8 +1,5 @@
 package frc.robot.commands.vision
 
-import frc.robot.utils.Sugar.clamp
-import frc.robot.utils.degrees
-import frc.robot.utils.asRadians
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.geometry.Pose2d
@@ -11,6 +8,9 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.subsystems.Drivetrain
+import frc.robot.utils.Sugar.clamp
+import frc.robot.utils.asRadians
+import frc.robot.utils.degrees
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 

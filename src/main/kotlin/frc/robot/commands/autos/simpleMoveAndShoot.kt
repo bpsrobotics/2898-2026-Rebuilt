@@ -1,24 +1,23 @@
 package frc.robot.commands.autos
 
-import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
-import frc.robot.utils.Sugar.clamp
-import frc.robot.utils.degrees
-import frc.robot.utils.radians
-import frc.robot.utils.asRadians
-import frc.robot.utils.getCoterminal
-import frc.robot.utils.geometry.Vector2
-import frc.robot.utils.geometry.vector2
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.wpilibj.DriverStation
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.commands.swerve.MoveTo
-import frc.robot.utils.DashboardNumber
 import frc.robot.input.OI
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Shooter
+import frc.robot.utils.DashboardNumber
+import frc.robot.utils.Sugar.clamp
+import frc.robot.utils.asRadians
+import frc.robot.utils.degrees
+import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
+import frc.robot.utils.geometry.Vector2
+import frc.robot.utils.geometry.vector2
+import frc.robot.utils.getCoterminal
+import frc.robot.utils.radians
 
 val shootVectors =
     mapOf(
@@ -28,25 +27,31 @@ val shootVectors =
     )
 
 val distance by DashboardNumber(2.0, "simpleMoveAndShoot")
-val desiredPosePublisher: StructPublisher<Pose2d?> = NetworkTableInstance
-    .getDefault()
-    .getStructTopic("simpleMoveAndShoot/desiredPose", Pose2d.struct)
-    .publish()
+val desiredPosePublisher: StructPublisher<Pose2d?> =
+    NetworkTableInstance.getDefault()
+        .getStructTopic("simpleMoveAndShoot/desiredPose", Pose2d.struct)
+        .publish()
 val overrideTargetPosition by DashboardNumber(0.0, "simpleMoveAndShoot")
 
 fun simpleMoveAndShoot(): Command {
     var pos = Vector2(0.0, 0.0)
 
     return MoveTo {
-        val pose = pos.toPose2d((pos.angleTo(FieldMapREBUILTWelded.teamHub.center) + 180.degrees).getCoterminal())
-        desiredPosePublisher.set(pose)
-        pose
-    }
+            val pose =
+                pos.toPose2d(
+                    (pos.angleTo(FieldMapREBUILTWelded.teamHub.center) + 180.degrees)
+                        .getCoterminal()
+                )
+            desiredPosePublisher.set(pose)
+            pose
+        }
         .solitarily()
         .beforeStarting({
             pos =
                 FieldMapREBUILTWelded.teamHub.center +
-                    (shootVectors[if (overrideTargetPosition > 0) overrideTargetPosition else DriverStation.getLocation().orElse(2)] ?: shootVectors[2]!!) *
+                    (shootVectors[
+                        if (overrideTargetPosition > 0) overrideTargetPosition
+                        else DriverStation.getLocation().orElse(2)] ?: shootVectors[2]!!) *
                         distance *
                         -OI.reverseDrive
         })

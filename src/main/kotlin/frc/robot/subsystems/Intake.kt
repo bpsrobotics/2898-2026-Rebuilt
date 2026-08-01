@@ -1,15 +1,10 @@
 package frc.robot.subsystems
 
-import frc.robot.utils.controls.ArmFeedForwardConstants
-import frc.robot.utils.controls.PIDConstants
-import frc.robot.utils.radians
-import frc.robot.utils.rotations
-import frc.robot.utils.asRadians
-import edu.wpi.first.units.measure.Angle
 import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.config.SparkBaseConfig
 import com.revrobotics.spark.config.SparkMaxConfig
 import edu.wpi.first.math.MathUtil
+import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
@@ -18,6 +13,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase
 import frc.robot.utils.DashboardNumber
 import frc.robot.utils.HoodPIDFF
 import frc.robot.utils.SparkWrapper
+import frc.robot.utils.asRadians
+import frc.robot.utils.controls.ArmFeedForwardConstants
+import frc.robot.utils.controls.PIDConstants
+import frc.robot.utils.radians
+import frc.robot.utils.rotations
 
 object Intake : SubsystemBase() {
     private object Constants {
@@ -118,12 +118,11 @@ object Intake : SubsystemBase() {
             InstantCommand({ controller.setpoint = newSetpoint }, this)
 
         /** Sets the wrist to target position, and ends once the PID is at the setpoint */
-        fun runToPosition(targetPosition: Angle): Command =
-            run {
-                    controller.setpoint = targetPosition
-                    motor.setVoltage(controller.calculate(position))
-                }
-                .until { controller.atSetpoint() }
+        fun runToPosition(targetPosition: Angle): Command = run {
+            controller.setpoint = targetPosition
+            motor.setVoltage(controller.calculate(position))
+        }
+            .until { controller.atSetpoint() }
 
         fun runAtPower(power: Double): Command = run { motor.set(power) }
 

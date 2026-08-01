@@ -1,14 +1,5 @@
 package frc.robot.input
 
-import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
-import frc.robot.utils.Sugar.clamp
-import frc.robot.utils.RPM
-import frc.robot.utils.degrees
-import frc.robot.utils.radians
-import frc.robot.utils.meters
-import frc.robot.utils.sec
-import frc.robot.utils.asRadians
-import frc.robot.utils.geometry.vector2
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.RunCommand
@@ -25,6 +16,15 @@ import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.HedgieHelmet
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
+import frc.robot.utils.RPM
+import frc.robot.utils.Sugar.clamp
+import frc.robot.utils.asRadians
+import frc.robot.utils.degrees
+import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
+import frc.robot.utils.geometry.vector2
+import frc.robot.utils.meters
+import frc.robot.utils.radians
+import frc.robot.utils.sec
 
 @Suppress("Unused")
 fun OI.driverAndOperatorBindings() {
@@ -82,9 +82,7 @@ fun OI.driverAndOperatorBindings() {
     Trigger { driverController.hid.pov != -1 }
         .whileTrue(driveManager.defineDriver(CardinalAlign { -driverController.hid.pov.degrees }))
 
-    HedgieHelmet.trenchDriveTrigger.onTrue(
-        rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.sec)
-    )
+    HedgieHelmet.trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.sec))
 
     /** Shooter */
     operatorController
@@ -99,8 +97,10 @@ fun OI.driverAndOperatorBindings() {
         .whileTrue(
             RunCommand({
                 desiredHoodAngle =
-                    (desiredHoodAngle - 0.025)
-                        .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
+                    (desiredHoodAngle - 0.025).clamp(
+                        0.0,
+                        Shooter.Hood.Constants.TOP_POSITION.asRadians,
+                    )
             })
         )
 
@@ -109,27 +109,44 @@ fun OI.driverAndOperatorBindings() {
         .whileTrue(
             RunCommand({
                 desiredHoodAngle =
-                    (desiredHoodAngle + 0.025)
-                        .clamp(0.0, Shooter.Hood.Constants.TOP_POSITION.asRadians)
+                    (desiredHoodAngle + 0.025).clamp(
+                        0.0,
+                        Shooter.Hood.Constants.TOP_POSITION.asRadians,
+                    )
             })
         )
 
     operatorTrigger
         .and(driverController.a().negate())
-        .and(operatorController.axisLessThan(1, -0.5).negate()
-            .or(operatorController.axisGreaterThan(1, 0.5).negate()))
+        .and(
+            operatorController
+                .axisLessThan(1, -0.5)
+                .negate()
+                .or(operatorController.axisGreaterThan(1, 0.5).negate())
+        )
         .whileTrue(
             SequentialCommandGroup(
-                (Shooter.Hood.moveToPosition { desiredHoodAngle.radians }.withTimeout(1.0).deadlineFor(Intake.Pivot.runToPosition(Intake.Pivot.Constants.FEEDER_POSITION))),
-                Shooter.Feeder.runAtPower(1.0).alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians }).alongWith(Intake.Pivot.getJiggyWithIt()),
+                (Shooter.Hood.moveToPosition { desiredHoodAngle.radians }
+                    .withTimeout(1.0)
+                    .deadlineFor(
+                        Intake.Pivot.runToPosition(Intake.Pivot.Constants.FEEDER_POSITION)
+                    )),
+                Shooter.Feeder.runAtPower(1.0)
+                    .alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians })
+                    .alongWith(Intake.Pivot.getJiggyWithIt()),
             )
         )
     operatorTrigger
         .and(driverController.a())
-        .and(operatorController.axisLessThan(1, -0.5).negate()
-            .or(operatorController.axisGreaterThan(1, 0.5).negate()))
+        .and(
+            operatorController
+                .axisLessThan(1, -0.5)
+                .negate()
+                .or(operatorController.axisGreaterThan(1, 0.5).negate())
+        )
         .whileTrue(
-            WaitUntilCommand { Shooter.Hood.atSetpoint }.withTimeout(1.0)
+            WaitUntilCommand { Shooter.Hood.atSetpoint }
+                .withTimeout(1.0)
                 .deadlineFor(Intake.Pivot.runToPosition(Intake.Pivot.Constants.FEEDER_POSITION))
                 .andThen(
                     Shooter.Feeder.getJiggyWithIt(1.0).alongWith(Intake.Pivot.getJiggyWithIt())
@@ -137,24 +154,26 @@ fun OI.driverAndOperatorBindings() {
         )
     operatorTrigger
         .and(driverController.a().negate())
-        .and(operatorController.axisLessThan(1, -0.5)
-            .or(operatorController.axisGreaterThan(1, 0.5)))
+        .and(
+            operatorController.axisLessThan(1, -0.5).or(operatorController.axisGreaterThan(1, 0.5))
+        )
         .whileTrue(
             SequentialCommandGroup(
                 (Shooter.Hood.moveToPosition { desiredHoodAngle.radians }.withTimeout(1.0)),
-                Shooter.Feeder.runAtPower(1.0).alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians }),
+                Shooter.Feeder.runAtPower(1.0)
+                    .alongWith(Shooter.Hood.holdPosition { desiredHoodAngle.radians }),
             )
         )
     operatorTrigger
         .and(driverController.a())
-        .and(operatorController.axisLessThan(1, -0.5)
-            .or(operatorController.axisGreaterThan(1, 0.5)))
+        .and(
+            operatorController.axisLessThan(1, -0.5).or(operatorController.axisGreaterThan(1, 0.5))
+        )
         .whileTrue(
-            WaitUntilCommand { Shooter.Hood.atSetpoint }.withTimeout(1.0)
-                .andThen(
-                    Shooter.Feeder.getJiggyWithIt(1.0))
-                )
-
+            WaitUntilCommand { Shooter.Hood.atSetpoint }
+                .withTimeout(1.0)
+                .andThen(Shooter.Feeder.getJiggyWithIt(1.0))
+        )
 
     operatorController
         .button(2)
@@ -171,13 +190,14 @@ fun OI.driverAndOperatorBindings() {
     /** Intake */
     highHatBack.whileTrue(Intake.runAtPower(0.5))
     highHatForward.whileTrue(Intake.runAtPower(-0.75).alongWith(Shooter.Feeder.runAtPower(-0.1)))
-    operatorController.button(11)
+    operatorController
+        .button(11)
         .and(operatorTrigger.negate())
         .whileTrue(Shooter.Feeder.runAtPower(1.0))
-    operatorController.button(12)
+    operatorController
+        .button(12)
         .and(operatorTrigger.negate())
         .whileTrue(Shooter.Feeder.runAtPower(-1.0))
-
 
     operatorController
         .axisLessThan(1, -0.5)
@@ -185,7 +205,7 @@ fun OI.driverAndOperatorBindings() {
     operatorController
         .axisGreaterThan(1, 0.5)
         .onTrue(Intake.Pivot.setSetpoint(Intake.Pivot.Constants.STOWED_POSITION))
-//    operatorController.button(11).whileTrue(Shooter.Feeder.getJiggyWithIt(1.0))
+    //    operatorController.button(11).whileTrue(Shooter.Feeder.getJiggyWithIt(1.0))
 
     // operatorController.button(12).whileTrue(Shooter.runAtPower { desiredShooterPower })
 }

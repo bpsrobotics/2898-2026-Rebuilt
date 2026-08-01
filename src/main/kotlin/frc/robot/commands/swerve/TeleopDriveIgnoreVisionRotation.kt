@@ -1,11 +1,11 @@
 package frc.robot.commands.swerve
 
-import frc.robot.utils.radians
+import edu.wpi.first.units.measure.Angle
+import frc.robot.subsystems.Drivetrain
+import frc.robot.utils.DashboardNumberPublisher
 import frc.robot.utils.angle
 import frc.robot.utils.geometry.Vector2
-import frc.robot.utils.DashboardNumberPublisher
-import frc.robot.subsystems.Drivetrain
-import edu.wpi.first.units.measure.Angle
+import frc.robot.utils.radians
 import kotlin.math.pow
 
 /**
@@ -51,9 +51,8 @@ class TeleopDriveIgnoreVisionRotation(
 
         val velocity =
             Vector2(forwardVelocity, strafeVelocity)
-                .rotateBy(
-                    Drivetrain.pose.rotation.angle - (Drivetrain.rawYaw + angleOffset)
-                ) * Drivetrain.maximumSpeed
+                .rotateBy(Drivetrain.pose.rotation.angle - (Drivetrain.rawYaw + angleOffset)) *
+                Drivetrain.maximumSpeed
 
         vx = velocity.x
         vy = velocity.y

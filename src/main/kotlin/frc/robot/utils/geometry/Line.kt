@@ -1,11 +1,12 @@
 package frc.robot.utils.geometry
 
+import edu.wpi.first.math.geometry.Pose2d
 import frc.robot.utils.Sugar.eqEpsilon
 import frc.robot.utils.asRadians
-import frc.robot.utils.getCoterminal
 import frc.robot.utils.geometry.Vector2.Companion.dotProduct
-import edu.wpi.first.math.geometry.Pose2d
-import kotlin.math.*
+import frc.robot.utils.getCoterminal
+import kotlin.math.max
+import kotlin.math.min
 
 class Line(val point1: Vector2, val point2: Vector2) {
     val slope

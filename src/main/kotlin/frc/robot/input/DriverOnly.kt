@@ -1,10 +1,5 @@
 package frc.robot.input
 
-import frc.robot.utils.RPM
-import frc.robot.utils.degrees
-import frc.robot.utils.radians
-import frc.robot.utils.meters
-import frc.robot.utils.sec
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup
@@ -19,6 +14,11 @@ import frc.robot.subsystems.HedgieHelmet
 import frc.robot.subsystems.Intake
 import frc.robot.subsystems.Shooter
 import frc.robot.subsystems.VisionTurningHandler
+import frc.robot.utils.RPM
+import frc.robot.utils.degrees
+import frc.robot.utils.meters
+import frc.robot.utils.radians
+import frc.robot.utils.sec
 
 fun OI.driverOnly() {
     /** Drivetrain */
@@ -96,9 +96,7 @@ fun OI.driverOnly() {
     //            .povUpLeft()
     //            .whileTrue(driveManager.defineDriver(CardinalAlign { forward + step * 7.0 }))
 
-    HedgieHelmet.trenchDriveTrigger.onTrue(
-        rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.sec)
-    )
+    HedgieHelmet.trenchDriveTrigger.onTrue(rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.sec))
 
     /** Shooter */
     driverController

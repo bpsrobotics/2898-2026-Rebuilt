@@ -1,13 +1,13 @@
 package frc.robot.utils.fieldmap
 
-import frc.robot.utils.feet
-import frc.robot.utils.inches
+import edu.wpi.first.math.geometry.Pose2d
+import edu.wpi.first.wpilibj.DriverStation
 import frc.robot.utils.asMeters
+import frc.robot.utils.feet
 import frc.robot.utils.geometry.Line
 import frc.robot.utils.geometry.Rectangle
 import frc.robot.utils.geometry.Vector2
-import edu.wpi.first.math.geometry.Pose2d
-import edu.wpi.first.wpilibj.DriverStation
+import frc.robot.utils.inches
 
 interface Hub {
     val center: Vector2

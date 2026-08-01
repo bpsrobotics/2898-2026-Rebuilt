@@ -1,6 +1,9 @@
 package frc.robot.utils
 
-import kotlin.math.*
+import kotlin.math.PI
+import kotlin.math.absoluteValue
+import kotlin.math.pow
+import kotlin.math.round
 
 @Suppress("unused", "MemberVisibilityCanBePrivate")
 object Sugar {
@@ -11,8 +14,11 @@ object Sugar {
     }
 
     infix fun Double.eqEpsilon(other: Double) = (this - other).absoluteValue < 0.01
+
     infix fun Double.eqEpsilon(other: Int) = (this - other).absoluteValue < 0.01
-    fun Double.within(maxError: Double, target: Double = 0.0) : Boolean = (this - target).absoluteValue < maxError
+
+    fun Double.within(maxError: Double, target: Double = 0.0): Boolean =
+        (this - target).absoluteValue < maxError
 
     fun Double.degreesToRadians(): Double {
         return times(PI / 180)
@@ -22,7 +28,7 @@ object Sugar {
         return toDouble().radiansToDegrees()
     }
 
-    fun Int.degreesToRadians():Double{
+    fun Int.degreesToRadians(): Double {
         return toDouble().degreesToRadians()
     }
 
@@ -32,12 +38,14 @@ object Sugar {
         val a = angle1 - angle2
         return (a + PI).mod(2.0 * PI) - PI
     }
-    fun Double.roundTo(decimalPlace: Int) : Double{
+
+    fun Double.roundTo(decimalPlace: Int): Double {
         val multiplier = 10.0.pow(decimalPlace).toInt()
-        return round(this*multiplier)/multiplier
+        return round(this * multiplier) / multiplier
     }
+
     fun Double.circleNormalize(): Double {
-        if(this < 0) return (this % (2* PI)) + (2*PI)
-        return this % (2*PI)
+        if (this < 0) return (this % (2 * PI)) + (2 * PI)
+        return this % (2 * PI)
     }
 }

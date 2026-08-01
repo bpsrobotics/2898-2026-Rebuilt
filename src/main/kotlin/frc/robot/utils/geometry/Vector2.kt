@@ -1,17 +1,20 @@
 package frc.robot.utils.geometry
 
-import frc.robot.utils.asMeters
-import frc.robot.utils.asRadians
-import frc.robot.utils.convert
-import edu.wpi.first.units.measure.Distance
-import edu.wpi.first.units.measure.Angle
-import edu.wpi.first.units.measure.LinearVelocity
-import edu.wpi.first.units.measure.LinearAcceleration
-import edu.wpi.first.units.Units
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
-import kotlin.math.*
+import edu.wpi.first.units.Units
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.Distance
+import edu.wpi.first.units.measure.LinearAcceleration
+import edu.wpi.first.units.measure.LinearVelocity
+import frc.robot.utils.asMeters
+import frc.robot.utils.convert
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class Vector2(val x: Double, val y: Double) {
     companion object {
@@ -19,10 +22,12 @@ class Vector2(val x: Double, val y: Double) {
 
         @JvmName("fromMagnitude&Angle")
         fun new(angle: Angle, magnitude: Double) =
-            Vector2(cos(angle.convert(Units.Radians)) * magnitude, sin(angle.convert(Units.Radians)) * magnitude)
+            Vector2(
+                cos(angle.convert(Units.Radians)) * magnitude,
+                sin(angle.convert(Units.Radians)) * magnitude,
+            )
 
-        @JvmName("fromDistance")
-        fun new(x: Distance, y: Distance) = Vector2(x.asMeters, y.asMeters)
+        @JvmName("fromDistance") fun new(x: Distance, y: Distance) = Vector2(x.asMeters, y.asMeters)
 
         @JvmName("fromVelocity")
         fun new(x: LinearVelocity, y: LinearVelocity) =
@@ -30,7 +35,10 @@ class Vector2(val x: Double, val y: Double) {
 
         @JvmName("fromAcceleration")
         fun new(x: LinearAcceleration, y: LinearAcceleration) =
-            Vector2(x.convert(Units.MetersPerSecondPerSecond), y.convert(Units.FeetPerSecondPerSecond))
+            Vector2(
+                x.convert(Units.MetersPerSecondPerSecond),
+                y.convert(Units.FeetPerSecondPerSecond),
+            )
 
         fun zero() = Vector2(0.0, 0.0)
 
@@ -46,7 +54,9 @@ class Vector2(val x: Double, val y: Double) {
 
     constructor(pose: Pose2d) : this(pose.x, pose.y)
 
-    constructor(angle: Angle) : this(cos(angle.convert(Units.Radians)), sin(angle.convert(Units.Radians)))
+    constructor(
+        angle: Angle
+    ) : this(cos(angle.convert(Units.Radians)), sin(angle.convert(Units.Radians)))
 
     fun rotateBy(angle: Double): Vector2 {
         return Vector2(cos(angle) * x - sin(angle) * y, sin(angle) * x + cos(angle) * y)
@@ -103,7 +113,8 @@ class Vector2(val x: Double, val y: Double) {
 
     fun reflectHorizontally(x: Double) = Vector2(x + (x - this.x), y)
 
-    fun toPose2d(rotation: Angle) = Pose2d(x, y, Rotation2d.fromRadians(rotation.convert(Units.Radians)))
+    fun toPose2d(rotation: Angle) =
+        Pose2d(x, y, Rotation2d.fromRadians(rotation.convert(Units.Radians)))
 }
 
 val Pose2d.vector2

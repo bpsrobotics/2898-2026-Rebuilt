@@ -1,11 +1,13 @@
 package frc.robot.commands.autos
 
-import beaverlib.fieldmap.FieldMapREBUILTWelded
-import beaverlib.utils.Sugar.clamp
-import beaverlib.utils.Units.Angular.degrees
-import beaverlib.utils.Units.Angular.radians
-import beaverlib.utils.geometry.Vector2
-import beaverlib.utils.geometry.vector2
+import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
+import frc.robot.utils.Sugar.clamp
+import frc.robot.utils.degrees
+import frc.robot.utils.radians
+import frc.robot.utils.asRadians
+import frc.robot.utils.getCoterminal
+import frc.robot.utils.geometry.Vector2
+import frc.robot.utils.geometry.vector2
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
@@ -13,7 +15,7 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.commands.swerve.MoveTo
-import frc.robot.engine.DashboardNumber
+import frc.robot.utils.DashboardNumber
 import frc.robot.input.OI
 import frc.robot.subsystems.Drivetrain
 import frc.robot.subsystems.Shooter

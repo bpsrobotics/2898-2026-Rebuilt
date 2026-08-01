@@ -1,13 +1,15 @@
 package frc.robot.subsystems
 
-import beaverlib.odometry.BeaverPhotonVision
-import beaverlib.utils.Units.Angular.degrees
-import beaverlib.utils.Units.Linear.inches
+import frc.robot.utils.odometry.BeaverPhotonVision
+import frc.robot.utils.degrees
+import frc.robot.utils.inches
+import frc.robot.utils.asMeters
+import frc.robot.utils.asRadians
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.apriltag.AprilTagFields
 import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.geometry.Transform3d
-import frc.robot.beaverlib.odometry.BeaverVisionCamera
+import frc.robot.utils.odometry.BeaverVisionCamera
 import org.photonvision.PhotonPoseEstimator
 
 val Vision =

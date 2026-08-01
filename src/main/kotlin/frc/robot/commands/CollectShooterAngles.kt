@@ -1,8 +1,9 @@
 package frc.robot.commands
 
-import beaverlib.fieldmap.FieldMapREBUILTWelded
-import beaverlib.utils.Units.Angular.radians
-import beaverlib.utils.geometry.Vector2
+import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
+import frc.robot.utils.radians
+import frc.robot.utils.asRadians
+import frc.robot.utils.geometry.Vector2
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands.sequence

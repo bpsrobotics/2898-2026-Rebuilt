@@ -1,25 +1,31 @@
 package frc.robot.commands.vision
 
-import beaverlib.utils.Sugar.clamp
-import beaverlib.utils.Units.Angular.AngleUnit
-import beaverlib.utils.Units.Angular.degrees
-import beaverlib.utils.Units.Linear.DistanceUnit
-import beaverlib.utils.geometry.Vector2
-import beaverlib.utils.geometry.vector2
+import frc.robot.utils.Sugar.clamp
+import frc.robot.utils.degrees
+import frc.robot.utils.asMeters
+import frc.robot.utils.asRadians
+import frc.robot.utils.convert
+import frc.robot.utils.geometry.Vector2
+import frc.robot.utils.geometry.vector2
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.networktables.NetworkTableInstance
+import edu.wpi.first.units.Units
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.Distance
 import edu.wpi.first.wpilibj2.command.Command
 import frc.robot.subsystems.Drivetrain
 import kotlin.math.absoluteValue
+import kotlin.math.cos
 import kotlin.math.sign
+import kotlin.math.sin
 
 class CircleAlign(
     var targetCenter: () -> Vector2,
-    val angleProvider: () -> AngleUnit,
-    val desiredDistance: () -> DistanceUnit,
+    val angleProvider: () -> Angle,
+    val desiredDistance: () -> Distance,
     val maxSpeed: Double = 5.0,
     val maxRotSpeed: Double = 1.0,
     val initializeLambda: () -> Unit = {},
@@ -41,7 +47,7 @@ class CircleAlign(
 
     init {
         addRequirements(Drivetrain)
-        rotationPID.enableContinuousInput(-180.degrees.asRadians, 180.degrees.asRadians)
+        rotationPID.enableContinuousInput((-180).degrees.convert(Units.Radians), 180.degrees.convert(Units.Radians))
     }
 
     override fun initialize() {
@@ -90,10 +96,11 @@ class CircleAlign(
         if (rotationSpeed.absoluteValue < deadzone) rotationSpeed = 0.0
         else rotationSpeed += ks * rotationSpeed.sign
 
+        val currentAngleRadians = currentAngleToCenter.convert(Units.Radians)
         val xSpeed =
-            circleSpeed * -currentAngleToCenter.sin() + currentAngleToCenter.cos() * distanceSpeed
+            circleSpeed * -sin(currentAngleRadians) + cos(currentAngleRadians) * distanceSpeed
         val ySpeed =
-            circleSpeed * currentAngleToCenter.cos() + currentAngleToCenter.sin() * distanceSpeed
+            circleSpeed * cos(currentAngleRadians) + sin(currentAngleRadians) * distanceSpeed
 
         Drivetrain.driveFieldOriented(
             ChassisSpeeds(

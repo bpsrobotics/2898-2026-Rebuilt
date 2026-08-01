@@ -1,17 +1,5 @@
 package frc.robot
 
-import beaverlib.controls.PIDConstants
-import beaverlib.controls.PathPlannerPID
-import beaverlib.utils.Units.Angular.AngularAcceleration
-import beaverlib.utils.Units.Angular.AngularVelocity
-import beaverlib.utils.Units.Angular.radiansPerSecond
-import beaverlib.utils.Units.Angular.radiansPerSecondSquared
-import beaverlib.utils.Units.Linear.Acceleration
-import beaverlib.utils.Units.Linear.VelocityUnit
-import beaverlib.utils.Units.Linear.inches
-import beaverlib.utils.Units.Linear.metersPerSecond
-import beaverlib.utils.Units.Linear.metersPerSecondSquared
-import beaverlib.utils.Units.lb
 import com.pathplanner.lib.auto.AutoBuilder
 import com.pathplanner.lib.config.ModuleConfig
 import com.pathplanner.lib.config.RobotConfig
@@ -22,6 +10,11 @@ import com.pathplanner.lib.path.PathPlannerPath
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.system.plant.DCMotor
+import edu.wpi.first.units.Units
+import edu.wpi.first.units.measure.AngularAcceleration
+import edu.wpi.first.units.measure.AngularVelocity
+import edu.wpi.first.units.measure.LinearAcceleration
+import edu.wpi.first.units.measure.LinearVelocity
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -30,17 +23,28 @@ import edu.wpi.first.wpilibj2.command.InstantCommand
 import frc.robot.commands.autos.simpleMoveAndShoot
 import frc.robot.commands.autos.superdupersimpleauto
 import frc.robot.subsystems.Drivetrain
+import frc.robot.utils.asKilograms
+import frc.robot.utils.asMeters
+import frc.robot.utils.controls.PIDConstants
+import frc.robot.utils.controls.PathPlannerPID
+import frc.robot.utils.convert
+import frc.robot.utils.inches
+import frc.robot.utils.lbs
+import frc.robot.utils.metersPerSecond
+import frc.robot.utils.metersPerSecondSquared
+import frc.robot.utils.radiansPerSecond
+import frc.robot.utils.radiansPerSecondSquared
 import kotlin.math.PI
 
 object Autos {
     object Constants {
         val robotConfig =
             RobotConfig(
-                (120.0).lb.asKilograms,
-                Drivetrain.Constants.MAX_SPEED_MPS,
+                (120.0).lbs.asKilograms,
+                Drivetrain.Constants.MAX_SPEED.convert(Units.MetersPerSecond),
                 ModuleConfig(
                     (2.0).inches.asMeters,
-                    Drivetrain.Constants.MAX_SPEED_MPS,
+                    Drivetrain.Constants.MAX_SPEED.convert(Units.MetersPerSecond),
                     1.54,
                     DCMotor.getNEO(1).withReduction(6.75),
                     30.0,
@@ -68,7 +72,11 @@ object Autos {
     val autonomousCommand: Command
         get() = autoCommandChooser.selected
 
-    private val autos = mapOf("Simple Move/Shoot" to simpleMoveAndShoot(), "SuperDuperSimpleAuto" to superdupersimpleauto())
+    private val autos =
+        mapOf(
+            "Simple Move/Shoot" to simpleMoveAndShoot(),
+            "SuperDuperSimpleAuto" to superdupersimpleauto(),
+        )
 
     fun addAutos() {
         autoCommandChooser.setDefaultOption("No Auto", InstantCommand())
@@ -100,8 +108,8 @@ object Autos {
     @Suppress("unused")
     fun generatePath(
         vararg pose2dWaypoints: Pose2d,
-        maxVelocity: VelocityUnit = 3.0.metersPerSecond,
-        maxAcceleration: Acceleration = 3.0.metersPerSecondSquared,
+        maxVelocity: LinearVelocity = 3.0.metersPerSecond,
+        maxAcceleration: LinearAcceleration = 3.0.metersPerSecondSquared,
         maxAngularVelocity: AngularVelocity = (2 * PI).radiansPerSecond,
         maxAngularAcceleration: AngularAcceleration = (4 * PI).radiansPerSecondSquared,
     ): PathPlannerPath {
@@ -112,10 +120,10 @@ object Autos {
 
         val constraints =
             PathConstraints(
-                maxVelocity.asMetersPerSecond,
-                maxAcceleration.asMetersPerSecondSquared,
-                maxAngularVelocity.asRadiansPerSecond,
-                maxAngularAcceleration.asRadiansPerSecondSquared,
+                maxVelocity.convert(Units.MetersPerSecond),
+                maxAcceleration.convert(Units.MetersPerSecondPerSecond),
+                maxAngularVelocity.convert(Units.RadiansPerSecond),
+                maxAngularAcceleration.convert(Units.RadiansPerSecondPerSecond),
             ) // The constraints for this path.
         // PathConstraints constraints = PathConstraints.unlimitedConstraints(12.0); // You can also
         // use unlimited constraints, only limited by motor torque and nominal battery voltage
@@ -141,18 +149,18 @@ object Autos {
     @Suppress("unused")
     fun pathFindToPose(
         pose: Pose2d,
-        maxVelocity: VelocityUnit = 1.0.metersPerSecond,
-        maxAcceleration: Acceleration = 1.0.metersPerSecondSquared,
+        maxVelocity: LinearVelocity = 1.0.metersPerSecond,
+        maxAcceleration: LinearAcceleration = 1.0.metersPerSecondSquared,
         maxAngularVelocity: AngularVelocity = (2 * PI).radiansPerSecond,
         maxAngularAcceleration: AngularAcceleration = (4 * PI).radiansPerSecondSquared,
     ): Command =
         AutoBuilder.pathfindToPose(
             pose,
             PathConstraints(
-                maxVelocity.asMetersPerSecond,
-                maxAcceleration.asMetersPerSecondSquared,
-                maxAngularVelocity.asRadiansPerSecond,
-                maxAngularAcceleration.asRadiansPerSecondSquared,
+                maxVelocity.convert(Units.MetersPerSecond),
+                maxAcceleration.convert(Units.MetersPerSecondPerSecond),
+                maxAngularVelocity.convert(Units.RadiansPerSecond),
+                maxAngularAcceleration.convert(Units.RadiansPerSecondPerSecond),
             ),
         ) // The constraints for this path.
 }

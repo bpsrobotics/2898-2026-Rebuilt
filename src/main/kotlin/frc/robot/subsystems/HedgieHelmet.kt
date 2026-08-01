@@ -1,7 +1,7 @@
 package frc.robot.subsystems
 
-import beaverlib.fieldmap.FieldMapREBUILTWelded
-import beaverlib.utils.Units.Linear.meters
+import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
+import frc.robot.utils.meters
 import edu.wpi.first.wpilibj2.command.button.Trigger
 
 object HedgieHelmet {

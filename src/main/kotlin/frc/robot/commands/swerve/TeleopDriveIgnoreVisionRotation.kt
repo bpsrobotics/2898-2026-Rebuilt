@@ -1,11 +1,11 @@
 package frc.robot.commands.swerve
 
-import beaverlib.utils.Units.Angular.AngleUnit
-import beaverlib.utils.Units.Angular.asAngleUnit
-import beaverlib.utils.Units.Angular.radians
-import beaverlib.utils.geometry.Vector2
-import frc.robot.engine.DashboardNumberPublisher
+import frc.robot.utils.radians
+import frc.robot.utils.angle
+import frc.robot.utils.geometry.Vector2
+import frc.robot.utils.DashboardNumberPublisher
 import frc.robot.subsystems.Drivetrain
+import edu.wpi.first.units.measure.Angle
 import kotlin.math.pow
 
 /**
@@ -27,11 +27,11 @@ class TeleopDriveIgnoreVisionRotation(
     override var vy: Double? = 0.0
     override var omega: Double? = 0.0
     override val priority: Int = DriverPriority.BASE_TELEOP.ordinal
-    private var angleOffset: AngleUnit = 0.0.radians
+    private var angleOffset: Angle = 0.0.radians
 
     override fun initialize() {
         super.initialize()
-        angleOffset = Drivetrain.pose.rotation.asAngleUnit - Drivetrain.rawYaw
+        angleOffset = Drivetrain.pose.rotation.angle - Drivetrain.rawYaw
     }
 
     private var forwardVelocity: Double by DashboardNumberPublisher(0.0, "Teleop/")
@@ -52,7 +52,7 @@ class TeleopDriveIgnoreVisionRotation(
         val velocity =
             Vector2(forwardVelocity, strafeVelocity)
                 .rotateBy(
-                    Drivetrain.pose.rotation.asAngleUnit - (Drivetrain.rawYaw + angleOffset)
+                    Drivetrain.pose.rotation.angle - (Drivetrain.rawYaw + angleOffset)
                 ) * Drivetrain.maximumSpeed
 
         vx = velocity.x

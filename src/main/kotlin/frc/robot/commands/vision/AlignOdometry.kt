@@ -1,7 +1,8 @@
 package frc.robot.commands.vision
 
-import beaverlib.utils.Sugar.clamp
-import beaverlib.utils.Units.Angular.degrees
+import frc.robot.utils.Sugar.clamp
+import frc.robot.utils.degrees
+import frc.robot.utils.asRadians
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.math.controller.PIDController
 import edu.wpi.first.math.geometry.Pose2d

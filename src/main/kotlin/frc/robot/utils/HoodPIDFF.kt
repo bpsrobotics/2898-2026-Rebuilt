@@ -1,14 +1,14 @@
-package frc.robot.engine
+package frc.robot.utils
 
-import beaverlib.controls.ArmFeedForwardConstants
-import beaverlib.controls.PIDConstants
-import beaverlib.utils.Units.Angular.AngleUnit
-import beaverlib.utils.Units.Angular.AngularVelocity
-import beaverlib.utils.Units.Angular.radians
-import beaverlib.utils.Units.Angular.radiansPerSecond
 import edu.wpi.first.math.controller.PIDController
+import edu.wpi.first.units.Units
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.AngularVelocity
 import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
+import frc.robot.utils.controls.ArmFeedForwardConstants
+import frc.robot.utils.controls.PIDConstants
+import kotlin.math.cos
 import kotlin.math.sign
 
 /**
@@ -23,7 +23,7 @@ import kotlin.math.sign
 open class HoodPIDFF(
     pidConstants: PIDConstants,
     ffConstants: ArmFeedForwardConstants,
-    var zeroPosition: AngleUnit = 0.0.radians,
+    var zeroPosition: Angle = 0.0.radians,
     var kC: Double = 0.0,
 ) : Sendable {
     /** The Proportional Integral Derivative controller part of the PidFF */
@@ -36,7 +36,7 @@ open class HoodPIDFF(
     var kSVoltage = 0.0
 
     /** The goal state for the PidFF */
-    var setpoint: AngleUnit
+    var setpoint: Angle
         get() = pid.setpoint.radians
         set(value) {
             pid.setpoint = value.asRadians
@@ -49,7 +49,7 @@ open class HoodPIDFF(
      * @param measurement The measured value of what the PidFF controls
      */
     open fun calculate(
-        measurement: AngleUnit,
+        measurement: Angle,
         desiredVelocity: AngularVelocity = 0.radiansPerSecond,
     ): Double {
         var voltage = pid.calculate(measurement.asRadians)
@@ -57,11 +57,11 @@ open class HoodPIDFF(
             kSVoltage = sign(voltage) * kS
             voltage += sign(voltage) * kS
         }
-        voltage += (setpoint - zeroPosition).cos() * kG
-        kGVoltage = (setpoint - zeroPosition).cos() * kG
+        voltage += cos((setpoint - zeroPosition).convert(Units.Radians)) * kG
+        kGVoltage = cos((setpoint - zeroPosition).convert(Units.Radians)) * kG
         return voltage +
-            (kV * desiredVelocity.asRadiansPerSecond) +
-            (kA * desiredVelocity.asRadiansPerSecond)
+            (kV * desiredVelocity.convert(Units.RadiansPerSecond)) +
+            (kA * desiredVelocity.convert(Units.RadiansPerSecond))
     }
 
     /**
@@ -70,9 +70,11 @@ open class HoodPIDFF(
      *
      * @param measurement The measured value of what the PidFF controls
      */
-    open fun test(measurement: AngleUnit): Double {
+    open fun test(measurement: Angle): Double {
         val voltage =
-            pid.calculate(measurement.asRadians) + kS + (setpoint - zeroPosition).cos() * kG
+            pid.calculate(measurement.asRadians) +
+                kS +
+                cos((setpoint - zeroPosition).convert(Units.Radians)) * kG
         return voltage
     }
 

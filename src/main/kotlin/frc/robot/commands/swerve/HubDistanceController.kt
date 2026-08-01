@@ -1,13 +1,18 @@
 package frc.robot.commands.swerve
 
-import beaverlib.fieldmap.FieldMapREBUILTWelded
-import beaverlib.utils.Units.Linear.DistanceUnit
-import beaverlib.utils.geometry.vector2
+import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
+import frc.robot.utils.asMeters
+import frc.robot.utils.geometry.vector2
+import frc.robot.utils.convert
 import edu.wpi.first.math.controller.PIDController
+import edu.wpi.first.units.Units
+import edu.wpi.first.units.measure.Distance
 import frc.robot.subsystems.Drivetrain
+import kotlin.math.cos
+import kotlin.math.sin
 
 class HubDistanceController(
-    private val desiredDistance: () -> DistanceUnit,
+    private val desiredDistance: () -> Distance,
     private val moveAround: () -> Double,
 ) : DriveManager.DriveRequestBase() {
     override val priority = DriverPriority.HUB_DISTANCE.ordinal
@@ -27,7 +32,8 @@ class HubDistanceController(
             )
         val circleSpeed = moveAround()
 
-        vx = circleSpeed * -currentAngleToCenter.sin() + currentAngleToCenter.cos() * distanceSpeed
-        vy = circleSpeed * currentAngleToCenter.cos() + currentAngleToCenter.sin() * distanceSpeed
+        val angleRadians = currentAngleToCenter.convert(Units.Radians)
+        vx = circleSpeed * -sin(angleRadians) + cos(angleRadians) * distanceSpeed
+        vy = circleSpeed * cos(angleRadians) + sin(angleRadians) * distanceSpeed
     }
 }

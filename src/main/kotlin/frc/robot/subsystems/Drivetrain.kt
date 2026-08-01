@@ -1,11 +1,13 @@
 package frc.robot.subsystems
 
-import beaverlib.fieldmap.FieldMapREBUILTWelded
-import beaverlib.utils.Units.Angular.asAngleUnit
-import beaverlib.utils.Units.Angular.radiansPerSecond
-import beaverlib.utils.Units.Linear.feetPerSecond
-import beaverlib.utils.Units.Linear.inches
-import beaverlib.utils.geometry.vector2
+import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
+import frc.robot.utils.radiansPerSecond
+import frc.robot.utils.feetPerSecond
+import frc.robot.utils.inches
+import frc.robot.utils.asMeters
+import frc.robot.utils.angle
+import frc.robot.utils.convert
+import frc.robot.utils.geometry.vector2
 import edu.wpi.first.math.VecBuilder
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.math.geometry.Pose3d
@@ -14,7 +16,7 @@ import edu.wpi.first.math.geometry.Rotation3d
 import edu.wpi.first.math.geometry.Translation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.math.kinematics.SwerveModuleState
-import edu.wpi.first.math.util.Units
+import edu.wpi.first.units.Units
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructArrayPublisher
 import edu.wpi.first.networktables.StructPublisher
@@ -25,7 +27,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
-import frc.robot.engine.DashboardNumber
+import frc.robot.utils.DashboardNumber
 import swervelib.SwerveDrive
 import swervelib.SwerveDriveTest
 import swervelib.parser.SwerveParser
@@ -37,13 +39,13 @@ import kotlin.math.PI
 
 object Drivetrain : SubsystemBase() {
     object Constants {
-        val MAX_SPEED_MPS = (15.1).feetPerSecond.asMetersPerSecond
-        val MAX_ANGULAR_SPEED_RADIANS_PER_SECOND = (Math.PI).radiansPerSecond.asRadiansPerSecond
+        val MAX_SPEED = 15.1.feetPerSecond
+        val MAX_ANGULAR_SPEED = PI.radiansPerSecond
         // Chassis configuration (left to right dist of center of the wheels)
-        private val TRACK_WIDTH = Units.inchesToMeters(11.5)
+        private val TRACK_WIDTH = 11.5.inches.asMeters
 
         // Distance between centers of right and left wheels on robot (front to back dist)
-        private val WHEEL_BASE = Units.inchesToMeters(11.5)
+        private val WHEEL_BASE = 11.5.inches.asMeters
 
         // Distance between front and back wheels on robot: CHANGE TO MATCH WITH ROBOT
         val DRIVE_KINEMATICS =
@@ -63,9 +65,9 @@ object Drivetrain : SubsystemBase() {
     var distToHub: Double by DashboardNumber(0.0, "Odometry")
     private val swerveDrive: SwerveDrive
 
-    /** The maximum speed of the swerve drive */
-    val maximumSpeed = Constants.MAX_SPEED_MPS
-    val maxAngularSpeed = Constants.MAX_ANGULAR_SPEED_RADIANS_PER_SECOND
+    /** The maximum speed of the swerve drive (m/s) */
+    val maximumSpeed = Constants.MAX_SPEED.convert(Units.MetersPerSecond)
+    val maxAngularSpeed = Constants.MAX_ANGULAR_SPEED.convert(Units.RadiansPerSecond)
 
     /** SwerveModuleStates publisher for swerve display */
     private val swerveStatePublisher: StructArrayPublisher<SwerveModuleState> =
@@ -89,7 +91,7 @@ object Drivetrain : SubsystemBase() {
         SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH
 
         swerveDrive =
-            SwerveParser(Constants.DRIVE_CONFIG).createSwerveDrive(Constants.MAX_SPEED_MPS)
+            SwerveParser(Constants.DRIVE_CONFIG).createSwerveDrive(maximumSpeed)
 
         // Set YAGSL preferences
         swerveDrive.setHeadingCorrection(false)
@@ -255,7 +257,7 @@ object Drivetrain : SubsystemBase() {
         get() = swerveDrive.yaw
 
     val rawYaw
-        get() = swerveDrive.gyro.rotation3d.toRotation2d().asAngleUnit
+        get() = swerveDrive.gyro.rotation3d.toRotation2d().angle
 
     /**
      * Method to generate a ChassisSpeeds object from a desired X, Y, and Rotational velocity.

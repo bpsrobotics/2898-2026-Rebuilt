@@ -1,13 +1,14 @@
 package frc.robot.input
 
-import beaverlib.fieldmap.FieldMapREBUILTWelded
-import beaverlib.utils.Sugar.clamp
-import beaverlib.utils.Units.Angular.RPM
-import beaverlib.utils.Units.Angular.degrees
-import beaverlib.utils.Units.Angular.radians
-import beaverlib.utils.Units.Linear.meters
-import beaverlib.utils.Units.seconds
-import beaverlib.utils.geometry.vector2
+import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
+import frc.robot.utils.Sugar.clamp
+import frc.robot.utils.RPM
+import frc.robot.utils.degrees
+import frc.robot.utils.radians
+import frc.robot.utils.meters
+import frc.robot.utils.sec
+import frc.robot.utils.asRadians
+import frc.robot.utils.geometry.vector2
 import edu.wpi.first.wpilibj.GenericHID
 import edu.wpi.first.wpilibj2.command.InstantCommand
 import edu.wpi.first.wpilibj2.command.RunCommand
@@ -33,7 +34,7 @@ fun OI.driverAndOperatorBindings() {
         .debounce(0.5)
         .onTrue(
             InstantCommand({ Drivetrain.zeroGyro() }, Drivetrain)
-                .andThen(rumble(GenericHID.RumbleType.kLeftRumble, 0.25, 0.2.seconds))
+                .andThen(rumble(GenericHID.RumbleType.kLeftRumble, 0.25, 0.2.sec))
         )
     // Default drive
     Drivetrain.defaultCommand =
@@ -82,7 +83,7 @@ fun OI.driverAndOperatorBindings() {
         .whileTrue(driveManager.defineDriver(CardinalAlign { -driverController.hid.pov.degrees }))
 
     HedgieHelmet.trenchDriveTrigger.onTrue(
-        rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.seconds)
+        rumble(GenericHID.RumbleType.kBothRumble, 0.5, 0.2.sec)
     )
 
     /** Shooter */

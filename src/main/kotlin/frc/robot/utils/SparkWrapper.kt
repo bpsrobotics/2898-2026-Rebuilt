@@ -1,7 +1,5 @@
-package frc.robot.engine
+package frc.robot.utils
 
-import beaverlib.utils.Units.Angular.RPM
-import beaverlib.utils.Units.Angular.rotations
 import com.revrobotics.PersistMode
 import com.revrobotics.REVLibError
 import com.revrobotics.ResetMode
@@ -13,14 +11,17 @@ import edu.wpi.first.util.sendable.Sendable
 import edu.wpi.first.util.sendable.SendableBuilder
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 
-class SparkWrapper(val deviceId: Int, motorType: MotorType, configurer: SparkMaxConfig.() -> Unit) :
-    Sendable {
+class SparkWrapper(
+    val deviceId: Int,
+    val motorType: MotorType,
+    configurer: SparkMaxConfig.() -> Unit,
+) : Sendable {
     companion object {
         val sparksWithErrors = mutableSetOf<SparkWrapper>()
     }
 
     private var motor: SparkMax? = null
-    var initError: REVLibError
+    lateinit var initError: REVLibError
     val config = SparkMaxConfig()
 
     var dashboardControl = false
@@ -41,14 +42,21 @@ class SparkWrapper(val deviceId: Int, motorType: MotorType, configurer: SparkMax
 
     init {
         config.configurer()
+        initMotor()
+
+        SmartDashboard.putData("Motors/Spark$deviceId", this)
+    }
+
+    private fun initMotor() {
         val motor = SparkMax(deviceId, motorType)
         this.motor = motor
         initError =
             motor.configure(config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters)
-        if (initError != REVLibError.kOk) this.motor = null
+        if (initError != REVLibError.kOk) {
+            motor.close()
+            this.motor = null
+        }
         updateGlobalErrorState()
-
-        SmartDashboard.putData("Motors/Spark$deviceId", this)
     }
 
     @Suppress("MemberVisibilityCanBePrivate", "unused")
@@ -182,6 +190,17 @@ class SparkWrapper(val deviceId: Int, motorType: MotorType, configurer: SparkMax
                 requestPower = it
                 dashboardControl = true
                 motor?.set(requestPower)
+            },
+        )
+        builder.addBooleanProperty(
+            "clearFaults",
+            { false },
+            {
+                if (motor == null) initMotor()
+                else {
+                    motor?.clearFaults()
+                    updateGlobalErrorState()
+                }
             },
         )
     }

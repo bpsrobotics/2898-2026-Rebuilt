@@ -2,7 +2,7 @@ package frc.robot.commands.swerve
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds
 import edu.wpi.first.wpilibj2.command.Command
-import frc.robot.engine.DashboardString
+import frc.robot.utils.DashboardString
 import frc.robot.subsystems.Drivetrain
 
 class DriveManager() : Command() {

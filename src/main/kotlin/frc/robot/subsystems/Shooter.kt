@@ -1,17 +1,20 @@
 package frc.robot.subsystems
 
-import beaverlib.controls.ArmFeedForwardConstants
-import beaverlib.controls.PIDConstants
-import beaverlib.controls.PidFF
-import beaverlib.controls.SimpleMotorFeedForwardConstants
-import beaverlib.utils.MovingAverage
-import beaverlib.utils.Sugar.clamp
-import beaverlib.utils.Units.Angular.AngleUnit
-import beaverlib.utils.Units.Angular.AngularVelocity
-import beaverlib.utils.Units.Angular.asRPM
-import beaverlib.utils.Units.Angular.degrees
-import beaverlib.utils.Units.Angular.radians
-import beaverlib.utils.Units.Angular.rotations
+import frc.robot.utils.controls.ArmFeedForwardConstants
+import frc.robot.utils.controls.PIDConstants
+import frc.robot.utils.controls.PidFF
+import frc.robot.utils.controls.SimpleMotorFeedForwardConstants
+import frc.robot.utils.MovingAverage
+import frc.robot.utils.Sugar.clamp
+import frc.robot.utils.degrees
+import frc.robot.utils.radians
+import frc.robot.utils.rotations
+import frc.robot.utils.RPM
+import frc.robot.utils.asRadians
+import frc.robot.utils.convert
+import edu.wpi.first.units.Units
+import edu.wpi.first.units.measure.Angle
+import edu.wpi.first.units.measure.AngularVelocity
 import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.config.SparkBaseConfig
 import edu.wpi.first.math.MathUtil
@@ -23,10 +26,10 @@ import edu.wpi.first.wpilibj2.command.Commands.waitUntil
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.WaitCommand
 import edu.wpi.first.wpilibj2.command.button.Trigger
-import frc.engine.utils.Polynomial
-import frc.robot.engine.DashboardNumber
-import frc.robot.engine.HoodPIDFF
-import frc.robot.engine.SparkWrapper
+import frc.robot.utils.Polynomial
+import frc.robot.utils.DashboardNumber
+import frc.robot.utils.HoodPIDFF
+import frc.robot.utils.SparkWrapper
 import kotlin.math.PI
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
@@ -78,8 +81,8 @@ object Shooter : SubsystemBase() {
     }
 
     fun stabilize(): Command = run {
-        motorVoltage = motor1Controller.calculate(motor.velocity.asRPM)
-        motor.set(motor1Controller.calculate(motor.velocity.asRPM).clamp(0.0, 12.0))
+        motorVoltage = motor1Controller.calculate(motor.velocity.convert(Units.RPM))
+        motor.set(motor1Controller.calculate(motor.velocity.convert(Units.RPM)).clamp(0.0, 12.0))
     }
 
     fun waitSpeed(): Command = waitUntil { motor1Controller.atSetpoint() }
@@ -88,9 +91,9 @@ object Shooter : SubsystemBase() {
         stabilize().beforeStarting({ motor1Controller.setpoint = Constants.runningSpeed })
 
     fun runAtSpeed(speedLambda: () -> AngularVelocity): Command = run {
-        motor1Controller.setpoint = speedLambda().asRPM
-        motorVoltage = motor1Controller.calculate(motor.velocity.asRPM)
-        motor.setVoltage(motor1Controller.calculate(motor.velocity.asRPM).clamp(0.0, 12.0))
+        motor1Controller.setpoint = speedLambda().convert(Units.RPM)
+        motorVoltage = motor1Controller.calculate(motor.velocity.convert(Units.RPM))
+        motor.setVoltage(motor1Controller.calculate(motor.velocity.convert(Units.RPM)).clamp(0.0, 12.0))
     }
 
     val desiredSpeed: Double by DashboardNumber(0.0, "Shooter")
@@ -143,7 +146,7 @@ object Shooter : SubsystemBase() {
             SmartDashboard.putData("Shooter/Hood/ArmPID", controller)
         }
 
-        val position: AngleUnit
+        val position: Angle
             get() =
                 MathUtil.inputModulus(absEncoder.get() - absoluteEncoderOffset, -PI, PI).rotations
 
@@ -167,7 +170,7 @@ object Shooter : SubsystemBase() {
             yellowBabber = currentAverage.average
         }
 
-        fun applyController(setpoint: AngleUnit? = null) {
+        fun applyController(setpoint: Angle? = null) {
             if (setpoint != null)
                 controller.setpoint =
                     setpoint.asRadians.clamp(0.0, Constants.TOP_POSITION.asRadians).radians
@@ -182,19 +185,19 @@ object Shooter : SubsystemBase() {
             motor.setVoltage(desiredVoltage)
         }
 
-        fun holdPosition(positionToHold: AngleUnit): Command =
+        fun holdPosition(positionToHold: Angle): Command =
             startRun({ controller.setpoint = positionToHold }) { applyController() }
 
-        fun holdPosition(positionToHold: () -> AngleUnit): Command = run {
+        fun holdPosition(positionToHold: () -> Angle): Command = run {
             applyController(positionToHold())
         }
 
         fun stabilize(): Command = run { applyController() }
 
-        fun moveToPosition(positionToHold: AngleUnit): Command =
+        fun moveToPosition(positionToHold: Angle): Command =
             holdPosition(positionToHold).withDeadline(waitUntil { controller.atSetpoint() })
 
-        fun moveToPosition(positionToHold: () -> AngleUnit): Command =
+        fun moveToPosition(positionToHold: () -> Angle): Command =
             holdPosition(positionToHold).withDeadline(waitUntil { controller.atSetpoint() })
 
         fun moveDown() = holdPosition(Constants.DOWN_POSITION)
@@ -264,8 +267,8 @@ object Shooter : SubsystemBase() {
 
         fun runAtSpeed(): Command =
             startRun({ controller.setpoint = Constants.runningSpeed }) {
-                topMotor.set(controller.calculate(topMotor.velocity.asRPM))
-                bottomMotor.set(controller.calculate(bottomMotor.velocity.asRPM))
+                topMotor.set(controller.calculate(topMotor.velocity.convert(Units.RPM)))
+                bottomMotor.set(controller.calculate(bottomMotor.velocity.convert(Units.RPM)))
             }
 
         /*
@@ -285,7 +288,7 @@ object Shooter : SubsystemBase() {
                 .repeatedly() */
 
         val isStalled = Trigger {
-            topMotor.velocity.asRPM <= 100 || bottomMotor.velocity.asRPM <= 170
+            topMotor.velocity.convert(Units.RPM) <= 100 || bottomMotor.velocity.convert(Units.RPM) <= 170
         }
         val isStalledDebounced: Trigger = isStalled.debounce(0.25, Debouncer.DebounceType.kRising)
 

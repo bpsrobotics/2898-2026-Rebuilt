@@ -1,6 +1,7 @@
 package frc.robot.input
 
-import beaverlib.utils.Units.Time
+import frc.robot.utils.asSeconds
+import edu.wpi.first.units.measure.Time
 import edu.wpi.first.math.MathUtil
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.GenericHID
@@ -11,7 +12,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandJoystick
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.commands.swerve.DriveManager
-import frc.robot.engine.DashboardNumber
+import frc.robot.utils.DashboardNumber
 import frc.robot.input.OI.process
 import frc.robot.subsystems.Drivetrain
 import kotlin.math.absoluteValue

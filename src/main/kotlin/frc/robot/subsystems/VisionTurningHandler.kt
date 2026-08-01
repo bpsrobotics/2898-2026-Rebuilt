@@ -1,19 +1,21 @@
 package frc.robot.subsystems
 
-import beaverlib.fieldmap.FieldMapREBUILTWelded
-import beaverlib.utils.Units.Angular.AngleUnit
-import beaverlib.utils.Units.Angular.asAngleUnit
-import beaverlib.utils.Units.Angular.radians
-import beaverlib.utils.Units.Angular.radiansPerSecond
-import beaverlib.utils.Units.seconds
-import beaverlib.utils.geometry.Vector2
-import beaverlib.utils.geometry.vector2
+import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
+import frc.robot.utils.radians
+import frc.robot.utils.radiansPerSecond
+import frc.robot.utils.sec
+import frc.robot.utils.asMeters
+import frc.robot.utils.asRadians
+import frc.robot.utils.angle
+import frc.robot.utils.geometry.Vector2
+import edu.wpi.first.units.measure.Angle
+import frc.robot.utils.geometry.vector2
 import edu.wpi.first.math.geometry.Pose2d
 import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.wpilibj2.command.SubsystemBase
-import frc.engine.utils.Polynomial
-import frc.robot.engine.DashboardNumber
+import frc.robot.utils.Polynomial
+import frc.robot.utils.DashboardNumber
 import kotlin.math.PI
 import kotlin.math.sign
 
@@ -55,8 +57,8 @@ object VisionTurningHandler : SubsystemBase() {
 
     var targetPos: Vector2? = null
     var nextFramePos = Vector2(0.0, 0.0)
-    var goalHoodAngle: AngleUnit = 0.0.radians
-    var goalShooterAngle: AngleUnit = 0.0.radians
+    var goalHoodAngle: Angle = 0.0.radians
+    var goalShooterAngle: Angle = 0.0.radians
     var dashboardGoalShooter: Double by DashboardNumber(0.0, "Odometry")
     val canFire: Boolean
         get() =
@@ -91,8 +93,8 @@ object VisionTurningHandler : SubsystemBase() {
         nextFramePos = (Drivetrain.pose.vector2 + Drivetrain.fieldVelocity.vector2 * 0.02)
         val nextFramePose =
             nextFramePos.toPose2d(
-                Drivetrain.pose.rotation.asAngleUnit +
-                    (Drivetrain.fieldVelocity.omegaRadiansPerSecond.radiansPerSecond * 0.02.seconds)
+                Drivetrain.pose.rotation.angle +
+                    (Drivetrain.fieldVelocity.omegaRadiansPerSecond.radiansPerSecond * 0.02.sec)
             )
         targetPos = getTargetPos(nextFramePos)
 
@@ -102,7 +104,7 @@ object VisionTurningHandler : SubsystemBase() {
         if (targetPos == null) {
             posePublisher.set(Pose2d())
             goalHoodAngle = 0.radians
-            goalShooterAngle = Drivetrain.pose.rotation.asAngleUnit
+            goalShooterAngle = Drivetrain.pose.rotation.angle
             dashboardGoalShooter = goalShooterAngle.asRadians
             return
         }
@@ -116,7 +118,7 @@ object VisionTurningHandler : SubsystemBase() {
                 allianceArea != FieldMapREBUILTWelded.AllianceArea.BlueTrench &&
                 allianceArea != FieldMapREBUILTWelded.AllianceArea.RedTrench
         ) {
-            if ((goalShooterAngle - nextFramePose.rotation.asAngleUnit).asRadians > PI) {
+            if ((goalShooterAngle - nextFramePose.rotation.angle).asRadians > PI) {
                 goalHoodAngle += PI.radians
                 goalHoodAngle = 0.0.radians
             }

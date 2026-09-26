@@ -1,24 +1,16 @@
 {
-  "optimalVoltage": 12,
-  "robotMass": 95.2311,
-  "wheelGripCoefficientOfFriction": 1.19,
-  "currentLimit": {
-    "drive": 35,
-    "angle": 10
-  },
-  "conversionFactors": {
+  "$schema": "https://raw.githubusercontent.com/Yet-Another-Software-Suite/YAGSL/main/vendordep/src/test/resources/schemas/physicalproperties.json",
+  "gearing": {
     "angle": {
-      "gearRatio": 21.4285714286,
-      "factor": 0
+      "gearRatio": 21.4285714286
     },
     "drive": {
       "diameter": 3.7,
-      "gearRatio": 6.75,
-      "factor": 0
+      "gearRatio": 6.75
     }
   },
-  "rampRate": {
-    "drive": 0.25,
-    "angle": 0.25
+  "statorCurrentLimit": {
+    "drive": 35,
+    "angle": 10
   }
 }

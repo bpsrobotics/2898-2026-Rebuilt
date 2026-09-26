@@ -1,10 +1,12 @@
 {
-  "imu": {
-    "type": "navx",
+  "$schema": "https://raw.githubusercontent.com/Yet-Another-Software-Suite/YAGSL/main/vendordep/src/test/resources/schemas/swervedrive.json",
+  "gyro": {
+    "type": "custom",
     "id": 0,
-    "canbus": null
+    "canbus": ""
   },
-  "invertedIMU": false,
+  "gyroAxis": "yaw",
+  "gyroInvert": false,
   "modules": [
     "frontleft.json",
     "frontright.json",

@@ -14,42 +14,26 @@ import frc.robot.utils.degrees
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 
+private val alignOdometryYPID = PIDController(2.0, 0.3, 0.1)
+private val alignOdometryXPID = PIDController(2.0, 0.3, 0.1)
+private val alignOdometryRotationPID = PIDController(3.0, 0.1, 0.1)
+
 // 3, 3.2
-class AlignOdometry(
-    var targetPose2d: Pose2d = Pose2d(3.1, 4.24, Rotation2d(0.0)),
-    val maxSpeed: Double = 0.5,
-    val maxRotSpeed: Double = 1.0,
-) : Command() {
-    companion object {
-        val yPID = PIDController(2.0, 0.3, 0.1)
-        val xPID = PIDController(2.0, 0.3, 0.1)
-        val rotationPID = PIDController(3.0, 0.1, 0.1)
-        val xError: Double
-            get() = xPID.error.absoluteValue
+/**
+ * Auto-mode aligner that drives field-oriented speeds to [targetPose2d]. Built on
+ * [Drivetrain.driveLive].
+ */
+fun alignOdometry(
+    targetPose2d: Pose2d = Pose2d(3.1, 4.24, Rotation2d(0.0)),
+    maxSpeed: Double = 0.5,
+    maxRotSpeed: Double = 1.0,
+): Command {
+    val xPID = alignOdometryXPID
+    val yPID = alignOdometryYPID
+    val rotationPID = alignOdometryRotationPID
+    rotationPID.enableContinuousInput(-180.degrees.asRadians, 180.degrees.asRadians)
 
-        val yError: Double
-            get() = xPID.error.absoluteValue
-
-        val rotationError: Double
-            get() = xPID.error.absoluteValue
-    }
-
-    init {
-        addRequirements(Drivetrain)
-        rotationPID.enableContinuousInput(-180.degrees.asRadians, 180.degrees.asRadians)
-    }
-
-    override fun initialize() {
-        xPID.reset()
-        yPID.reset()
-        rotationPID.reset()
-
-        rotationPID.setpoint = MathUtil.angleModulus(targetPose2d.rotation.radians)
-        xPID.setpoint = targetPose2d.x
-        yPID.setpoint = targetPose2d.y
-    }
-
-    override fun execute() {
+    fun computeSpeeds(): ChassisSpeeds {
         NetworkTableInstance.getDefault().getStructTopic("RobotPose", Pose2d.struct).publish()
 
         var rotationSpeed = rotationPID.calculate(Drivetrain.pose.rotation.radians)
@@ -61,21 +45,22 @@ class AlignOdometry(
         val ks = 0.05
 
         if (xSpeed.absoluteValue < deadzone) xSpeed = 0.0 else xSpeed += ks * xSpeed.sign
-        //
         if (ySpeed.absoluteValue < deadzone) ySpeed = 0.0 else ySpeed += ks * ySpeed.sign
-        //
         if (rotationSpeed.absoluteValue < deadzone) rotationSpeed = 0.0
         else rotationSpeed += ks * rotationSpeed.sign
 
-        val totalError = rotationError + xError + yError
+        val totalError =
+            rotationPID.error.absoluteValue + xPID.error.absoluteValue + yPID.error.absoluteValue
 
         if (totalError < 0.2) {
             when {
-                xError > yError && xError > rotationError * 2 -> {
+                xPID.error.absoluteValue > yPID.error.absoluteValue &&
+                    xPID.error.absoluteValue > rotationPID.error.absoluteValue * 2 -> {
                     ySpeed = 0.0
                     rotationSpeed = 0.0
                 }
-                yPID.error > xError && yError > rotationError * 2 -> {
+                yPID.error.absoluteValue > xPID.error.absoluteValue &&
+                    yPID.error.absoluteValue > rotationPID.error.absoluteValue * 2 -> {
                     xSpeed = 0.0
                     rotationSpeed = 0.0
                 }
@@ -86,20 +71,29 @@ class AlignOdometry(
             }
         }
 
-        Drivetrain.driveFieldOriented(
-            ChassisSpeeds(
-                xSpeed.clamp(-maxSpeed, maxSpeed),
-                ySpeed.clamp(-maxSpeed, maxSpeed),
-                rotationSpeed.clamp(-maxRotSpeed, maxRotSpeed),
-            )
+        return ChassisSpeeds(
+            xSpeed.clamp(-maxSpeed, maxSpeed),
+            ySpeed.clamp(-maxSpeed, maxSpeed),
+            rotationSpeed.clamp(-maxRotSpeed, maxRotSpeed),
         )
     }
 
-    override fun isFinished(): Boolean {
-        return rotationError < 0.01 && xError < 0.01 && yError < 0.01
-    }
+    return Drivetrain.driveLive(::computeSpeeds)
+        .beforeStarting(
+            Runnable {
+                xPID.reset()
+                yPID.reset()
+                rotationPID.reset()
 
-    override fun end(interrupted: Boolean) {
-        Drivetrain.stop()
-    }
+                rotationPID.setpoint = MathUtil.angleModulus(targetPose2d.rotation.radians)
+                xPID.setpoint = targetPose2d.x
+                yPID.setpoint = targetPose2d.y
+            }
+        )
+        .until {
+            rotationPID.error.absoluteValue < 0.01 &&
+                xPID.error.absoluteValue < 0.01 &&
+                yPID.error.absoluteValue < 0.01
+        }
+        .finallyDo(Runnable { Drivetrain.stop() })
 }

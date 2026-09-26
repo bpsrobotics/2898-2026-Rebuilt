@@ -67,6 +67,10 @@ object OI : SubsystemBase() {
             Drivetrain.sysIdDriveMotors(),
         )
         SmartDashboard.putData(
+            "SysIdCommands/Drivetrain/DriveMotorsSpin",
+            Drivetrain.sysIdDriveMotorsSpin(),
+        )
+        SmartDashboard.putData(
             "SysIdCommands/Drivetrain/AngleMotors",
             Drivetrain.sysIdAngleMotors(),
         )

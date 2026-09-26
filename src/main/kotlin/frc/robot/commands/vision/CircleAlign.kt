@@ -22,52 +22,33 @@ import kotlin.math.cos
 import kotlin.math.sign
 import kotlin.math.sin
 
-class CircleAlign(
-    var targetCenter: () -> Vector2,
-    val angleProvider: () -> Angle,
-    val desiredDistance: () -> Distance,
-    val maxSpeed: Double = 5.0,
-    val maxRotSpeed: Double = 1.0,
-    val initializeLambda: () -> Unit = {},
-    val endLambda: () -> Unit = {},
-) : Command() {
-    companion object {
-        val circlePID = PIDController(4.0, 0.3, 0.1)
-        val distancePID = PIDController(2.0, 0.3, 0.1)
-        val rotationPID = PIDController(3.0, 0.1, 0.1)
-        val circleError: Double
-            get() = circlePID.error.absoluteValue
+private val circleAlignCirclePID = PIDController(4.0, 0.3, 0.1)
+private val circleAlignDistancePID = PIDController(2.0, 0.3, 0.1)
+private val circleAlignRotationPID = PIDController(3.0, 0.1, 0.1)
 
-        val distanceError: Double
-            get() = distancePID.error.absoluteValue
+/**
+ * Auto-mode aligner that orbits [targetCenter] at [desiredDistance] while holding the heading from
+ * [angleProvider]. Controls all axes field-oriented via [Drivetrain.driveLive]. Runs until
+ * interrupted.
+ */
+fun circleAlign(
+    targetCenter: () -> Vector2,
+    angleProvider: () -> Angle,
+    desiredDistance: () -> Distance,
+    maxSpeed: Double = 5.0,
+    maxRotSpeed: Double = 1.0,
+    initializeLambda: () -> Unit = {},
+    endLambda: () -> Unit = {},
+): Command {
+    val circlePID = circleAlignCirclePID
+    val distancePID = circleAlignDistancePID
+    val rotationPID = circleAlignRotationPID
+    rotationPID.enableContinuousInput(
+        (-180).degrees.convert(Units.Radians),
+        180.degrees.convert(Units.Radians),
+    )
 
-        val rotationError: Double
-            get() = rotationPID.error.absoluteValue
-    }
-
-    init {
-        addRequirements(Drivetrain)
-        rotationPID.enableContinuousInput(
-            (-180).degrees.convert(Units.Radians),
-            180.degrees.convert(Units.Radians),
-        )
-    }
-
-    override fun initialize() {
-        circlePID.reset()
-        distancePID.reset()
-        rotationPID.reset()
-
-        rotationPID.setpoint = 0.0
-        circlePID.setpoint = 0.0
-        distancePID.setpoint = 0.0
-        initializeLambda()
-    }
-
-    override fun execute() {
-
-        // if (rotationError < 0.01 && xError < 0.01 && yError < 0.01) return
-
+    fun computeSpeeds(): ChassisSpeeds {
         NetworkTableInstance.getDefault().getStructTopic("RobotPose", Pose2d.struct).publish()
         val currentAngleToCenter = Drivetrain.pose.vector2.angleTo(targetCenter())
 
@@ -92,10 +73,8 @@ class CircleAlign(
 
         if (circleSpeed.absoluteValue < 0.05) circleSpeed = 0.0
         else circleSpeed += ks * circleSpeed.sign
-        //
         if (distanceSpeed.absoluteValue < 0.1) distanceSpeed = 0.0
         else distanceSpeed += ks * distanceSpeed.sign
-        //
         if (rotationSpeed.absoluteValue < deadzone) rotationSpeed = 0.0
         else rotationSpeed += ks * rotationSpeed.sign
 
@@ -105,21 +84,30 @@ class CircleAlign(
         val ySpeed =
             circleSpeed * cos(currentAngleRadians) + sin(currentAngleRadians) * distanceSpeed
 
-        Drivetrain.driveFieldOriented(
-            ChassisSpeeds(
-                xSpeed.clamp(-maxSpeed, maxSpeed),
-                ySpeed.clamp(-maxSpeed, maxSpeed),
-                rotationSpeed.clamp(-maxRotSpeed, maxRotSpeed),
-            )
+        return ChassisSpeeds(
+            xSpeed.clamp(-maxSpeed, maxSpeed),
+            ySpeed.clamp(-maxSpeed, maxSpeed),
+            rotationSpeed.clamp(-maxRotSpeed, maxRotSpeed),
         )
     }
 
-    override fun isFinished(): Boolean {
-        return false
-    }
+    return Drivetrain.driveLive(::computeSpeeds)
+        .beforeStarting(
+            Runnable {
+                circlePID.reset()
+                distancePID.reset()
+                rotationPID.reset()
 
-    override fun end(interrupted: Boolean) {
-        Drivetrain.stop()
-        endLambda()
-    }
+                rotationPID.setpoint = 0.0
+                circlePID.setpoint = 0.0
+                distancePID.setpoint = 0.0
+                initializeLambda()
+            }
+        )
+        .finallyDo(
+            Runnable {
+                Drivetrain.stop()
+                endLambda()
+            }
+        )
 }

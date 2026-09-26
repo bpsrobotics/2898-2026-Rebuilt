@@ -87,15 +87,17 @@ object Intake : SubsystemBase() {
 
         val position
             get() =
-                MathUtil.inputModulus(absEncoder.get() + Constants.ENCODER_OFFSET, -0.5, 0.5)
-                    .rotations
+                if (absEncoder.isConnected())
+                    MathUtil.inputModulus(absEncoder.get() + Constants.ENCODER_OFFSET, -0.5, 0.5)
+                        .rotations
+                else null
 
         init {
             val motorConfig = SparkMaxConfig()
 
             SmartDashboard.putData("Intake/Pivot/ArmPidFF", controller)
             // SmartDashboard.putData("Intake/Pivot/motor", Intake.motor)
-            controller.setpoint = position
+            position?.let { controller.setpoint = it }
             // Stabilize the wrist if nothing else is happening
             defaultCommand = stabilize()
         }
@@ -104,7 +106,7 @@ object Intake : SubsystemBase() {
         var rawEncoderPosition by DashboardNumber(0.0, "Intake/Pivot")
 
         override fun periodic() {
-            pivotEncoderPosition = position.asRadians
+            pivotEncoderPosition = position?.asRadians ?: Double.NaN
             rawEncoderPosition = absEncoder.get()
         }
 
@@ -112,7 +114,9 @@ object Intake : SubsystemBase() {
         fun stop(): Command = runOnce { motor.stopMotor() }
 
         /** Holds the wrist at the last set position */
-        fun stabilize(): Command = run { motor.setVoltage(controller.calculate(position)) }
+        fun stabilize(): Command = run {
+            position?.let { motor.setVoltage(controller.calculate(it)) }
+        }
 
         fun setSetpoint(newSetpoint: Angle): Command =
             InstantCommand({ controller.setpoint = newSetpoint }, this)
@@ -120,7 +124,7 @@ object Intake : SubsystemBase() {
         /** Sets the wrist to target position, and ends once the PID is at the setpoint */
         fun runToPosition(targetPosition: Angle): Command = run {
             controller.setpoint = targetPosition
-            motor.setVoltage(controller.calculate(position))
+            position?.let { motor.setVoltage(controller.calculate(it)) }
         }
             .until { controller.atSetpoint() }
 

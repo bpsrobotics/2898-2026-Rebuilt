@@ -1,13 +1,15 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Yet-Another-Software-Suite/YAGSL/main/vendordep/src/test/resources/schemas/module.json",
   "location": {
     "front": 10.625,
     "left": -10.625
   },
   "absoluteEncoderOffset": 200.7421875,
+  "absoluteEncoderInverted": false,
   "drive": {
     "type": "sparkmax_neo",
     "id": 2,
-    "canbus": null
+    "canbus": ""
   },
   "inverted": {
     "drive": true,
@@ -16,12 +18,12 @@
   "angle": {
     "type": "sparkmax_neo",
     "id": 1,
-    "canbus": null
+    "canbus": ""
   },
-  "encoder": {
-    "type": "cancoder",
+  "absoluteEncoder": {
+    "type": "cancoder_can",
     "id": 3,
-    "canbus": null
-  },
-  "absoluteEncoderInverted": false
+    "channel": 0,
+    "canbus": ""
+  }
 }

@@ -70,8 +70,6 @@ object Shooter : SubsystemBase() {
 
     override fun periodic() {}
 
-    /*val sysID: BeaverSysIDRoutine =
-    BeaverSysIDRoutine(this, BeaverSysIDMotor("ShooterMotor", motor))*/
     var motorVoltage: Double by DashboardNumber(0.0, "Shooter")
 
     fun stop(): Command = runOnce {
@@ -230,6 +228,7 @@ object Shooter : SubsystemBase() {
         private object Constants {
             const val TOP_MOTOR_ID = 15
             const val BOTTOM_MOTOR_ID = 19
+            const val BIG_WHEELS_ID = 20
 
             val pidConstants = PIDConstants(0.0, 0.0, 0.0)
             val ffConstants = SimpleMotorFeedForwardConstants(0.0, 0.0, 0.0)
@@ -247,6 +246,11 @@ object Shooter : SubsystemBase() {
                 idleMode(SparkBaseConfig.IdleMode.kCoast)
                 smartCurrentLimit(20)
                 inverted(true)
+            }
+        private val bigWheelsMotor =
+            SparkWrapper(Constants.BIG_WHEELS_ID, SparkLowLevel.MotorType.kBrushed) {
+                idleMode(SparkBaseConfig.IdleMode.kCoast)
+                smartCurrentLimit(20)
             }
         private val controller = PidFF(Constants.pidConstants, Constants.ffConstants)
 

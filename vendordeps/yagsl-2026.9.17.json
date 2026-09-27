@@ -1,0 +1,35 @@
+{
+  "fileName": "yagsl-2026.9.17.json",
+  "name": "YAGSL",
+  "version": "2026.9.17",
+  "frcYear": "2026",
+  "uuid": "1ccce5a4-acd2-4d18-bca3-4b8047188400",
+  "mavenUrls": [
+    "https://yet-another-software-suite.github.io/YAGSL/releases/",
+    "https://repo1.maven.org/maven2"
+  ],
+  "jsonUrl": "https://yet-another-software-suite.github.io/YAGSL/yagsl.json",
+  "javaDependencies": [
+    {
+      "groupId": "swervelib",
+      "artifactId": "YAGSL-java",
+      "version": "2026.9.17"
+    }
+  ],
+  "requires": [
+    {
+      "uuid": "3f48eb8c-50fe-43a6-9cb7-44c86353c4cb",
+      "errorMessage": "REVLib is required!",
+      "offlineFileName": "REVLib.json",
+      "onlineUrl": "https://software-metadata.revrobotics.com/REVLib-2026.json"
+    },
+    {
+      "uuid": "cb311d09-36e9-4143-a032-55bb2b94443b",
+      "errorMessage": "Studica is required!",
+      "offlineFileName": "StudicaLib.json",
+      "onlineUrl": "https://dev.studica.com/maven/release/2026/json/StudicaLib-2026.0.1-beta.json"
+    }
+  ],
+  "jniDependencies": [],
+  "cppDependencies": []
+}

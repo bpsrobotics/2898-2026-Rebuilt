@@ -5,12 +5,12 @@ import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
 import frc.robot.utils.meters
 
 object HedgieHelmet {
-    val trenchDriveTrigger = Trigger { willCollideWithTrench() && !Vision.cameras.isEmpty() }
+    val trenchDriveTrigger = Trigger { willCollideWithTrench() }
 
     val PADDING = 2.meters
 
     private fun willCollideWithTrench(): Boolean {
-        val robotX = Drivetrain.pose.x.meters
+        val robotX = Drivetrain.fieldPose?.x?.meters ?: return false
 
         for (x in
             arrayOf(

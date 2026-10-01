@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Filesystem
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
 import edu.wpi.first.wpilibj2.command.Command
-import edu.wpi.first.wpilibj2.command.InstantCommand
+import edu.wpi.first.wpilibj2.command.Commands
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import frc.robot.utils.DashboardNumber
@@ -28,14 +28,14 @@ import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
 import frc.robot.utils.geometry.vector2
 import frc.robot.utils.inches
 import frc.robot.utils.radiansPerSecond
-import java.io.File
-import kotlin.jvm.optionals.getOrNull
-import kotlin.math.PI
 import swervelib.SwerveDrive
 import swervelib.SwerveDriveTest
 import swervelib.parser.SwerveParser
 import swervelib.telemetry.SwerveDriveTelemetry
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity
+import java.io.File
+import kotlin.jvm.optionals.getOrNull
+import kotlin.math.PI
 
 object Drivetrain : SubsystemBase() {
     object Constants {
@@ -77,14 +77,6 @@ object Drivetrain : SubsystemBase() {
     private val posePublisher: StructPublisher<Pose2d> =
         NetworkTableInstance.getDefault().getStructTopic("RobotPose", Pose2d.struct).publish()
 
-    private val targetPosePublisher: StructPublisher<Pose2d> =
-        NetworkTableInstance.getDefault().getStructTopic("TargetPose", Pose2d.struct).publish()
-
-    var updateVisionOdometry = true
-
-    //    private val targetPoseProvider =
-    //        TargetPoseProvider(FieldMapREBUILTWelded.teamHub.center, 2.meters) { 0.radians }
-
     init {
         // Configure the Telemetry before creating the SwerveDrive to avoid unnecessary objects
         // being created.
@@ -102,24 +94,8 @@ object Drivetrain : SubsystemBase() {
 
         swerveDrive.setGyroOffset(Rotation3d(0.0, 0.0, PI))
 
-        // Updates odometry whenever vision sees apriltag
-        Vision.listeners.add(
-            "UpdateOdometry",
-            fun(result, camera) {
-                if (!updateVisionOdometry) return
-                if (result.targets.isEmpty()) return
-                if (
-                    !result.multitagResult.isPresent && (result.targets.first().poseAmbiguity > 0.3)
-                )
-                    return
-                val newPose = camera.getMultiTagPoseWithFallback(result)?.toPose2d() ?: return
-                addVisionMeasurement(
-                    newPose,
-                    result.timestampSeconds,
-                    true, /*!DriverStation.isTeleopEnabled()*/
-                )
-            },
-        )
+        // Vision odometry is pushed by the Vision subsystem itself via
+        // [addVisionMeasurement] (gated by Vision.enableYagslVision).
         setVisionMeasurementStdDevs(3.0, 4.0, 5.0)
         if (
             DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
@@ -137,9 +113,6 @@ object Drivetrain : SubsystemBase() {
 
         //        targetPoseProvider.initialize()
     }
-
-    fun doEnableVisionOdometry(enable: Boolean = true) =
-        InstantCommand({ updateVisionOdometry = enable })
 
     override fun periodic() {
         posePublisher.set(pose)
@@ -172,24 +145,52 @@ object Drivetrain : SubsystemBase() {
     }
 
     /**
+     * Live command that drives field-oriented [ChassisSpeeds] from a supplier. Requires the
+     * drivetrain. Intended for full-axis auto-mode aligners.
+     *
+     * @param speeds supplier of the desired field-oriented speeds, polled every cycle.
+     */
+    fun driveLive(speeds: () -> ChassisSpeeds): Command =
+        Commands.run({ driveFieldOriented(speeds()) }, this)
+
+    /**
+     * Live command that drives robot-oriented [ChassisSpeeds] from a supplier. Requires the
+     * drivetrain. Intended for full-axis auto-mode aligners.
+     *
+     * @param speeds supplier of the desired robot-oriented speeds, polled every cycle.
+     */
+    fun driveLiveRobotOriented(speeds: () -> ChassisSpeeds): Command =
+        Commands.run({ driveRobotOriented(speeds()) }, this)
+
+    /**
      * Return SysID command for drive motors from YAGSL
      *
+     * @param spin whether to spin in place instead of driving straight (defaults to true,
+     *   preserving the previous behavior).
      * @return A command that SysIDs the drive motors.
      */
-    fun sysIdDriveMotors(): Command? {
+    fun sysIdDriveMotors(spin: Boolean = true): Command? {
         return SwerveDriveTest.generateSysIdCommand(
             SwerveDriveTest.setDriveSysIdRoutine(
                 SysIdRoutine.Config(),
                 this,
                 swerveDrive,
                 12.0,
-                true,
+                spin,
             ),
             3.0,
             5.0,
             3.0,
         )
     }
+
+    /**
+     * Spin-in-place variant of [sysIdDriveMotors]: modules align tangentially and the robot rotates
+     * about its center, so characterization needs no long linear area.
+     *
+     * @return A command that SysIDs the drive motors while spinning.
+     */
+    fun sysIdDriveMotorsSpin(): Command? = sysIdDriveMotors(spin = true)
 
     /**
      * Return SysID command for angle motors from YAGSL
@@ -237,6 +238,8 @@ object Drivetrain : SubsystemBase() {
         drive(fieldSpeeds)
     }
 
+    private var hasFieldPose = false
+
     /**
      * Method to reset the odometry of the robot to a desired pose.
      *
@@ -250,9 +253,17 @@ object Drivetrain : SubsystemBase() {
     val pose
         get() = Pose2d(swerveDrive.pose.x, swerveDrive.pose.y, swerveDrive.pose.rotation)
 
+    /**
+     * Returns the current pose of the robot relative to the field, or null until a vision
+     * measurement tells us where on the field we are.
+     */
+    val fieldPose: Pose2d?
+        get() = if (hasFieldPose) pose else null
+
     /** Method to zero the gyro. */
     fun zeroGyro() {
         swerveDrive.zeroGyro()
+        hasFieldPose = false
     }
 
     /** Method to get the current heading (yaw) of the robot. */
@@ -319,16 +330,18 @@ object Drivetrain : SubsystemBase() {
     }
 
     /**
-     * Add a vision measurement to the swerve drive's pose estimator.
+     * Add a vision measurement to the swerve drive's pose estimator. Called by the Vision subsystem
+     * (gated by Vision.enableYagslVision).
      *
      * @param measurement The pose measurement to add.
      * @param timestamp The timestamp of the pose measurement.
      */
-    private fun addVisionMeasurement(
+    fun addVisionMeasurement(
         measurement: Pose2d,
         timestamp: Double,
         updateRotation: Boolean = true,
     ) {
+        hasFieldPose = true
         if (updateRotation) swerveDrive.addVisionMeasurement(measurement, timestamp)
         else
             swerveDrive.addVisionMeasurement(

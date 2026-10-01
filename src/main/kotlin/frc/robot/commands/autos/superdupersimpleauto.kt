@@ -24,42 +24,42 @@ import kotlin.math.sin
 private fun Angle.standardPosition(): Angle =
     Units.Radians.of((convert(Units.Radians) + 2 * PI).mod(2 * PI))
 
-class MoveDistanceAndRotate(private val desiredDistance: Distance = 2.meters) : Command() {
+class MoveDistanceAndRotate(private val desiredDistance: Distance = 2.meters) {
     private val distancePID = PIDController(2.0, 0.3, 0.1)
 
     private val rotationPID = PIDController(2.0, 0.01, 0.2)
 
     init {
         rotationPID.enableContinuousInput(-PI, PI)
-        addRequirements(Drivetrain)
     }
 
-    override fun execute() {
-        val target = FieldMapREBUILTWelded.teamHub.center
-        val currentAngleToCenter =
-            (Drivetrain.pose.vector2.angleTo(target) + PI.radians).standardPosition()
-        val distanceSpeed =
-            distancePID.calculate(
-                Drivetrain.pose.vector2.distance(target) - desiredDistance.asMeters
-            )
-        rotationPID.setpoint = currentAngleToCenter.asRadians
+    fun asCommand(): Command {
+        fun computeSpeeds(): ChassisSpeeds {
+            val target = FieldMapREBUILTWelded.teamHub.center
+            val currentAngleToCenter =
+                (Drivetrain.pose.vector2.angleTo(target) + PI.radians).standardPosition()
+            val distanceSpeed =
+                distancePID.calculate(
+                    Drivetrain.pose.vector2.distance(target) - desiredDistance.asMeters
+                )
+            rotationPID.setpoint = currentAngleToCenter.asRadians
 
-        val speeds =
-            ChassisSpeeds(
+            return ChassisSpeeds(
                 cos(currentAngleToCenter.convert(Units.Radians)) * distanceSpeed,
                 sin(currentAngleToCenter.convert(Units.Radians)) * distanceSpeed,
                 rotationPID.calculate(Drivetrain.pose.rotation.radians),
             )
-        Drivetrain.driveFieldOriented(speeds)
-    }
+        }
 
-    override fun isFinished(): Boolean {
-        return distancePID.atSetpoint() && rotationPID.atSetpoint()
+        return Drivetrain.driveLive(::computeSpeeds).until {
+            distancePID.atSetpoint() && rotationPID.atSetpoint()
+        }
     }
 }
 
 fun superdupersimpleauto(): Command {
     return MoveDistanceAndRotate()
+        .asCommand()
         .alongWith(Shooter.Hood.resetCommand())
         .deadlineFor(Shooter.runAtSpeed({ 4500.RPM }))
         .andThen(

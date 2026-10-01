@@ -28,12 +28,12 @@ package frc.robot.commands.vision
 //    rotateAround: () -> AngleUnit = { 0.radians },
 // ): Command {
 //    val targetPoseProvider = TargetPoseProvider(point, distance, rotateAround)
-//    return CircleAlign(
+//    return circleAlign(
 //            targetCenter = { point },
 //            angleProvider = { targetPoseProvider.getAngleAndCalculate() },
 //            desiredDistance = { distance },
 //        )
 //        .beforeStarting(targetPoseProvider::initialize)
-//        .alongWith(Drivetrain.doEnableVisionOdometry(false))
-//        .andThen(Drivetrain.doEnableVisionOdometry())
+//        .beforeStarting { Vision.enableYagslVision = false }
+//        .finallyDo { Vision.enableYagslVision = true }
 // }

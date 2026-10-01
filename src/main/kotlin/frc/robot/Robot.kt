@@ -3,11 +3,12 @@
 // the WPILib BSD license file in the root directory of this project.
 package frc.robot
 
+import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.TimedRobot
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
 import edu.wpi.first.wpilibj2.command.InstantCommand
-import frc.robot.subsystems.Drivetrain
+import frc.robot.subsystems.Vision
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -25,6 +26,7 @@ class Robot : TimedRobot() {
      * initialization code.
      */
     override fun robotInit() {
+        DriverStation.silenceJoystickConnectionWarning(true)
         // Instantiate our RobotContainer. This will perform all our button bindings, and put our
         // autonomous chooser on the dashboard.
         robotContainer = RobotContainer()
@@ -48,7 +50,7 @@ class Robot : TimedRobot() {
 
     /** This function is called once each time the robot enters Disabled mode. */
     override fun disabledInit() {
-        Drivetrain.updateVisionOdometry = true
+        Vision.enableYagslVision = true
     }
 
     override fun disabledPeriodic() {}

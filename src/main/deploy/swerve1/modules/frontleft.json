@@ -12,7 +12,7 @@
     "canbus": ""
   },
   "inverted": {
-    "drive": true,
+    "drive": false,
     "angle": true
   },
   "angle": {

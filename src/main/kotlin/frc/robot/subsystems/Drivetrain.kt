@@ -13,6 +13,7 @@ import edu.wpi.first.networktables.NetworkTableInstance
 import edu.wpi.first.networktables.StructArrayPublisher
 import edu.wpi.first.networktables.StructPublisher
 import edu.wpi.first.units.Units
+import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.DriverStation
 import edu.wpi.first.wpilibj.Filesystem
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -65,7 +66,6 @@ object Drivetrain : SubsystemBase() {
     }
 
     var distToHub: Double by DashboardNumber(0.0, "Odometry")
-    private val swerveDrive: SwerveDrive
 
     /** The maximum speed of the swerve drive (m/s) */
     val maximumSpeed = Constants.MAX_SPEED.convert(Units.MetersPerSecond)
@@ -80,27 +80,28 @@ object Drivetrain : SubsystemBase() {
         NetworkTableInstance.getDefault().getStructTopic("RobotPose", Pose2d.struct).publish()
 
     val navX = AHRS(AHRS.NavXComType.kMXP_SPI)
+    private val config: SwerveDriveConfig =
+        SwerveDriveConfig()
+            .withSubsystem(this)
+            .withGyro { navX.angle.degrees }
+            .withGyroInverted(true)
+            // .withGyroOffset(...), .withGyroVelocity(...) are also available
+            .withTranslationController(PIDController(4.0, 0.0, 0.0))
+            .withRotationController(PIDController(1.0, 0.0, 0.0))
+            .withTelemetry("swerve", SwerveDriveTelemetryConfig(TelemetryVerbosity.HIGH))
+
+    init {
+        // why does SwerveParser use global state?
+        // the world may never know
+        SwerveParser.parse(Constants.DRIVE_CONFIG)
+    }
+
+    val swerveDrive: SwerveDrive = SwerveParser.createSwerveDrive(config)
 
     //    private val targetPoseProvider =
     //        TargetPoseProvider(FieldMapREBUILTWelded.teamHub.center, 2.meters) { 0.radians }
 
     init {
-        // Configure the Telemetry before creating the SwerveDrive to avoid unnecessary objects
-        // being created.
-
-        val config =
-            SwerveDriveConfig()
-                .withSubsystem(this)
-                .withGyro { navX.yaw.degrees }
-                .withGyroInverted(false)
-                // .withGyroOffset(...), .withGyroVelocity(...) are also available
-                .withTranslationController(PIDController(4.0, 0.0, 0.0))
-                .withRotationController(PIDController(1.0, 0.0, 0.0))
-                .withTelemetry("swerve", SwerveDriveTelemetryConfig(TelemetryVerbosity.HIGH))
-
-        SwerveParser.parse((Constants.DRIVE_CONFIG))
-        swerveDrive = SwerveParser.createSwerveDrive(config)
-
         // Set YAGSL preferences
         // swerveDrive.setHeadingCorrection(false)
         // // Heading correction should only be used while controlling the robot via angle.
@@ -130,6 +131,7 @@ object Drivetrain : SubsystemBase() {
     }
 
     override fun periodic() {
+        swerveDrive.updateTelemetry()
         posePublisher.set(pose)
         distToHub = pose.vector2.distance(FieldMapREBUILTWelded.teamHub.center)
         swerveStatePublisher.set(swerveDrive.moduleStates)
@@ -174,7 +176,7 @@ object Drivetrain : SubsystemBase() {
             SysIdRoutine.Config(),
             SysIdRoutine.Mechanism(
                 { voltage ->
-                    swerveDrive.modules.forEach { it.driveMotorController.setVoltage(voltage) }
+                    swerveDrive.modules.forEach { it.driveMotorController.voltage = voltage }
                 },
                 { log ->
                     swerveDrive.modules.forEach { mod ->
@@ -198,7 +200,7 @@ object Drivetrain : SubsystemBase() {
             SysIdRoutine.Config(),
             SysIdRoutine.Mechanism(
                 { voltage ->
-                    swerveDrive.modules.forEach { it.azimuthMotorController.setVoltage(voltage) }
+                    swerveDrive.modules.forEach { it.azimuthMotorController.voltage = voltage }
                 },
                 { log ->
                     swerveDrive.modules.forEach { mod ->
@@ -399,7 +401,7 @@ object Drivetrain : SubsystemBase() {
         hasFieldPose = false
     }
 
-    val rawYaw
+    val rawYaw: Angle
         get() = swerveDrive.gyroAngle
 
     /** Returns the current field oriented velocity of the robot. */

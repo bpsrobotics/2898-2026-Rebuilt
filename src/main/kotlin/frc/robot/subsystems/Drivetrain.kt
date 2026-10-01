@@ -31,14 +31,14 @@ import frc.robot.utils.fieldmap.FieldMapREBUILTWelded
 import frc.robot.utils.geometry.vector2
 import frc.robot.utils.inches
 import frc.robot.utils.radiansPerSecond
+import java.io.File
+import kotlin.jvm.optionals.getOrNull
+import kotlin.math.PI
 import swervelib.parser.SwerveParser
 import yams.mechanisms.config.SwerveDriveConfig
 import yams.mechanisms.swerve.SwerveDrive
 import yams.motorcontrollers.SmartMotorControllerConfig.TelemetryVerbosity
 import yams.telemetry.SwerveDriveTelemetryConfig
-import java.io.File
-import kotlin.jvm.optionals.getOrNull
-import kotlin.math.PI
 
 object Drivetrain : SubsystemBase() {
     object Constants {
@@ -83,8 +83,8 @@ object Drivetrain : SubsystemBase() {
     private val config: SwerveDriveConfig =
         SwerveDriveConfig()
             .withSubsystem(this)
-            .withGyro { navX.angle.degrees }
-            .withGyroInverted(true)
+            .withGyro { -navX.angle.degrees }
+            .withGyroInverted(false)
             // .withGyroOffset(...), .withGyroVelocity(...) are also available
             .withTranslationController(PIDController(4.0, 0.0, 0.0))
             .withRotationController(PIDController(1.0, 0.0, 0.0))

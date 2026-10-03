@@ -70,8 +70,8 @@ object Intake : SubsystemBase() {
             val pidConstants: PIDConstants = PIDConstants(3.5, 0.05, 0.0)
             val armFFConstants = ArmFeedForwardConstants(0.75, 0.3, 0.0)
             val STOWED_POSITION = 0.35.rotations
-            val EXTENDED_POSITION = 0.076.rotations
-            val FEEDER_POSITION = 0.076.rotations
+            val EXTENDED_POSITION = 0.rotations
+            val FEEDER_POSITION = 0.rotations // 0.076.rotations
         }
 
         // Initializing brushless motor with SparkMAX motor controller

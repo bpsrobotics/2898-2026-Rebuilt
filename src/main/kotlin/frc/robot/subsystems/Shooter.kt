@@ -29,7 +29,6 @@ import frc.robot.utils.convert
 import frc.robot.utils.degrees
 import frc.robot.utils.radians
 import frc.robot.utils.rotations
-import kotlin.math.PI
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
 object Shooter : SubsystemBase() {
@@ -51,7 +50,7 @@ object Shooter : SubsystemBase() {
         SparkWrapper(Constants.MOTOR_1_ID, SparkLowLevel.MotorType.kBrushless) {
             idleMode(SparkBaseConfig.IdleMode.kCoast)
             smartCurrentLimit(40)
-            inverted(true)
+            inverted(false)
             encoder.velocityConversionFactor(2.0)
         }
     private val motorFollower =
@@ -118,7 +117,7 @@ object Shooter : SubsystemBase() {
             val ffConstants = ArmFeedForwardConstants(0.2, 0.20, 0.0)
 
             val DOWN_POSITION = 0.0.radians
-            val TOP_POSITION = 2.7.radians
+            val TOP_POSITION = 0.484.rotations
 
             val kinematics = Polynomial(0.196001, 1.76799, 5.48396, -4.12772)
         }
@@ -134,10 +133,10 @@ object Shooter : SubsystemBase() {
         private val controller =
             HoodPIDFF(Constants.pidConstants, Constants.ffConstants, (22.degrees * 133.0) / 24.0)
 
-        private var absoluteEncoderOffset = 0.4060916601522915
+        private var absoluteEncoderOffset = 0.rotations
 
         init {
-            absoluteEncoderOffset = absEncoder.get()
+            absoluteEncoderOffset = absEncoder.get().rotations
 
             defaultCommand = setDownAndReZero()
             controller.pid.setTolerance(0.04)
@@ -145,9 +144,18 @@ object Shooter : SubsystemBase() {
             SmartDashboard.putData("Shooter/Hood/ArmPID", controller)
         }
 
-        val position: Angle
+        val position: Angle?
             get() =
-                MathUtil.inputModulus(absEncoder.get() - absoluteEncoderOffset, -PI, PI).rotations
+                if (absEncoder.isConnected)
+                    MathUtil.inputModulus(
+                            (absEncoder.get().rotations - absoluteEncoderOffset).convert(
+                                Units.Rotations
+                            ),
+                            0.0,
+                            1.0,
+                        )
+                        .rotations
+                else null
 
         var setpoint
             get() = controller.setpoint
@@ -164,17 +172,18 @@ object Shooter : SubsystemBase() {
         var yellowBabber by DashboardNumber(0.0, "Shooter/Hood")
 
         override fun periodic() {
-            hoodEncoderPosition = position.asRadians
+            hoodEncoderPosition = position?.convert(Units.Rotations) ?: Double.NaN
             rawEncoderPosition = absEncoder.get()
             yellowBabber = currentAverage.average
         }
 
         fun applyController(setpoint: Angle? = null) {
+            if (position == null) return
             if (setpoint != null)
                 controller.setpoint =
                     setpoint.asRadians.clamp(0.0, Constants.TOP_POSITION.asRadians).radians
-            motorVoltage = controller.calculate(position)
-            motor.setVoltage(controller.calculate(position))
+            motorVoltage = controller.calculate(position!!)
+            motor.setVoltage(controller.calculate(position!!))
         }
 
         fun stop(): Command = run { motor.stopMotor() }
@@ -218,7 +227,7 @@ object Shooter : SubsystemBase() {
                 .until { currentAverage.average > 20 }
                 .andThen(
                     WaitCommand(0.5),
-                    runOnce { absoluteEncoderOffset = absEncoder.get() },
+                    runOnce { absoluteEncoderOffset = absEncoder.get().rotations },
                     stop().repeatedly(),
                 )
     }

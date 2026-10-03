@@ -4,6 +4,7 @@ import com.revrobotics.spark.SparkLowLevel
 import com.revrobotics.spark.config.SparkBaseConfig
 import com.revrobotics.spark.config.SparkMaxConfig
 import edu.wpi.first.math.MathUtil
+import edu.wpi.first.units.Units
 import edu.wpi.first.units.measure.Angle
 import edu.wpi.first.wpilibj.DutyCycleEncoder
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard
@@ -16,6 +17,7 @@ import frc.robot.utils.SparkWrapper
 import frc.robot.utils.asRadians
 import frc.robot.utils.controls.ArmFeedForwardConstants
 import frc.robot.utils.controls.PIDConstants
+import frc.robot.utils.convert
 import frc.robot.utils.radians
 import frc.robot.utils.rotations
 
@@ -63,13 +65,13 @@ object Intake : SubsystemBase() {
         object Constants {
             const val MOTOR_ID = 14
             const val ENCODER_ID = 0
-            const val ENCODER_OFFSET = -0.5539147638478691
+            val ENCODER_OFFSET = (-0.277).rotations
 
             val pidConstants: PIDConstants = PIDConstants(3.5, 0.05, 0.0)
             val armFFConstants = ArmFeedForwardConstants(0.75, 0.3, 0.0)
-            val STOWED_POSITION = 1.72265703174503.radians
-            val EXTENDED_POSITION = 0.0.radians
-            val FEEDER_POSITION = 0.3284585466925222.radians
+            val STOWED_POSITION = 0.35.rotations
+            val EXTENDED_POSITION = 0.076.rotations
+            val FEEDER_POSITION = 0.076.rotations
         }
 
         // Initializing brushless motor with SparkMAX motor controller
@@ -88,8 +90,10 @@ object Intake : SubsystemBase() {
         val position
             get() =
                 if (absEncoder.isConnected())
-                    MathUtil.inputModulus(absEncoder.get() + Constants.ENCODER_OFFSET, -0.5, 0.5)
-                        .rotations
+                    MathUtil.angleModulus(
+                            (absEncoder.get().rotations - Constants.ENCODER_OFFSET).asRadians
+                        )
+                        .radians
                 else null
 
         init {
@@ -106,7 +110,7 @@ object Intake : SubsystemBase() {
         var rawEncoderPosition by DashboardNumber(0.0, "Intake/Pivot")
 
         override fun periodic() {
-            pivotEncoderPosition = position?.asRadians ?: Double.NaN
+            pivotEncoderPosition = position?.convert(Units.Rotations) ?: Double.NaN
             rawEncoderPosition = absEncoder.get()
         }
 

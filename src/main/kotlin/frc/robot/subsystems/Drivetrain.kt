@@ -87,28 +87,28 @@ object Drivetrain : SubsystemBase() {
         // Set YAGSL preferences
         swerveDrive.setHeadingCorrection(false)
         // Heading correction should only be used while controlling the robot via angle.
-        swerveDrive.setCosineCompensator(false)
+        swerveDrive.setCosineCompensator(true)
         // !SwerveDriveTelemetry.isSimulation); // Disables cosine compensation for simulations
         // since it causes discrepancies not seen in real life.
         swerveDrive.setMotorIdleMode(false)
 
-        swerveDrive.setGyroOffset(Rotation3d(0.0, 0.0, PI))
+        swerveDrive.setGyroOffset(Rotation3d(0.0, 0.0, 0.0))
 
         // Vision odometry is pushed by the Vision subsystem itself via
         // [addVisionMeasurement] (gated by Vision.enableYagslVision).
         setVisionMeasurementStdDevs(3.0, 4.0, 5.0)
-        if (
-            DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
-                DriverStation.Alliance.Red
-        ) {
-            resetOdometry(
-                Pose2d(
-                    FieldMapREBUILTWelded.FieldLength.asMeters,
-                    FieldMapREBUILTWelded.FieldHeight.asMeters,
-                    Rotation2d(PI),
-                )
-            )
-        }
+//        if (
+//            DriverStation.getAlliance().orElse(DriverStation.Alliance.Red) ==
+//                DriverStation.Alliance.Red
+//        ) {
+//            resetOdometry(
+//                Pose2d(
+//                    FieldMapREBUILTWelded.FieldLength.asMeters,
+//                    FieldMapREBUILTWelded.FieldHeight.asMeters,
+//                    Rotation2d(PI),
+//                )
+//            )
+//        }
         // setupPathPlanner()
 
         //        targetPoseProvider.initialize()
